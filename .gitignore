@@ -1,0 +1,21 @@
+# Secrets and local environment
+.env
+backend/.env
+backend/.env.backup-*
+*.env
+!*.env.example
+
+# Dependencies and runtime files
+node_modules/
+backend/node_modules/
+backend/logs/
+*.log
+
+# User uploads and generated evidence
+backend/uploads/
+uploads/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260412">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-overview.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>All Tickets</span>
+                </a>
+                <a href="license-plate-lookup.html" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search Violator</span>
+                </a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item active">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="payments.html" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="disputes.html" class="nav-item">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Disputes</span>
+                </a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="notifications.html" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="admin-settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">Admin</h4>
+                        <p class="user-role">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Manage Users</h2>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn btn-primary" onclick="showAddUserModal()">
+                        <i class="fas fa-plus"></i> Add New User
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>User Accounts</h3>
+                        <div class="search-bar" style="max-width: 300px;">
+                            <input type="text" placeholder="Search users..." id="searchInput">
+                            <button onclick="searchUsers()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="usersTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Contact</th>
+                                        <th>Status</th>
+                                        <th>Last Login</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="8" style="text-align: center;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New User</h3>
+                <span class="close" onclick="closeUserModal()">&times;</span>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId">
+
+                <div class="form-group">
+                    <label for="userName" class="required">Full Name</label>
+                    <input type="text" id="userName" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="userEmail" class="required">Email</label>
+                    <input type="email" id="userEmail" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="userPassword" class="required">Password</label>
+                    <input type="password" id="userPassword" name="password" required>
+                    <small id="passwordHelp">Leave blank to keep current password (when editing)</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="userRole" class="required">Role</label>
+                    <select id="userRole" name="role" required>
+                        <option value="apprehending_officer">Apprehending Officer</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="userContact">Contact Number</label>
+                    <input type="tel" id="userContact" name="contact_number" placeholder="09XX XXX XXXX">
+                </div>
+
+                <div class="form-group">
+                    <label for="userStatus" class="required">Status</label>
+                    <select id="userStatus" name="status" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveUserBtn">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/dashboard.js?v=20260427c"></script>
+    <script>
+        // Require authentication
+        requireAuth();
+
+        // Only admins can access this page
+        if (!isAdmin()) {
+            window.location.href = 'officer-dashboard.html';
+        }
+
+        // Populate user info
+        populateUserInfo();
+
+        let users = [];
+        let editingUserId = null;
+
+        // Load users on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+        });
+
+        function handleAdminAccessError(error, fallbackMessage) {
+            const message = error?.message || fallbackMessage;
+
+            if (message.toLowerCase().includes('access denied')) {
+                showAlert('Access denied for Users page. Redirecting...', 'warning', 1500);
+                setTimeout(() => {
+                    window.location.href = 'officer-dashboard.html';
+                }, 1500);
+                return;
+            }
+
+            showAlert(message, 'danger');
+        }
+
+        // Load all users
+        async function loadUsers() {
+            try {
+                const response = await API.getUsers();
+                if (response.success) {
+                    users = response.users;
+                    displayUsers(users);
+                } else {
+                    handleAdminAccessError({ message: response.message }, 'Failed to load users');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                handleAdminAccessError(error, 'Error loading users');
+            }
+        }
+
+        // Compute a user-facing account state: Locked (temporary auto-lockout) takes priority over Active/Inactive.
+        function getAccountStateBadge(user) {
+            const isLocked = user.locked_until && new Date(user.locked_until) > new Date();
+            if (isLocked) {
+                return '<span class="badge badge-danger" title="Auto-locked after repeated failed logins">Locked</span>';
+            }
+            return getStatusBadge(user.status);
+        }
+
+        // Display users in table
+        function displayUsers(usersToDisplay) {
+            const tbody = document.getElementById('usersTableBody');
+
+            if (usersToDisplay.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = usersToDisplay.map(user => {
+                const isLocked = user.locked_until && new Date(user.locked_until) > new Date();
+                return `
+                <tr>
+                    <td>${Number(user.id) || 0}</td>
+                    <td>${escapeHtmlText(user.name)}</td>
+                    <td>${escapeHtmlText(user.email)}</td>
+                    <td><span class="badge ${user.role === 'admin' ? 'badge-danger' : 'badge-info'}">${escapeHtmlText(String(user.role || '').replace('_', ' ').toUpperCase())}</span></td>
+                    <td>${escapeHtmlText(user.contact_number || 'N/A')}</td>
+                    <td>${getAccountStateBadge(user)}</td>
+                    <td>${escapeHtmlText(user.last_login ? formatDate(user.last_login) : 'Never')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${isLocked ? `
+                        <button class="btn btn-sm btn-warning" onclick="unlockUserAccount(${user.id})" title="Unlock account">
+                            <i class="fas fa-unlock"></i>
+                        </button>` : ''}
+                        <button class="btn btn-sm btn-secondary" onclick="toggleUserStatus(${user.id})" title="${user.status === 'active' ? 'Deactivate' : 'Activate'}" ${user.id === getUser().id ? 'disabled' : ''}>
+                            <i class="fas fa-power-off"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})" title="Delete permanently" ${user.id === getUser().id ? 'disabled' : ''}>
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            }).join('');
+        }
+
+        // Unlock an account that was auto-locked after repeated failed logins
+        async function unlockUserAccount(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            if (!confirmAction(`Unlock the account for "${user.name}"?`)) return;
+
+            try {
+                const response = await API.unlockUser(id);
+                if (response.success) {
+                    showAlert('Account unlocked successfully', 'success');
+                    loadUsers();
+                } else {
+                    showAlert(response.message || 'Failed to unlock account', 'danger');
+                }
+            } catch (error) {
+                console.error('Error unlocking account:', error);
+                showAlert(error.message || 'Error unlocking account', 'danger');
+            }
+        }
+
+        // Toggle a user between Active and Inactive (preferred over deletion when historical
+        // records depend on the account - deactivated users cannot log in but their tickets,
+        // payments, evidence, and disputes stay intact).
+        async function toggleUserStatus(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            const newStatus = user.status === 'active' ? 'inactive' : 'active';
+            const verb = newStatus === 'active' ? 'reactivate' : 'deactivate';
+            if (!confirmAction(`Are you sure you want to ${verb} "${user.name}"?`)) return;
+
+            try {
+                const response = await API.updateUser(id, {
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    contact_number: user.contact_number,
+                    status: newStatus
+                });
+                if (response.success) {
+                    showAlert(`User ${verb}d successfully`, 'success');
+                    loadUsers();
+                } else {
+                    showAlert(response.message || `Failed to ${verb} user`, 'danger');
+                }
+            } catch (error) {
+                console.error(`Error trying to ${verb} user:`, error);
+                showAlert(error.message || `Error trying to ${verb} user`, 'danger');
+            }
+        }
+
+        // Search users
+        function searchUsers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = users.filter(user =>
+                user.name.toLowerCase().includes(searchTerm) ||
+                user.email.toLowerCase().includes(searchTerm) ||
+                user.role.toLowerCase().includes(searchTerm)
+            );
+            displayUsers(filtered);
+        }
+
+        // Show add user modal
+        function showAddUserModal() {
+            editingUserId = null;
+            document.getElementById('modalTitle').textContent = 'Add New User';
+            document.getElementById('userForm').reset();
+            document.getElementById('userId').value = '';
+            document.getElementById('userPassword').required = true;
+            document.getElementById('passwordHelp').style.display = 'none';
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        // Edit user
+        async function editUser(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            editingUserId = id;
+            document.getElementById('modalTitle').textContent = 'Edit User';
+            document.getElementById('userId').value = user.id;
+            document.getElementById('userName').value = user.name;
+            document.getElementById('userEmail').value = user.email;
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userPassword').required = false;
+            document.getElementById('passwordHelp').style.display = 'block';
+            document.getElementById('userRole').value = user.role;
+            document.getElementById('userContact').value = user.contact_number || '';
+            document.getElementById('userStatus').value = user.status;
+            document.getElementById('userModal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeUserModal() {
+            document.getElementById('userModal').style.display = 'none';
+            document.getElementById('userForm').reset();
+            editingUserId = null;
+        }
+
+        // Save user (add or edit)
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                role: document.getElementById('userRole').value,
+                contact_number: document.getElementById('userContact').value,
+                status: document.getElementById('userStatus').value
+            };
+
+            const password = document.getElementById('userPassword').value;
+            if (password) {
+                formData.password = password;
+            }
+
+            const saveBtn = document.getElementById('saveUserBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                let response;
+                if (editingUserId) {
+                    response = await API.updateUser(editingUserId, formData);
+                } else {
+                    if (!password) {
+                        showAlert('Password is required for new users', 'danger');
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save User';
+                        return;
+                    }
+                    response = await API.createUser(formData);
+                }
+
+                if (response.success) {
+                    showAlert(response.message || 'User saved successfully', 'success');
+                    closeUserModal();
+                    loadUsers();
+                } else {
+                    showAlert(response.message || 'Failed to save user', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showAlert(error.message || 'Error saving user', 'danger');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save User';
+            }
+        });
+
+        // Delete user
+        async function deleteUser(id) {
+            const user = users.find(u => u.id === id);
+            if (!user) return;
+
+            if (!confirmAction(`Are you sure you want to delete user "${user.name}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await API.deleteUser(id);
+                if (response.success) {
+                    showAlert('User deleted successfully', 'success');
+                    loadUsers();
+                } else {
+                    showAlert(response.message || 'Failed to delete user', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showAlert(error.message || 'Error deleting user', 'danger');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('userModal');
+            if (event.target === modal) {
+                closeUserModal();
+            }
+        }
+    </script>
+    <script src="../assets/js/toast.js"></script>
+</body>
+
+</html>

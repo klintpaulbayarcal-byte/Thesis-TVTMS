@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics & KPI Dashboard - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        .analytics-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .analytics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+        }
+
+        .analytics-header h1 {
+            color: #333;
+            margin: 0;
+        }
+
+        .time-period-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-period-selector button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .time-period-selector button.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .kpi-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .kpi-card.collections {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .kpi-card.unpaid {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .kpi-card.disputes {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .kpi-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .kpi-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 350px;
+        }
+
+        .single-chart {
+            grid-column: 1 / -1;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 350px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .export-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-export {
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-export:hover {
+            background: #218838;
+        }
+
+        .btn-export.pdf {
+            background: #dc3545;
+        }
+
+        .btn-export.pdf:hover {
+            background: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-card {
+                padding: 15px;
+            }
+
+            .kpi-value {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-brand">Municipal Traffic Violation Ticketing and Management System</div>
+        <div class="nav-links">
+            <a href="../index.html">Dashboard</a>
+            <a href="manage-violations.html">Violations</a>
+            <a href="analytics-dashboard.html" class="active">Analytics</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </div>
+
+    <div class="analytics-container">
+        <!-- Header with Time Period Selector -->
+        <div class="analytics-header">
+            <h1><i class="fas fa-chart-line" aria-hidden="true"></i> Analytics & KPI Dashboard</h1>
+            <div>
+                <div class="time-period-selector">
+                    <button class="period-btn active" data-period="7days">Last 7 Days</button>
+                    <button class="period-btn" data-period="30days">Last 30 Days</button>
+                    <button class="period-btn" data-period="90days">Last 90 Days</button>
+                    <button class="period-btn" data-period="year">This Year</button>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                    <span id="analyticsLastUpdated" style="font-size:12px;color:#666;">Not updated yet</span>
+                    <button id="analyticsRefreshBtn" class="btn-export" type="button">
+                        <i id="refreshIcon" class="fas fa-rotate" aria-hidden="true"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="export-section">
+            <h3>Export Analytics</h3>
+            <div class="export-buttons">
+                <button class="btn-export" id="exportExcelBtn"><i class="fas fa-file-csv" aria-hidden="true"></i> Export CSV</button>
+                <button class="btn-export pdf" id="exportPdfBtn"><i class="fas fa-file-pdf" aria-hidden="true"></i> Export to PDF</button>
+                <button class="btn-export" id="printBtn"><i class="fas fa-print" aria-hidden="true"></i> Print Report</button>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-metrics">
+            <div class="kpi-card collections">
+                <div class="kpi-label">Total Collections</div>
+                <div class="kpi-value" id="totalCollections">₱0</div>
+                <div class="kpi-subtitle" id="collectionSubtitle">0 payments processed</div>
+            </div>
+
+            <div class="kpi-card unpaid">
+                <div class="kpi-label">Outstanding Balance</div>
+                <div class="kpi-value" id="outstandingBalance">₱0</div>
+                <div class="kpi-subtitle" id="unpaidSubtitle">0 unpaid tickets</div>
+            </div>
+
+            <div class="kpi-card disputes">
+                <div class="kpi-label">Dispute Resolution Rate</div>
+                <div class="kpi-value" id="disputeRate">0%</div>
+                <div class="kpi-subtitle" id="disputeSubtitle">0 disputes resolved</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-label">Total Tickets Issued</div>
+                <div class="kpi-value" id="totalTickets">0</div>
+                <div class="kpi-subtitle" id="ticketSubtitle">0 pending payment</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <!-- Daily Collections Chart -->
+            <div class="chart-container">
+                <div class="chart-title"><i class="fas fa-coins" aria-hidden="true"></i> Daily Collections Trend</div>
+                <div class="chart-canvas-wrapper">
+                    <div class="loading" id="collectionsLoading">Loading chart...</div>
+                    <canvas id="collectionsChart" style="display: none;"></canvas>
+                </div>
+            </div>
+
+            <!-- Payment Status Pie Chart -->
+            <div class="chart-container">
+                <div class="chart-title"><i class="fas fa-chart-pie" aria-hidden="true"></i> Payment Status Distribution</div>
+                <div class="chart-canvas-wrapper">
+                    <div class="loading" id="paymentLoading">Loading chart...</div>
+                    <canvas id="paymentChart" style="display: none;"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Violations Chart -->
+            <div class="chart-container">
+                <div class="chart-title"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Top Violations by Count</div>
+                <div class="chart-canvas-wrapper">
+                    <div class="loading" id="violationsLoading">Loading chart...</div>
+                    <canvas id="violationsChart" style="display: none;"></canvas>
+                </div>
+            </div>
+
+            <!-- Apprehending Officer Productivity Chart -->
+            <div class="chart-container">
+                <div class="chart-title"><i class="fas fa-user-shield" aria-hidden="true"></i> Apprehending Officer Productivity Ranking</div>
+                <div class="chart-canvas-wrapper">
+                    <div class="loading" id="officerLoading">Loading chart...</div>
+                    <canvas id="officerChart" style="display: none;"></canvas>
+                </div>
+            </div>
+
+            <!-- Monthly Revenue Comparison -->
+            <div class="chart-container single-chart">
+                <div class="chart-title"><i class="fas fa-chart-column" aria-hidden="true"></i> Monthly Revenue Comparison</div>
+                <div class="chart-canvas-wrapper">
+                    <div class="loading" id="monthlyLoading">Loading chart...</div>
+                    <canvas id="monthlyChart" style="display: none;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+
+    <script>
+        let currentPeriod = '7days';
+        let charts = {};
+        let latestAnalytics = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!requireAuth() || !isAdmin()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            loadAnalyticsData();
+
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentPeriod = e.target.dataset.period;
+                    loadAnalyticsData();
+                });
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+            document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
+            document.getElementById('printBtn').addEventListener('click', () => window.print());
+            document.getElementById('analyticsRefreshBtn').addEventListener('click', refreshAllCharts);
+        });
+
+        async function loadAnalyticsData() {
+            try {
+                // Get date range based on period
+                const { startDate, endDate } = getDateRange(currentPeriod);
+
+                // Load all analytics data
+                const [collections, payments, tickets, disputes, officer, monthly] = await Promise.all([
+                    apiRequest(`/reports/analytics/collections?startDate=${startDate}&endDate=${endDate}`),
+                    apiRequest(`/reports/analytics/payment-status?startDate=${startDate}&endDate=${endDate}`),
+                    apiRequest(`/reports/analytics/tickets-summary?startDate=${startDate}&endDate=${endDate}`),
+                    apiRequest(`/reports/analytics/dispute-rate?startDate=${startDate}&endDate=${endDate}`),
+                    apiRequest(`/reports/productivity?startDate=${startDate}&endDate=${endDate}`),
+                    apiRequest('/reports/analytics/monthly-revenue')
+                ]);
+
+                latestAnalytics = {
+                    period: currentPeriod,
+                    dateRange: { startDate, endDate },
+                    collections: collections.data || {},
+                    payments: payments.data || {},
+                    tickets: tickets.data || {},
+                    disputes: disputes.data || {},
+                    officers: officer.performance || officer.productivity || officer.data || [],
+                    monthly: monthly.data || []
+                };
+
+                updateKPIs(
+                    latestAnalytics.collections,
+                    latestAnalytics.payments,
+                    latestAnalytics.tickets,
+                    latestAnalytics.disputes
+                );
+                drawCharts(
+                    latestAnalytics.collections,
+                    latestAnalytics.payments,
+                    latestAnalytics.tickets,
+                    latestAnalytics.officers,
+                    latestAnalytics.monthly
+                );
+
+                const updated = document.getElementById('analyticsLastUpdated');
+                if (updated) {
+                    updated.textContent = `Last updated: ${new Date().toLocaleTimeString('en-PH', {
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    })}`;
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                showError('Failed to load analytics data. Please try again.');
+            }
+        }
+
+        function getDateRange(period) {
+            const endDate = new Date();
+            const startDate = new Date();
+
+            switch(period) {
+                case '7days':
+                    startDate.setDate(endDate.getDate() - 7);
+                    break;
+                case '30days':
+                    startDate.setDate(endDate.getDate() - 30);
+                    break;
+                case '90days':
+                    startDate.setDate(endDate.getDate() - 90);
+                    break;
+                case 'year':
+                    startDate.setFullYear(endDate.getFullYear() - 1);
+                    break;
+            }
+
+            return {
+                startDate: formatDate(startDate),
+                endDate: formatDate(endDate)
+            };
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function updateKPIs(collections, paymentStatus, tickets, disputes) {
+            // Collections
+            const totalCollections = collections.totalAmount || 0;
+            document.getElementById('totalCollections').textContent = `₱${totalCollections.toLocaleString()}`;
+            document.getElementById('collectionSubtitle').textContent = 
+                `${collections.paymentCount || 0} payments processed`;
+
+            // Outstanding Balance
+            const outstandingBalance = paymentStatus.unpaidTotal || 0;
+            document.getElementById('outstandingBalance').textContent = `₱${outstandingBalance.toLocaleString()}`;
+            document.getElementById('unpaidSubtitle').textContent = 
+                `${paymentStatus.unpaidCount || 0} unpaid tickets`;
+
+            // Disputes
+            const disputeRate = disputes.resolutionRate || 0;
+            document.getElementById('disputeRate').textContent = `${disputeRate}%`;
+            document.getElementById('disputeSubtitle').textContent = 
+                `${disputes.resolvedCount || 0} disputes resolved`;
+
+            // Tickets
+            const totalTickets = tickets.totalIssued || 0;
+            document.getElementById('totalTickets').textContent = totalTickets;
+            document.getElementById('ticketSubtitle').textContent = 
+                `${tickets.pendingPayment || 0} pending payment`;
+        }
+
+        function drawCharts(collections, paymentStatus, tickets, officers, monthlyData) {
+            // Collections Chart (Line Chart)
+            drawCollectionsChart(collections.dailyData || []);
+
+            // Payment Status Chart (Pie Chart)
+            drawPaymentChart(paymentStatus.breakdown || {});
+
+            // Top Violations Chart (Bar Chart)
+            drawViolationsChart(tickets.topViolations || []);
+
+            // Enforcer Productivity Chart (Bar Chart)
+            drawOfficerChart((officers || []).slice(0, 10));
+
+            // Monthly Revenue Chart (Line Chart)
+            drawMonthlyChart(monthlyData || []);
+        }
+
+        function drawCollectionsChart(data) {
+            const ctx = document.getElementById('collectionsChart').getContext('2d');
+            document.getElementById('collectionsLoading').style.display = 'none';
+            document.getElementById('collectionsChart').style.display = 'block';
+
+            if (charts.collections) charts.collections.destroy();
+
+            charts.collections = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date || d.day),
+                    datasets: [{
+                        label: 'Amount Collected (₱)',
+                        data: data.map(d => d.amount || 0),
+                        borderColor: '#f5576c',
+                        backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#f5576c',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function drawPaymentChart(breakdown) {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            document.getElementById('paymentLoading').style.display = 'none';
+            document.getElementById('paymentChart').style.display = 'block';
+
+            if (charts.payment) charts.payment.destroy();
+
+            const labels = Object.keys(breakdown);
+            const data = Object.values(breakdown);
+
+            charts.payment = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#28a745',
+                            '#dc3545',
+                            '#ffc107',
+                            '#17a2b8'
+                        ],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        function drawViolationsChart(violations) {
+            const ctx = document.getElementById('violationsChart').getContext('2d');
+            document.getElementById('violationsLoading').style.display = 'none';
+            document.getElementById('violationsChart').style.display = 'block';
+
+            if (charts.violations) charts.violations.destroy();
+
+            charts.violations = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: violations.map(v => v.violation_name || v.type),
+                    datasets: [{
+                        label: 'Count',
+                        data: violations.map(v => v.count),
+                        backgroundColor: '#667eea',
+                        borderColor: '#667eea',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function drawOfficerChart(officers) {
+            const ctx = document.getElementById('officerChart').getContext('2d');
+            document.getElementById('officerLoading').style.display = 'none';
+            document.getElementById('officerChart').style.display = 'block';
+
+            if (charts.officer) charts.officer.destroy();
+
+            charts.officer = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: officers.map(e => e.name || e.officer_name),
+                    datasets: [{
+                        label: 'Tickets Issued',
+                        data: officers.map(e => Number(e.total_tickets || e.tickets_issued || 0)),
+                        backgroundColor: '#30cfd0',
+                        borderColor: '#30cfd0',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function drawMonthlyChart(monthlyData) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            document.getElementById('monthlyLoading').style.display = 'none';
+            document.getElementById('monthlyChart').style.display = 'block';
+
+            if (charts.monthly) charts.monthly.destroy();
+
+            charts.monthly = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthlyData.map(m => m.month),
+                    datasets: [{
+                        label: 'Monthly Revenue (₱)',
+                        data: monthlyData.map(m => m.totalAmount),
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#28a745',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function csvCell(value) {
+            let text = value === null || value === undefined ? '' : String(value);
+            if (/^[=+\-@]/.test(text)) text = `'${text}`;
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        function exportToExcel() {
+            if (!latestAnalytics) {
+                if (typeof showToast === 'function') showToast('Analytics data is still loading.', 'warning');
+                else alert('Analytics data is still loading.');
+                return;
+            }
+
+            const rows = [
+                ['Municipal Traffic Violation Ticketing and Management System'],
+                ['Analytics Export'],
+                ['Period', latestAnalytics.dateRange.startDate, latestAnalytics.dateRange.endDate],
+                ['Generated', new Date().toLocaleString('en-PH')],
+                [],
+                ['KPI Summary'],
+                ['Metric', 'Value'],
+                ['Total Collections', latestAnalytics.collections.totalAmount || 0],
+                ['Payments Processed', latestAnalytics.collections.paymentCount || 0],
+                ['Outstanding Balance', latestAnalytics.payments.unpaidTotal || 0],
+                ['Unpaid Tickets', latestAnalytics.payments.unpaidCount || 0],
+                ['Dispute Resolution Rate', `${latestAnalytics.disputes.resolutionRate || 0}%`],
+                ['Total Tickets Issued', latestAnalytics.tickets.totalIssued || 0],
+                [],
+                ['Daily Collections'],
+                ['Date', 'Amount']
+            ];
+
+            (latestAnalytics.collections.dailyData || []).forEach(item => {
+                rows.push([item.date || item.day || '', Number(item.amount || 0)]);
+            });
+
+            rows.push([], ['Top Violations'], ['Violation', 'Count']);
+            (latestAnalytics.tickets.topViolations || []).forEach(item => {
+                rows.push([item.violation_name || 'Unspecified', Number(item.count || 0)]);
+            });
+
+            rows.push([], ['Apprehending Officer Productivity'], ['Officer', 'Total Tickets', 'Paid', 'Unpaid', 'Revenue']);
+            (latestAnalytics.officers || []).forEach(item => {
+                rows.push([
+                    item.name || item.officer_name || 'Unknown',
+                    Number(item.total_tickets || 0),
+                    Number(item.paid_tickets || 0),
+                    Number(item.unpaid_tickets || 0),
+                    Number(item.total_revenue || 0)
+                ]);
+            });
+
+            rows.push([], ['Monthly Revenue'], ['Month', 'Amount']);
+            (latestAnalytics.monthly || []).forEach(item => {
+                rows.push([item.month || '', Number(item.totalAmount || 0)]);
+            });
+
+            const csv = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `analytics-${latestAnalytics.dateRange.startDate}-to-${latestAnalytics.dateRange.endDate}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportToPdf() {
+            const element = document.querySelector('.analytics-container');
+            const opt = {
+                margin: 10,
+                filename: `Analytics-Report-${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'landscape', unit: 'mm', format: 'a4' }
+            };
+            html2pdf().set(opt).save();
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            document.querySelector('.analytics-container').insertBefore(
+                errorDiv,
+                document.querySelector('.analytics-header').nextSibling
+            );
+        }
+
+        function logout() {
+            clearAuth();
+            window.location.href = 'login.html';
+        }
+    </script>
+    <script src="../assets/js/toast.js"></script>
+
+    <script>
+    // Analytics refresh function
+    async function refreshAllCharts() {
+        const btn = document.getElementById('analyticsRefreshBtn');
+        const icon = document.getElementById('refreshIcon');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        }
+        if (icon) icon.style.animation = 'spin 1s linear infinite';
+
+        // Inject spin keyframe
+        if (!document.getElementById('spin-style')) {
+            const s = document.createElement('style');
+            s.id = 'spin-style';
+            s.textContent = '@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+            document.head.appendChild(s);
+        }
+
+        // Reload the page data
+        if (typeof loadAnalyticsData === 'function') {
+            try {
+                await loadAnalyticsData();
+            } catch (error) {
+                console.error('Analytics refresh failed:', error);
+            } finally {
+                if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+                if (icon) icon.style.animation = '';
+            }
+        } else {
+            // Fallback: reload page
+            setTimeout(() => window.location.reload(), 500);
+        }
+    }
+
+    // Set initial "last updated" on load
+    window.addEventListener('load', () => {
+        const now = new Date();
+        const el = document.getElementById('analyticsLastUpdated');
+        if (el) el.textContent = 'Last updated: ' + now.toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'});
+    });
+    </script>
+
+</body>
+</html>
+

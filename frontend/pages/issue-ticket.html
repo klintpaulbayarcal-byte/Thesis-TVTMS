@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issue Ticket - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="issue-ticket.html" class="nav-item active">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item">
+                    <i class="fas fa-list"></i>
+                    <span>View Tickets</span>
+                </a>
+
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Audit Trail</span>
+                </a>
+
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">User</h4>
+                        <p class="user-role">Role</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Issue Violation Ticket</h2>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">New Violation Ticket</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="issueTicketForm">
+                            <!-- Vehicle Information -->
+                            <h4 style="margin-bottom: 20px; color: var(--primary-color);">
+                                <i class="fas fa-motorcycle"></i> Vehicle Information
+                            </h4>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="plateNumber" class="required">Plate Number</label>
+                                        <input type="text" id="plateNumber" name="plateNumber" required
+                                            placeholder="e.g., ABC1234" style="text-transform: uppercase;">
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="vehicleType" class="required">Vehicle Type</label>
+                                        <select id="vehicleType" name="vehicleType" required>
+                                            <option value="">-- Select Type --</option>
+                                            <option value="motorcycle">Motorcycle</option>
+                                            <option value="tricycle">Tricycle</option>
+                                            <option value="car">Car</option>
+                                            <option value="truck">Truck</option>
+                                            <option value="bus">Bus</option>
+                                            <option value="van">Van</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="ownerName">Owner Name</label>
+                                        <input type="text" id="ownerName" name="ownerName"
+                                            placeholder="e.g., Juan Dela Cruz">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="driverLicenseNumber">Driver's License Number</label>
+                                        <input type="text" id="driverLicenseNumber" name="driverLicenseNumber"
+                                            placeholder="e.g., N01-23-456789"
+                                            style="text-transform: uppercase;"
+                                            oninput="this.value = this.value.toUpperCase()">
+                                        <small style="color:#888;font-size:11px;">Required for repeat offender tracking</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-group">
+                                        <label for="ownerEmail">Owner Email Address</label>
+                                        <input type="email" id="ownerEmail" name="ownerEmail"
+                                            placeholder="e.g., juan@email.com">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <label for="ownerAddress">Owner Address</label>
+                                        <input type="text" id="ownerAddress" name="ownerAddress"
+                                            placeholder="e.g., Poblacion, Calape, Bohol">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Violation Information -->
+                            <h4 style="margin: 30px 0 20px 0; color: var(--primary-color);">
+                                <i class="fas fa-exclamation-triangle"></i> Violation Information
+                            </h4>
+
+                            <div class="row">
+                                <div class="col-8">
+                                    <div class="form-group">
+                                        
+                <!-- Offense Level Indicator (shows when repeat offender found) -->
+                <div id="offenseLevelCard" style="display:none;
+                    margin: 12px 0;
+                    padding: 14px 18px;
+                    border-radius: 12px;
+                    border: 2px solid #dc2626;
+                    background: #fef2f2;
+                    display: none;
+                    align-items: center;
+                    gap: 14px;
+                ">
+                    <div style="font-size: 28px;"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></div>
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #b91c1c; margin-bottom: 3px;">
+                            REPEAT OFFENDER DETECTED
+                        </div>
+                        <div style="font-size: 12px; color: #374151;">
+                            This violator has <strong id="priorViolationCount">0</strong> prior violation(s) on record.
+                            Current ticket will be recorded as:
+                            <span id="offenseLevelBadge" style="
+                                display:inline-block; padding:2px 10px;
+                                border-radius:999px; font-size:12px; font-weight:700;
+                                background:#dc2626; color:white; margin-left:4px;
+                            ">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <label for="violationId" class="required">Violation Type</label>
+                                        <select id="violationId" name="violationId" required>
+                                            <option value="">-- Select Violation --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label>Penalty Amount</label>
+                                        <div style="
+                                            padding: 12px 14px;
+                                            border: 2px solid var(--danger-color);
+                                            border-radius: var(--border-radius);
+                                            background-color: #fee2e2;
+                                            text-align: center;
+                                        ">
+                                            <strong id="penaltyDisplay"
+                                                style="font-size: 18px; color: var(--danger-color);">
+                                                ₱0.00
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="location" class="required">Location</label>
+                                <div style="display:flex;gap:8px;align-items:flex-start">
+                                    <input type="text" id="location" name="location" required
+                                        placeholder="e.g., National Highway, Calape" style="flex:1">
+                                    <button type="button" id="gpsBtn" onclick="fillGPS()"
+                                        title="Use my current GPS location"
+                                        style="padding:10px 12px;background:#1a237e;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap;font-size:0.8rem">
+                                        <i class="fas fa-map-marker-alt"></i> GPS
+                                    </button>
+                                </div>
+                                <div id="gpsStatus" style="font-size:0.75rem;color:#666;margin-top:4px"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="remarks">Remarks / Additional Information</label>
+                                <textarea id="remarks" name="remarks" rows="4"
+                                    placeholder="Enter any additional notes about this violation..."></textarea>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-ticket-alt"></i> Issue Ticket
+                                </button>
+                                <button type="reset" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-redo"></i> Reset Form
+                                </button>
+                                <a href="view-tickets.html" class="btn btn-outline btn-lg">
+                                    <i class="fas fa-arrow-left"></i> Back to Tickets
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Information Card -->
+                <div class="card" style="margin-top: 20px;">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-info-circle"></i> Instructions</h3>
+                    </div>
+                    <div class="card-body">
+                        <ol style="color: var(--text-secondary); line-height: 1.8;">
+                            <li>Enter the vehicle's plate number and type</li>
+                            <li>Fill in the vehicle owner information (if available)</li>
+                            <li>Select the type of violation committed</li>
+                            <li>The penalty amount will be automatically displayed</li>
+                            <li>Specify the exact location where the violation occurred</li>
+                            <li>Add any additional remarks or observations</li>
+                            <li>Click "Issue Ticket" to generate the violation ticket</li>
+                            <li>Open or print the ticket details after issuance; the printable page includes its QR lookup code</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay"></div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/tickets.js?v=20260415"></script>
+    <script>
+        if (!requireAuth()) {
+            // Redirect handled by requireAuth
+        } else {
+            const user = getUser();
+
+            if (!user || !['admin', 'apprehending_officer'].includes(user.role)) {
+                redirectToDashboard();
+            } else {
+                populateUserInfo();
+            }
+        }
+
+        // GPS auto-fill for location field
+        function fillGPS() {
+            const btn = document.getElementById('gpsBtn');
+            const status = document.getElementById('gpsStatus');
+            if (!navigator.geolocation) {
+                status.textContent = 'GPS not supported on this browser.';
+                return;
+            }
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting...';
+            status.textContent = 'Acquiring GPS location...';
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    // Keep coordinates local to the system instead of sending them to a third-party geocoding service.
+                    document.getElementById('location').value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                    status.innerHTML = `<span style="color:#2e7d32"><i class="fas fa-location-crosshairs" aria-hidden="true"></i> GPS coordinates filled (${latitude.toFixed(4)}, ${longitude.toFixed(4)})</span>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+                },
+                (err) => {
+                    status.textContent = 'GPS error: ' + err.message;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+                },
+                { timeout: 10000, maximumAge: 60000 }
+            );
+        }
+
+        // Repeat-offender indicator. The effective penalty is fetched by tickets.js.
+        function updateOffenseLevel(priorViolationCount) {
+            const card = document.getElementById('offenseLevelCard');
+            const count = document.getElementById('priorViolationCount');
+            const badge = document.getElementById('offenseLevelBadge');
+            if (!card) return;
+
+            const prior = Number(priorViolationCount || 0);
+            if (prior > 0) {
+                card.style.display = 'flex';
+                if (count) count.textContent = String(prior);
+                const offenseNumber = prior + 1;
+                if (badge) {
+                    badge.textContent = `${offenseNumber}${offenseNumber === 2 ? 'nd' : offenseNumber === 3 ? 'rd' : 'th'} Offense`;
+                    badge.style.background = offenseNumber >= 3 ? '#7f1d1d' : '#dc2626';
+                }
+            } else {
+                card.style.display = 'none';
+            }
+        }
+        window.updateOffenseLevel = updateOffenseLevel;
+    </script>
+    <script src="../assets/js/toast.js"></script>
+
+</body>
+
+</html>

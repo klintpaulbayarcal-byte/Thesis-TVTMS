@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disputes - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-overview.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>All Tickets</span>
+                </a>
+                <a href="license-plate-lookup.html" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search Violator</span>
+                </a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="payments.html" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="disputes.html" class="nav-item active">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Disputes</span>
+                </a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="notifications.html" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="admin-settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">User</h4>
+                        <p class="user-role">Role</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <h2>Disputes</h2>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Submit Dispute</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="disputeForm" class="row">
+                            <div class="col-3 form-group">
+                                <label for="disputeTicketId" class="required">Ticket ID</label>
+                                <input type="number" id="disputeTicketId" required min="1">
+                            </div>
+                            <div class="col-9 form-group">
+                                <label for="disputeReason" class="required">Reason</label>
+                                <textarea id="disputeReason" required rows="3" minlength="10"
+                                    placeholder="Explain your dispute in detail"></textarea>
+                            </div>
+                            <div class="col-12 form-group">
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-gavel"></i> Submit
+                                    Dispute</button>
+                                <button type="button" class="btn btn-secondary" onclick="loadDisputes()"><i
+                                        class="fas fa-sync"></i> Refresh List</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Dispute Queue</h3>
+                    </div>
+                    <div class="card-body table-container">
+                        <div class="row" style="margin-bottom: 12px; align-items: flex-end;">
+                            <div class="col-4 form-group" style="margin-bottom: 0;">
+                                <label for="disputeStatusFilter">Filter by Status</label>
+                                <select id="disputeStatusFilter">
+                                    <option value="">All Statuses</option>
+                                    <option value="submitted">Submitted</option>
+                                    <option value="under_review">Under Review</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div class="col-8 form-group"
+                                style="margin-bottom: 0; display: flex; gap: 8px; justify-content: flex-end;">
+                                <button type="button" class="btn btn-secondary" onclick="applyDisputeFilters()"><i
+                                        class="fas fa-filter"></i> Apply Filter</button>
+                                <button type="button" class="btn btn-light" onclick="resetDisputeFilters()"><i
+                                        class="fas fa-undo"></i> Reset</button>
+                            </div>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Ticket #</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                    <th>Resolution</th>
+                                    <th>Submitted By</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="disputesTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="spinner"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="resolveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Resolve Dispute</h3>
+                <span class="close" onclick="closeResolveModal()">&times;</span>
+            </div>
+            <form id="resolveForm">
+                <div class="modal-body">
+                    <input type="hidden" id="resolveDisputeId">
+
+                    <div class="form-group">
+                        <label for="resolveStatus" class="required">New Status</label>
+                        <select id="resolveStatus" required>
+                            <option value="under_review">Under Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="resolveNotes">Resolution Notes</label>
+                        <textarea id="resolveNotes" rows="3" placeholder="Optional notes"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="resolveConfirm" required>
+                            I confirm this dispute status update.
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeResolveModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Update Dispute</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="disputeDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Dispute Details</h3>
+                <span class="close" onclick="closeDisputeDetailsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="disputeDetailsStepper" style="display:flex; justify-content:space-between; margin-bottom:20px; gap:6px;"></div>
+                <div id="disputeDetailsBody" style="display:flex; flex-direction:column; gap:10px; font-size:14px;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDisputeDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay"></div>
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script>
+        if (!requireAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        populateUserInfo();
+
+        const disputesTableBody = document.getElementById('disputesTableBody');
+        const disputeStatusFilter = document.getElementById('disputeStatusFilter');
+        const disputeForm = document.getElementById('disputeForm');
+        const resolveForm = document.getElementById('resolveForm');
+        const resolveDisputeIdInput = document.getElementById('resolveDisputeId');
+        const resolveStatusInput = document.getElementById('resolveStatus');
+        const resolveNotesInput = document.getElementById('resolveNotes');
+        const resolveConfirmInput = document.getElementById('resolveConfirm');
+        const allowedResolveStatuses = ['under_review', 'approved', 'rejected', 'closed'];
+        const terminalDisputeStatuses = ['approved', 'closed', 'rejected'];
+        let lastLoadedDisputes = [];
+
+        disputeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!validateForm('disputeForm')) {
+                showAlert('Please complete required fields.', 'warning');
+                return;
+            }
+
+            const ticketId = Number(document.getElementById('disputeTicketId').value);
+            const reason = document.getElementById('disputeReason').value.trim();
+
+            if (reason.length < 10) {
+                showAlert('Dispute reason must be at least 10 characters.', 'warning');
+                return;
+            }
+
+            try {
+                const response = await API.createDispute({ ticket_id: ticketId, reason });
+                if (response.success) {
+                    showAlert('Dispute submitted successfully.', 'success');
+                    disputeForm.reset();
+                    await loadDisputes();
+                }
+            } catch (error) {
+                showAlert(error.message || 'Failed to submit dispute.', 'danger');
+            }
+        });
+
+        resolveForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const disputeId = Number(resolveDisputeIdInput.value);
+            const status = (resolveStatusInput.value || '').trim().toLowerCase();
+            const resolutionNotes = (resolveNotesInput.value || '').trim();
+
+            if (!disputeId) {
+                showAlert('Invalid dispute selected.', 'warning');
+                return;
+            }
+
+            if (!allowedResolveStatuses.includes(status)) {
+                showAlert('Invalid status.', 'warning');
+                return;
+            }
+
+            if (!resolveConfirmInput.checked) {
+                showAlert('Please confirm the dispute update before submitting.', 'warning');
+                return;
+            }
+
+            try {
+                const response = await API.resolveDispute(disputeId, {
+                    status,
+                    resolution_notes: resolutionNotes
+                });
+
+                if (response.success) {
+                    showAlert('Dispute updated successfully.', 'success');
+                    closeResolveModal();
+                    await loadDisputes();
+                }
+            } catch (error) {
+                showAlert(error.message || 'Failed to update dispute.', 'danger');
+            }
+        });
+
+        async function loadDisputes() {
+            showLoading(disputesTableBody);
+            try {
+                const filters = {};
+                if (disputeStatusFilter.value) {
+                    filters.status = disputeStatusFilter.value;
+                }
+
+                const response = await API.getDisputes(filters);
+                const disputes = response.disputes || response.data || [];
+                lastLoadedDisputes = disputes;
+                const user = getUser();
+                const canResolve = user && user.role === 'admin';
+
+                if (disputes.length === 0) {
+                    disputesTableBody.innerHTML = '<tr><td colspan="8" class="text-center">No disputes found.</td></tr>';
+                    return;
+                }
+
+                disputesTableBody.innerHTML = disputes.map((item) => `
+                    <tr>
+                        <td>${Number(item.id) || 0}</td>
+                        <td>${escapeHtml(item.ticket_number || item.ticket_id || 'N/A')}</td>
+                        <td>${getStatusBadge(item.status)}</td>
+                        <td>${escapeHtml(item.reason || '')}</td>
+                        <td>${formatResolutionSummary(item)}</td>
+                        <td>${escapeHtml(item.submitted_by_name || item.contact_name || item.submitted_by || 'N/A')}</td>
+                        <td>${escapeHtml(formatDate(item.created_at))}</td>
+                        <td>
+                            <button class="btn btn-sm btn-light" onclick="viewDisputeDetails(${Number(item.id) || 0})" title="View full details"><i class="fas fa-eye"></i> View</button>
+                            ${canResolve ? renderResolveAction(canResolve, item) : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                disputesTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load disputes.</td></tr>';
+            }
+        }
+
+        function renderResolveAction(canResolve, item) {
+            if (!canResolve) {
+                return '';
+            }
+
+            const status = (item.status || '').toLowerCase();
+            if (terminalDisputeStatuses.includes(status)) {
+                return '<button class="btn btn-sm btn-light" disabled title="Final dispute status">Finalized</button>';
+            }
+
+            return `<button class="btn btn-sm btn-success" onclick='resolveDispute(${Number(item.id) || 0}, ${JSON.stringify(item.status || 'under_review')})'>Resolve</button>`;
+        }
+
+        function formatResolutionSummary(item) {
+            const notes = (item.resolution_notes || '').trim();
+            const resolver = (item.resolved_by_name || '').trim();
+            const resolvedAt = item.resolved_at ? formatDate(item.resolved_at) : '';
+
+            if (!notes && !resolver && !resolvedAt) {
+                return '<span class="text-muted">Pending</span>';
+            }
+
+            const preview = notes ? escapeHtml(notes.length > 70 ? `${notes.slice(0, 70)}...` : notes) : 'No notes';
+            const metaParts = [];
+            if (resolver) metaParts.push(`By ${escapeHtml(resolver)}`);
+            if (resolvedAt) metaParts.push(resolvedAt);
+            const meta = metaParts.length > 0 ? `<br><small class="text-muted">${metaParts.join(' | ')}</small>` : '';
+
+            return `${preview}${meta}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function applyDisputeFilters() {
+            loadDisputes();
+        }
+
+        function resetDisputeFilters() {
+            disputeStatusFilter.value = '';
+            loadDisputes();
+        }
+
+        function openResolveModal(disputeId, currentStatus = 'under_review') {
+            if (terminalDisputeStatuses.includes((currentStatus || '').toLowerCase())) {
+                showAlert('This dispute is already finalized and can no longer be updated.', 'info');
+                return;
+            }
+
+            resolveDisputeIdInput.value = disputeId;
+            resolveStatusInput.value = allowedResolveStatuses.includes(currentStatus) ? currentStatus : 'under_review';
+            resolveNotesInput.value = '';
+            resolveConfirmInput.checked = false;
+            openModal('resolveModal');
+        }
+
+        function closeResolveModal() {
+            closeModal('resolveModal');
+            resolveForm.reset();
+            resolveDisputeIdInput.value = '';
+            resolveConfirmInput.checked = false;
+        }
+
+        function resolveDispute(disputeId, currentStatus) {
+            openResolveModal(disputeId, currentStatus);
+        }
+
+        // Feature 8: Dispute details view with a clear visual workflow stepper.
+        // Reuses fields already returned by the backend (ticket, plate/owner, reason,
+        // reviewer, decision, resolution notes/date) - nothing new is fetched or duplicated.
+        function viewDisputeDetails(disputeId) {
+            const item = lastLoadedDisputes.find((d) => d.id === disputeId);
+            if (!item) {
+                showAlert('Could not find that dispute. Try refreshing the list.', 'warning');
+                return;
+            }
+
+            const status = (item.status || 'submitted').toLowerCase();
+
+            // Normal path vs exception path (rejected is a valid outcome, not an "error"
+            // banner, so it still gets a stepper position rather than a standalone banner).
+            const steps = [
+                { key: 'submitted', label: 'Submitted' },
+                { key: 'under_review', label: 'Under Review' },
+                { key: 'decision', label: status === 'rejected' ? 'Rejected' : 'Approved' },
+                { key: 'closed', label: 'Closed' }
+            ];
+            const statusToStepIndex = {
+                submitted: 0,
+                under_review: 1,
+                approved: 2,
+                rejected: 2,
+                closed: 3
+            };
+            const currentIndex = statusToStepIndex[status] ?? 0;
+
+            const stepperEl = document.getElementById('disputeDetailsStepper');
+            stepperEl.innerHTML = steps.map((step, index) => {
+                const isDone = index < currentIndex || (index === currentIndex && status === 'closed');
+                const isCurrent = index === currentIndex && status !== 'closed';
+                const isRejectedDecision = step.key === 'decision' && status === 'rejected' && index <= currentIndex;
+                let color = '#cbd5e1';
+                if (isRejectedDecision) color = '#c0392b';
+                else if (isDone) color = '#1e7e34';
+                else if (isCurrent) color = '#0b5ed7';
+
+                return `
+                    <div style="flex:1; text-align:center;">
+                        <div style="width:26px;height:26px;border-radius:50%;background:${color};color:#fff;
+                            display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:12px;">
+                            ${isDone || isRejectedDecision ? '<i class="fas fa-check"></i>' : index + 1}
+                        </div>
+                        <small style="font-weight:${isCurrent ? '700' : '500'};">${step.label}</small>
+                    </div>
+                `;
+            }).join('');
+
+            const bodyEl = document.getElementById('disputeDetailsBody');
+            const row = (label, value) => `
+                <div style="display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #eef1f4; padding-bottom:6px;">
+                    <span style="color:#6b7280;">${label}</span>
+                    <span style="text-align:right; font-weight:600;">${value}</span>
+                </div>
+            `;
+
+            bodyEl.innerHTML =
+                row('Ticket #', `<a href="ticket-details.html?id=${encodeURIComponent(Number(item.ticket_id) || 0)}">${escapeHtml(item.ticket_number || item.ticket_id || 'N/A')}</a>`) +
+                row('Vehicle / Complainant', escapeHtml(`${item.plate_number || 'N/A'} — ${item.owner_name || 'N/A'}`)) +
+                row('Reason', escapeHtml(item.reason || 'N/A')) +
+                row('Submitted By', escapeHtml(item.submitted_by_name || String(item.submitted_by || 'N/A'))) +
+                row('Submitted Date', item.created_at ? formatDate(item.created_at) : 'N/A') +
+                row('Status', getStatusBadge(item.status)) +
+                row('Reviewer', escapeHtml(item.resolved_by_name || 'Not yet reviewed')) +
+                row('Resolution Notes', escapeHtml(item.resolution_notes || 'None yet')) +
+                row('Resolution Date', item.resolved_at ? formatDate(item.resolved_at) : 'Not yet resolved') +
+                `<div style="padding-top:6px;"><a href="ticket-details.html?id=${encodeURIComponent(Number(item.ticket_id) || 0)}" class="btn btn-sm btn-secondary"><i class="fas fa-ticket-alt"></i> View Ticket &amp; Evidence</a></div>`;
+
+            openModal('disputeDetailsModal');
+        }
+
+        function closeDisputeDetailsModal() {
+            closeModal('disputeDetailsModal');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDisputes);
+    </script>
+    <script src="../assets/js/toast.js"></script>
+</body>
+
+</html>

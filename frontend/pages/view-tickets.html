@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Tickets - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-overview.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item active">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>All Tickets</span>
+                </a>
+                <a href="license-plate-lookup.html" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search Violator</span>
+                </a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="payments.html" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="disputes.html" class="nav-item">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Disputes</span>
+                </a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="notifications.html" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="admin-settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">User</h4>
+                        <p class="user-role">Role</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Violation Tickets</h2>
+                </div>
+                <div class="topbar-right">
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search tickets..." id="searchTickets">
+                        <button><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Filters -->
+                <div class="filter-section">
+                    <form id="filterForm">
+                        <div class="filter-group">
+                            <div class="form-group">
+                                <label for="filterStatus">Status</label>
+                                <select id="filterStatus">
+                                    <option value="">All Status</option>
+                                    <option value="unpaid">Unpaid</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="filterDateFrom">Date From</label>
+                                <input type="date" id="filterDateFrom">
+                            </div>
+                            <div class="form-group">
+                                <label for="filterDateTo">Date To</label>
+                                <input type="date" id="filterDateTo">
+                            </div>
+                            <div class="form-group">
+                                <label for="filterOfficer">Apprehending Officer</label>
+                                <select id="filterOfficer">
+                                    <option value="">All Apprehending Officers</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="filterViolation">Violation</label>
+                                <select id="filterViolation">
+                                    <option value="">All Violations</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="filterLocation">Location</label>
+                                <input type="text" id="filterLocation" placeholder="Enter location keyword">
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                    <i class="fas fa-filter"></i> Apply Filters
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="button" class="btn btn-secondary" style="width: 100%;"
+                                    onclick="resetFilters()">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="issue-ticket.html" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Issue New Ticket
+                    </a>
+                    <button class="btn btn-success" onclick="exportTicketsToCSV()">
+                        <i class="fas fa-file-excel"></i> Export to CSV
+                    </button>
+                </div>
+
+                <!-- Tickets Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">All Violation Tickets</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Ticket #</th>
+                                        <th>Date & Time</th>
+                                        <th>Vehicle</th>
+                                        <th>Owner</th>
+                                        <th>Violation</th>
+                                        <th>Penalty</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ticketsTableBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="spinner"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay"></div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/tickets.js?v=20260418b"></script>
+    <script>
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('filterForm').reset();
+            loadAllTickets();
+        }
+
+        // Export tickets to CSV
+        async function exportTicketsToCSV() {
+            try {
+                const data = await API.getTickets();
+                if (data.success && data.tickets) {
+                    const csvData = data.tickets.map(t => ({
+                        'Ticket Number': t.ticket_number,
+                        'Date': formatDate(t.date_issued),
+                        'Time': formatTime(t.time_issued),
+                        'Plate Number': t.plate_number,
+                        'Vehicle Type': t.vehicle_type,
+                        'Owner': t.owner_name || 'N/A',
+                        'Violation': t.violation_name,
+                        'Penalty': t.penalty_amount,
+                        'Status': t.status,
+                        'Location': t.location || 'N/A',
+                        'Apprehending Officer': t.officer_name
+                    }));
+
+                    const filename = `violation-tickets-${new Date().toISOString().split('T')[0]}.csv`;
+                    exportToCSV(csvData, filename);
+                    showAlert('Tickets exported successfully', 'success');
+                } else {
+                    showAlert('No tickets to export', 'warning');
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                showAlert('Failed to export tickets', 'danger');
+            }
+        }
+
+        // Check for search query in URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = getUser();
+            document.querySelectorAll('.role-admin-link').forEach((link) => {
+                if (!user || user.role !== 'admin') {
+                    link.remove();
+                }
+            });
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+            const statusQuery = urlParams.get('status');
+
+            if (searchQuery) {
+                document.getElementById('searchTickets').value = searchQuery;
+                searchTickets(searchQuery);
+            }
+
+            if (statusQuery) {
+                const statusSelect = document.getElementById('filterStatus');
+                if (statusSelect) {
+                    statusSelect.value = statusQuery;
+                    if (typeof loadAllTickets === 'function') {
+                        loadAllTickets({ status: statusQuery });
+                    }
+                }
+            }
+        });
+    </script>
+    <script src="../assets/js/toast.js"></script>
+</body>
+
+</html>

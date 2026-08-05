@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Lookup -  Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --navy-900: #0b1638;
+            --navy-800: #0f1c47;
+            --navy-700: #1a2e6d;
+            --blue-600: #2d5a9f;
+            --blue-500: #3b82f6;
+            --ice-200: #c5d9f1;
+            --ice-100: #f0f4ff;
+            --text: #121225;
+            --muted: #6b7280;
+            --card: rgba(255, 255, 255, 0.98);
+            --border: rgba(255, 255, 255, 0.65);
+            --soft-border: rgba(224, 229, 240, 0.95);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            background: linear-gradient(135deg, #0f1c47 0%, #1a2e6d 15%, #2d5a9f 35%, #5a8fc4 60%, #c5d9f1 85%, #f0f4ff 100%);
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            bottom: 18px;
+            right: 18px;
+            width: 220px;
+            height: 220px;
+            background-image: url('images/calape-logo.webp');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: 0.18;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #0f1c47 0%, #1a2e6d 50%, #2d5a9f 100%);
+            color: #fff;
+            padding: 2.2rem 1rem 3.1rem;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(15, 28, 71, 0.35);
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            inset: -200px -200px auto auto;
+            width: 480px;
+            height: 480px;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 60%);
+            transform: rotate(12deg);
+            pointer-events: none;
+        }
+
+        .header-accent {
+            height: 10px;
+            width: 180px;
+            margin: 0 auto 1.1rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.85) 40%, rgba(255, 255, 255, 0) 100%);
+            box-shadow: 0 10px 30px rgba(90, 143, 196, 0.35);
+        }
+
+        .back-to-home {
+            position: absolute;
+            top: 1.2rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #fff;
+            padding: 9px 18px;
+            border-radius: 12px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            z-index: 2;
+        }
+
+        .back-to-home:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: rgba(255, 255, 255, 0.42);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+        }
+
+        .page-header .lgu-logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.80) 35%, rgba(255, 255, 255, 0.12) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16);
+            backdrop-filter: blur(14px);
+            overflow: hidden;
+            animation: glowPulse 5s ease-in-out infinite;
+        }
+
+        .page-header .lgu-logo::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+            pointer-events: none;
+        }
+
+        .page-header .lgu-logo::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            filter: blur(2px);
+            opacity: 0.85;
+            pointer-events: none;
+        }
+
+        .page-header .lgu-logo img {
+            width: 72%;
+            height: 72%;
+            max-width: 86px;
+            max-height: 86px;
+            object-fit: contain;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 10px;
+            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.35s ease;
+        }
+
+        .page-header .lgu-logo:hover img {
+            transform: scale(1.03);
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.16), 0 0 0 0 rgba(59, 130, 246, 0.06);
+            }
+            50% {
+                box-shadow: 0 28px 50px rgba(0, 0, 0, 0.2), 0 0 30px rgba(59, 130, 246, 0.16);
+            }
+        }
+
+        .page-header h1 {
+            font-size: 1.85rem;
+            font-weight: 800;
+            margin-bottom: 0.45rem;
+            letter-spacing: -0.6px;
+        }
+
+        .page-header p {
+            font-size: 0.98rem;
+            opacity: 0.92;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        .public-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(92, 184, 92, 0.24);
+            border: 1px solid rgba(92, 184, 92, 0.55);
+            color: #c8f7d7;
+            border-radius: 999px;
+            padding: 7px 16px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            margin-top: 1.1rem;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 30px rgba(67, 160, 71, 0.18);
+        }
+
+        .public-badge i {
+            opacity: 0.95;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: -1.9rem auto 2.5rem;
+            padding: 0 1rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .lookup-card {
+            background: var(--card);
+            border-radius: 22px;
+            padding: 2.1rem 2rem;
+            box-shadow: 0 18px 55px rgba(15, 28, 71, 0.18), 0 0 1px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.6rem;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lookup-card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, rgba(15, 28, 71, 0.14), rgba(45, 90, 159, 0.06), rgba(255, 255, 255, 0));
+            pointer-events: none;
+        }
+
+        .lookup-card>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .lookup-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 1rem;
+        }
+
+        .lookup-card h2 {
+            font-size: 1.2rem;
+            font-weight: 850;
+            color: var(--navy-800);
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lookup-card h2::before {
+            content: '';
+            font-size: 1.35rem;
+        }
+
+        .lookup-sub {
+            font-size: 0.88rem;
+            color: var(--muted);
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+
+        .search-tabs {
+            display: flex;
+            gap: 10px;
+            margin: 1.25rem 0 1.55rem;
+            background: rgba(245, 247, 250, 0.95);
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid rgba(15, 28, 71, 0.06);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 14px;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            font-size: 0.88rem;
+            cursor: pointer;
+            color: #556;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 750;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: var(--navy-800);
+            box-shadow: 0 12px 24px rgba(15, 28, 71, 0.12);
+            border: 1px solid rgba(15, 28, 71, 0.12);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--navy-800);
+        }
+
+        .search-panel {
+            display: none;
+        }
+
+        .search-panel.active {
+            display: block;
+            animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.86rem;
+            font-weight: 850;
+            color: #18204a;
+            margin-bottom: 0.65rem;
+            letter-spacing: 0.2px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border: 2px solid var(--soft-border);
+            border-radius: 14px;
+            font-size: 0.96rem;
+            outline: none;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #f8f9fc;
+            font-weight: 650;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-control.lower {
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 450;
+        }
+
+        .form-control:focus {
+            border-color: var(--navy-800);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(15, 28, 71, 0.10);
+        }
+
+        .btn-search {
+            width: 100%;
+            padding: 1.02rem;
+            background: linear-gradient(135deg, var(--navy-800) 0%, var(--navy-700) 40%, var(--blue-600) 100%);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 0.97rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 0.2px;
+            box-shadow: 0 10px 28px rgba(15, 28, 71, 0.22);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 38px rgba(15, 28, 71, 0.28);
+        }
+
+        .btn-search:active {
+            transform: translateY(0);
+        }
+
+        .btn-search:disabled {
+            background: #c5d9f1;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .hint {
+            font-size: 0.78rem;
+            color: #6b7280;
+            margin-top: 0.55rem;
+            font-weight: 550;
+        }
+
+        /* Results */
+        .results-section {
+            margin-top: 1.5rem;
+        }
+
+        .result-count {
+            font-size: 0.88rem;
+            font-weight: 850;
+            color: #1a1a2e;
+            margin-bottom: 1rem;
+            padding: 0.65rem 0.75rem;
+            letter-spacing: 0.2px;
+            background: rgba(15, 28, 71, 0.04);
+            border: 1px solid rgba(15, 28, 71, 0.08);
+            border-radius: 14px;
+        }
+
+        .ticket-card {
+            background: rgba(255, 255, 255, 0.985);
+            border-radius: 18px;
+            padding: 1.35rem;
+            box-shadow: 0 10px 28px rgba(15, 28, 71, 0.10), 0 0 1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem;
+            border: 1px solid rgba(15, 28, 71, 0.08);
+            border-left: 6px solid #9fa8da;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 45px rgba(15, 28, 71, 0.14);
+        }
+
+        .ticket-card.status-unpaid {
+            border-left-color: #e53935;
+        }
+
+        .ticket-card.status-paid {
+            border-left-color: #43a047;
+        }
+
+        .ticket-card.status-cancelled {
+            border-left-color: #bdbdbd;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 1rem;
+        }
+
+        .ticket-number {
+            font-weight: 950;
+            font-size: 1.02rem;
+            color: var(--navy-800);
+            letter-spacing: -0.5px;
+        }
+
+        .ticket-plate {
+            font-size: 0.85rem;
+            color: #5b6475;
+            margin-top: 4px;
+            font-weight: 650;
+        }
+
+        .status-badge {
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 950;
+            letter-spacing: 0.25px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .status-badge.unpaid {
+            background: linear-gradient(135deg, rgba(255, 235, 238, 1), rgba(255, 205, 210, 1));
+            color: #c62828;
+            border-color: rgba(239, 154, 154, 0.9);
+        }
+
+        .status-badge.paid {
+            background: linear-gradient(135deg, rgba(232, 245, 233, 1), rgba(200, 230, 201, 1));
+            color: #2e7d32;
+            border-color: rgba(129, 199, 132, 0.9);
+        }
+
+        .status-badge.cancelled {
+            background: linear-gradient(135deg, #f5f5f5, #eeeeee);
+            color: #616161;
+            border-color: rgba(189, 189, 189, 0.95);
+        }
+
+        .ticket-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.95rem 1.1rem;
+        }
+
+        .ticket-detail {
+            font-size: 0.86rem;
+            min-width: 0;
+        }
+
+        .ticket-detail .label {
+            color: rgba(90, 100, 120, 0.95);
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.45px;
+        }
+
+        .ticket-detail .value {
+            font-weight: 850;
+            color: var(--text);
+            font-size: 0.95rem;
+            word-break: break-word;
+        }
+
+        .ticket-detail.full {
+            grid-column: 1 / -1;
+        }
+
+        .penalty-amount {
+            font-size: 1.45rem;
+            font-weight: 1000;
+            color: #e53935;
+            letter-spacing: -0.5px;
+        }
+
+        .penalty-paid {
+            color: #43a047;
+            font-weight: 1000;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6b7280;
+        }
+
+        .no-results i {
+            font-size: 3.2rem;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.35;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+            font-weight: 800;
+        }
+
+        .error-msg {
+            background: linear-gradient(135deg, rgba(255, 235, 238, 1), rgba(255, 205, 210, 1));
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            color: #c62828;
+            font-size: 0.9rem;
+            font-weight: 850;
+            border: 2px solid rgba(239, 154, 154, 0.95);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-msg::before {
+            content: '';
+            font-size: 1.25rem;
+        }
+
+        /* Dispute */
+        .dispute-wrap {
+            display: none;
+            margin-top: 1.9rem;
+        }
+
+        .dispute-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.03));
+            border: 1px solid rgba(239, 68, 68, 0.22);
+            border-radius: 20px;
+            padding: 1.7rem;
+            box-shadow: 0 14px 40px rgba(15, 28, 71, 0.08);
+        }
+
+        .dispute-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #b91c1c;
+            font-size: 1.02rem;
+            font-weight: 1000;
+            margin-bottom: 0.5rem;
+        }
+
+        .dispute-desc {
+            color: #64748b;
+            font-size: 0.88rem;
+            font-weight: 650;
+            margin-bottom: 1.2rem;
+            line-height: 1.5;
+        }
+
+        .dispute-form .field {
+            margin-bottom: 14px;
+        }
+
+        .dispute-form label {
+            font-size: 0.78rem;
+            font-weight: 950;
+            color: #334155;
+            display: block;
+            margin-bottom: 6px;
+            letter-spacing: 0.25px;
+        }
+
+        .dispute-form input,
+        .dispute-form textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            background: rgba(255, 255, 255, 0.05);
+            color: #0f172a;
+            font-size: 0.92rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .dispute-form input::placeholder,
+        .dispute-form textarea::placeholder {
+            color: rgba(100, 116, 139, 0.9);
+        }
+
+        .dispute-form input:focus,
+        .dispute-form textarea:focus {
+            border-color: rgba(239, 68, 68, 0.55);
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.12);
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        .dispute-submit {
+            width: 100%;
+            padding: 12px;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 950;
+            letter-spacing: 0.2px;
+            transition: all 0.2s ease;
+            box-shadow: 0 14px 34px rgba(220, 38, 38, 0.22);
+        }
+
+        .dispute-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        .dispute-success {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.28);
+            color: #059669;
+            font-size: 0.9rem;
+            font-weight: 850;
+        }
+
+        .dispute-error {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(239, 68, 68, 0.10);
+            border: 1px solid rgba(239, 68, 68, 0.26);
+            color: #b91c1c;
+            font-size: 0.9rem;
+            font-weight: 850;
+        }
+
+        /* Footer */
+        .footer-note {
+            background: rgba(255, 255, 255, 0.72);
+            border-radius: 18px;
+            padding: 1.15rem 1.2rem;
+            margin-top: 1.7rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text);
+            font-weight: 650;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 2;
+            position: relative;
+        }
+
+        .footer-note strong {
+            color: var(--navy-800);
+            font-weight: 950;
+        }
+
+        @media (max-width: 520px) {
+            .page-header {
+                padding: 1.7rem 1rem 2.6rem;
+            }
+
+            .page-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .back-to-home {
+                top: 1rem;
+                right: 0.8rem;
+                padding: 8px 12px;
+                font-size: 0.82rem;
+            }
+
+            .container {
+                margin: -1.45rem auto 2rem;
+            }
+
+            .lookup-card {
+                padding: 1.55rem 1.2rem;
+            }
+
+            .ticket-detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header .lgu-logo {
+                width: 108px;
+                height: 108px;
+            }
+
+            .page-header .lgu-logo img {
+                width: 72%;
+                height: 72%;
+            }
+        }
+    </style>
+  <script src="../app-config.js"></script>
+</head>
+
+<body>
+
+    <div class="page-header">
+        <a href="landing.html" class="back-to-home"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+        <div class="header-accent"></div>
+        <div class="lgu-logo">
+            <img src="images/calape-logo.webp" alt="Calape Logo" onerror="this.style.display='none'">
+        </div>
+        <h1> Traffic Violation Ticketing and Management System</h1>
+        <p>Ticket Lookup — No login required</p>
+        <div class="public-badge"><i class="fa-solid fa-user-shield"></i> Public Access</div>
+    </div>
+
+    <div class="container">
+        <div class="lookup-card">
+            <div class="lookup-top">
+                <h2>Look up your ticket</h2>
+                <div class="lookup-sub">Fast, secure public lookup</div>
+            </div>
+
+            <div class="search-tabs" role="tablist" aria-label="Ticket lookup mode">
+                <button class="tab-btn active" onclick="switchTab('plate')" role="tab" aria-selected="true">
+                    <i class="fas fa-car"></i> By Plate Number
+                </button>
+                <button class="tab-btn" onclick="switchTab('ticket')" role="tab" aria-selected="false">
+                    <i class="fas fa-ticket-alt"></i> By Ticket Number
+                </button>
+            </div>
+
+            <!-- Plate search -->
+            <div id="panel-plate" class="search-panel active">
+                <div class="form-group">
+                    <label for="plateInput">Plate Number</label>
+                    <input type="text" id="plateInput" class="form-control" placeholder="e.g. ABC1234" maxlength="20"
+                        oninput="this.value = this.value.toUpperCase()">
+                    <div class="hint">Enter the plate number printed on your vehicle registration.</div>
+                </div>
+                <button class="btn-search" onclick="searchByPlate()" type="button">
+                    <i class="fas fa-search"></i> Search Tickets
+                </button>
+            </div>
+
+            <!-- Ticket number search -->
+            <div id="panel-ticket" class="search-panel">
+                <div class="form-group">
+                    <label for="ticketInput">Ticket Number</label>
+                    <input type="text" id="ticketInput" class="form-control" placeholder="e.g. TVT-2026-0001"
+                        maxlength="30" oninput="this.value = this.value.toUpperCase()">
+                    <div class="hint">The ticket number is printed at the top of your violation ticket slip.</div>
+                </div>
+                <button class="btn-search" onclick="searchByTicket()" type="button">
+                    <i class="fas fa-search"></i> Find My Ticket
+                </button>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="results-section" style="display:none"></div>
+
+        <!-- PUBLIC DISPUTE FORM -->
+        <div id="disputeSection" class="dispute-wrap">
+            <div class="dispute-card">
+                <div class="dispute-title"><i class="fa-solid fa-scale-balanced"></i> File a Dispute</div>
+                <div class="dispute-desc">
+                    Believe this ticket was issued in error? Submit a dispute below. No login required.
+                </div>
+
+                <form id="publicDisputeForm" class="dispute-form">
+                    <input type="hidden" id="disputeTicketNum" name="ticket_number">
+
+                    <div class="field">
+                        <label for="disputeContactName">Your Name</label>
+                        <input type="text" id="disputeContactName" placeholder="e.g., Juan Dela Cruz" maxlength="120" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="disputeContactEmail">Contact Email</label>
+                        <input type="email" id="disputeContactEmail" placeholder="your@email.com" maxlength="190" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="disputeReason">Reason for Dispute <span style="color:#ef4444">*</span></label>
+                        <textarea id="disputeReason" rows="4" minlength="10" maxlength="4000" required
+                            placeholder="Please explain why you believe this ticket should be disputed (minimum 10 characters)..."
+                            style="resize: vertical"></textarea>
+                    </div>
+
+                    <button type="submit" id="submitDisputeBtn" class="dispute-submit">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Dispute
+                    </button>
+
+                    <div id="disputeSuccess" class="dispute-success">
+                        Your dispute has been submitted. The administrator will review it.
+                    </div>
+
+                    <div id="disputeError" class="dispute-error"></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="footer-note">
+            Municipal Traffic Violation Ticketing and Management System &bull; For inquiries, visit the Municipal Hall.
+            <br>
+            This is a local government system — not affiliated with LTO national.
+        </div>
+
+    </div>
+
+    <script>
+        const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
+        const API = `${API_ORIGIN}/api/public`;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach((b, i) =>
+                b.classList.toggle('active', (i === 0 && tab === 'plate') || (i === 1 && tab === 'ticket'))
+            );
+            document.getElementById('panel-plate').classList.toggle('active', tab === 'plate');
+            document.getElementById('panel-ticket').classList.toggle('active', tab === 'ticket');
+        }
+
+        async function searchByPlate() {
+            const plate = document.getElementById('plateInput').value.trim();
+            if (!plate) {
+                alert('Please enter a plate number.');
+                return;
+            }
+            await doSearch({ plate });
+        }
+
+        async function searchByTicket() {
+            const ticket = document.getElementById('ticketInput').value.trim();
+            if (!ticket) {
+                alert('Please enter a ticket number.');
+                return;
+            }
+            await doSearch({ ticket });
+        }
+
+        async function doSearch(params) {
+            const section = document.getElementById('resultsSection');
+            section.style.display = 'block';
+            section.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+
+            try {
+                const qs = new URLSearchParams(params).toString();
+                const res = await fetch(`${API}/ticket-lookup?${qs}`);
+                const data = await res.json();
+
+                if (!res.ok) {
+                    section.innerHTML = `<div class="error-msg"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(data.message || 'An error occurred.')}</div>`;
+                    return;
+                }
+
+                if (!data.tickets || data.tickets.length === 0) {
+                    section.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-ticket-alt"></i>
+                            <p><strong>No tickets found</strong></p>
+                            <p style="font-size:0.85rem;margin-top:0.35rem;color:#6b7280;font-weight:650">Double-check the plate or ticket number and try again.</p>
+                        </div>`;
+                    return;
+                }
+
+                renderResults(data.tickets);
+            } catch (e) {
+                section.innerHTML = `<div class="error-msg"><i class="fas fa-wifi"></i> Cannot connect to server. Make sure the system is running.</div>`;
+            }
+        }
+
+        function renderResults(tickets) {
+            const section = document.getElementById('resultsSection');
+            const statusLabel = { unpaid: 'Unpaid', paid: 'Paid', cancelled: 'Cancelled' };
+
+            let html = `<div class="result-count">${tickets.length} ticket${tickets.length !== 1 ? 's' : ''} found</div>`;
+
+            for (const t of tickets) {
+                const isPaid = t.status === 'paid';
+                const dateStr = t.date_issued
+                    ? new Date(t.date_issued).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+                    : '—';
+
+                const penalty = Number(t.remaining_balance ?? t.penalty_amount ?? 0);
+                const demerits = Number(t.demerit_points || 0);
+
+                const vehicleType = capitalize(t.vehicle_type || '');
+                const rawTicketNo = String(t.ticket_number || '');
+                const ticketNo = escapeHtml(rawTicketNo || '—');
+                const encodedTicketNo = encodeURIComponent(rawTicketNo).replace(/'/g, '%27');
+                const safeStatus = ['unpaid', 'paid', 'cancelled'].includes(t.status) ? t.status : 'unpaid';
+
+                html += `
+                <div class="ticket-card status-${safeStatus}">
+                    <div class="ticket-header">
+                        <div>
+                            <div class="ticket-number">${ticketNo}</div>
+                            <div class="ticket-plate"><i class="fas fa-car"></i> ${escapeHtml(t.plate_number || '—')} &bull; ${escapeHtml(vehicleType || '—')}</div>
+                        </div>
+                        <span class="status-badge ${safeStatus}">${escapeHtml(statusLabel[safeStatus] || safeStatus)}</span>
+                    </div>
+
+                    <div class="ticket-detail-grid">
+                        <div class="ticket-detail full">
+                            <div class="label">Violation</div>
+                            <div class="value">${escapeHtml(t.violation_name || '—')} <span style="color:#6b7280;font-weight:700">(${escapeHtml(t.violation_code || '—')})</span></div>
+                        </div>
+
+                        <div class="ticket-detail">
+                            <div class="label">Date Issued</div>
+                            <div class="value">${escapeHtml(dateStr)}</div>
+                        </div>
+
+                        <div class="ticket-detail">
+                            <div class="label">Amount Due</div>
+                            <div class="${isPaid ? 'penalty-paid' : 'penalty-amount'} value">
+                                ${isPaid
+                        ? 'PAID'
+                        : '₱' + penalty.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                        </div>
+
+                        ${t.location ? `
+                        <div class="ticket-detail full">
+                            <div class="label">Location</div>
+                            <div class="value">${escapeHtml(t.location)}</div>
+                        </div>` : ''}
+
+                        ${demerits > 0 ? `
+                        <div class="ticket-detail">
+                            <div class="label">Demerit Points</div>
+                            <div class="value">${demerits} pts</div>
+                        </div>` : ''}
+
+                        ${isPaid && t.payment_date ? `
+                        <div class="ticket-detail">
+                            <div class="label">Paid On</div>
+                            <div class="value">${escapeHtml(new Date(t.payment_date).toLocaleDateString('en-PH'))}</div>
+                        </div>` : ''}
+
+                        ${safeStatus === 'unpaid' ? `
+                        <div class="ticket-detail full" style="margin-top:4px;">
+                            <button type="button" class="btn-search" style="padding:0.85rem 1rem;border-radius:14px;box-shadow:none;display:flex;gap:10px;justify-content:center;align-items:center;background:linear-gradient(135deg,#ef4444,#dc2626)" onclick="openDispute('${encodedTicketNo}')">
+                                <i class="fa-solid fa-scale-balanced"></i> File a Dispute
+                            </button>
+                        </div>` : ''}
+                    </div>
+                </div>`;
+            }
+
+            section.innerHTML = html;
+        }
+
+        function openDispute(ticketNumberEncoded) {
+            const ticketNumber = decodeURIComponent(ticketNumberEncoded);
+            document.getElementById('disputeTicketNum').value = ticketNumber;
+            document.getElementById('disputeSection').style.display = 'block';
+            document.getElementById('disputeReason').focus();
+            // keep user context by scrolling nicely
+            document.getElementById('disputeSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function capitalize(str) {
+            return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
+        // Pre-fill from URL params (QR code support)
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const plate = params.get('plate');
+            const ticket = params.get('ticket');
+
+            if (ticket) {
+                switchTab('ticket');
+                document.getElementById('ticketInput').value = ticket.toUpperCase();
+                doSearch({ ticket });
+            } else if (plate) {
+                document.getElementById('plateInput').value = plate.toUpperCase();
+                doSearch({ plate });
+            }
+        });
+
+        // Dispute submit (no login required)
+        document.getElementById('publicDisputeForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitDisputeBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+            const success = document.getElementById('disputeSuccess');
+            const error = document.getElementById('disputeError');
+            success.style.display = 'none';
+            error.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API}/dispute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ticket_number: document.getElementById('disputeTicketNum').value,
+                        reason: document.getElementById('disputeReason').value.trim(),
+                        contact_name: document.getElementById('disputeContactName').value.trim(),
+                        contact_email: document.getElementById('disputeContactEmail').value.trim()
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    success.style.display = 'block';
+                    error.style.display = 'none';
+                    document.getElementById('publicDisputeForm').reset();
+                } else {
+                    error.textContent = data.message || 'Failed to submit dispute.';
+                    error.style.display = 'block';
+                }
+            } catch (err) {
+                error.textContent = 'Connection error. Please try again.';
+                error.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Dispute';
+            }
+        });
+    </script>
+
+</body>
+
+</html>

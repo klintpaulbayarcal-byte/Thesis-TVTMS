@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .notification-header,
+        .notification-actions,
+        .notification-counts,
+        .notification-row-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification-header {
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .notification-actions,
+        .notification-counts {
+            flex-wrap: wrap;
+        }
+
+        .notification-count {
+            padding: 7px 11px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            font-size: 13px;
+        }
+
+        .notification-count strong {
+            color: var(--text-primary);
+            margin-left: 4px;
+        }
+
+        .select-all-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .notification-checkbox {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .notification-row-actions {
+            flex-wrap: nowrap;
+        }
+
+        .notification-message {
+            min-width: 220px;
+            max-width: 480px;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .main-content,
+        .dashboard-content,
+        .card,
+        .table-container {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .empty-notifications {
+            padding: 38px 16px;
+            color: var(--text-secondary);
+        }
+
+        .empty-notifications i {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .modal-close-button {
+            border: 0;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            padding: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .topbar {
+                height: auto;
+                min-height: var(--header-height);
+                flex-wrap: wrap;
+                gap: 10px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+            .topbar-right,
+            .notification-actions {
+                width: 100%;
+                gap: 8px;
+            }
+
+            .topbar-right .btn,
+            .notification-actions .btn {
+                flex: 1 1 auto;
+            }
+
+            .notification-header {
+                align-items: flex-start;
+            }
+
+            .notification-row-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-overview.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>All Tickets</span>
+                </a>
+                <a href="license-plate-lookup.html" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search Violator</span>
+                </a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="payments.html" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="disputes.html" class="nav-item">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Disputes</span>
+                </a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="notifications.html" class="nav-item active">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="admin-settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">User</h4>
+                        <p class="user-role">Role</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <h2>Notifications</h2>
+                </div>
+                <div class="topbar-right">
+                    <button id="unreadOnlyButton" class="btn btn-secondary" type="button">
+                        <i class="fas fa-envelope" aria-hidden="true"></i> Unread Only
+                    </button>
+                    <button id="loadAllButton" class="btn btn-primary" type="button">
+                        <i class="fas fa-list" aria-hidden="true"></i> Load All
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="card">
+                    <div class="card-header notification-header">
+                        <div>
+                            <h3 class="card-title">My Notifications</h3>
+                            <div class="notification-counts" style="margin-top:10px;">
+                                <span class="notification-count"><i class="fas fa-bell" aria-hidden="true"></i> Total <strong id="totalNotificationCount">0</strong></span>
+                                <span class="notification-count"><i class="fas fa-envelope" aria-hidden="true"></i> Unread <strong id="unreadNotificationCount">0</strong></span>
+                            </div>
+                        </div>
+                        <div class="notification-actions">
+                            <label class="select-all-control" for="selectAllNotifications">
+                                <input id="selectAllNotifications" class="notification-checkbox" type="checkbox">
+                                Select All
+                            </label>
+                            <button id="deleteSelectedButton" class="btn btn-danger" type="button" disabled>
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i> Delete Selected
+                            </button>
+                            <button id="deleteAllButton" class="btn btn-danger" type="button" disabled>
+                                <i class="fas fa-trash" aria-hidden="true"></i> Delete All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Select</th>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Title</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notificationsTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="spinner"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="sidebar-overlay"></div>
+    <div id="deleteConfirmationModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" aria-describedby="deleteModalMessage" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="deleteModalTitle"><i class="fas fa-trash-alt" aria-hidden="true"></i> Confirm Deletion</h3>
+                <button id="closeDeleteModalButton" class="modal-close-button" type="button" aria-label="Close confirmation">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteModalMessage">Are you sure you want to delete this notification?</p>
+                <p class="text-danger" style="margin-top:10px;">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelDeleteButton" class="btn btn-secondary" type="button">
+                    <i class="fas fa-times" aria-hidden="true"></i> Cancel
+                </button>
+                <button id="confirmDeleteButton" class="btn btn-danger" type="button">
+                    <i class="fas fa-trash-alt" aria-hidden="true"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260806a"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script>
+        if (!requireAuth()) {
+            window.location.href = 'login.html';
+        }
+
+        populateUserInfo();
+        const notificationsTableBody = document.getElementById('notificationsTableBody');
+        const selectAllNotifications = document.getElementById('selectAllNotifications');
+        const deleteSelectedButton = document.getElementById('deleteSelectedButton');
+        const deleteAllButton = document.getElementById('deleteAllButton');
+        const deleteConfirmationModal = document.getElementById('deleteConfirmationModal');
+        const deleteModalMessage = document.getElementById('deleteModalMessage');
+        const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+        const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+        const closeDeleteModalButton = document.getElementById('closeDeleteModalButton');
+        const totalNotificationCount = document.getElementById('totalNotificationCount');
+        const unreadNotificationCount = document.getElementById('unreadNotificationCount');
+        const unreadOnlyButton = document.getElementById('unreadOnlyButton');
+        const loadAllButton = document.getElementById('loadAllButton');
+
+        let notifications = [];
+        let selectedNotificationIds = new Set();
+        let totalCount = 0;
+        let unreadCount = 0;
+        let currentUnreadOnly = false;
+        let pendingDelete = null;
+        let isDeleting = false;
+
+        function renderCounts() {
+            totalNotificationCount.textContent = String(Math.max(totalCount, 0));
+            unreadNotificationCount.textContent = String(Math.max(unreadCount, 0));
+            deleteAllButton.disabled = totalCount === 0 || isDeleting;
+        }
+
+        function updateSelectionControls() {
+            const visibleIds = notifications.map((item) => Number(item.id)).filter(Boolean);
+            const selectedVisibleCount = visibleIds.filter((id) => selectedNotificationIds.has(id)).length;
+            selectAllNotifications.checked = visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+            selectAllNotifications.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleIds.length;
+            selectAllNotifications.disabled = visibleIds.length === 0 || isDeleting;
+            deleteSelectedButton.disabled = selectedVisibleCount === 0 || isDeleting;
+        }
+
+        function renderNotifications() {
+            if (notifications.length === 0) {
+                notificationsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center empty-notifications">
+                            <i class="far fa-bell-slash" aria-hidden="true"></i>
+                            ${currentUnreadOnly ? 'No unread notifications found.' : 'No notifications found.'}
+                        </td>
+                    </tr>`;
+                updateSelectionControls();
+                return;
+            }
+
+            notificationsTableBody.innerHTML = notifications.map((item) => {
+                const id = Number(item.id) || 0;
+                return `
+                    <tr data-notification-id="${id}">
+                        <td>
+                            <input class="notification-checkbox row-notification-checkbox" type="checkbox" data-notification-id="${id}" aria-label="Select notification ${id}" ${selectedNotificationIds.has(id) ? 'checked' : ''}>
+                        </td>
+                        <td>${id}</td>
+                        <td>${escapeHtmlText(item.type || 'general')}</td>
+                        <td>${escapeHtmlText(item.title || 'Notification')}</td>
+                        <td class="notification-message">${escapeHtmlText(item.message || '')}</td>
+                        <td>${item.is_read ? '<span class="badge badge-secondary">Read</span>' : '<span class="badge badge-warning">Unread</span>'}</td>
+                        <td>${escapeHtmlText(formatDate(item.created_at))}</td>
+                        <td>
+                            <div class="notification-row-actions">
+                                ${item.is_read ? '' : `<button class="btn btn-sm btn-success mark-read-button" type="button" data-notification-id="${id}"><i class="fas fa-check" aria-hidden="true"></i> Mark Read</button>`}
+                                <button class="btn btn-sm btn-danger delete-notification-button" type="button" data-notification-id="${id}"><i class="fas fa-trash-alt" aria-hidden="true"></i> Delete</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            updateSelectionControls();
+        }
+
+        async function loadNotifications(unreadOnly = false) {
+            currentUnreadOnly = Boolean(unreadOnly);
+            selectedNotificationIds.clear();
+            notificationsTableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>';
+            unreadOnlyButton.disabled = currentUnreadOnly;
+            loadAllButton.disabled = !currentUnreadOnly;
+            try {
+                const response = await API.getNotifications({ unreadOnly, limit: 200 });
+                notifications = response.notifications || response.data || [];
+                totalCount = Number.isFinite(Number(response.totalCount)) ? Number(response.totalCount) : notifications.length;
+                unreadCount = Number.isFinite(Number(response.unreadCount))
+                    ? Number(response.unreadCount)
+                    : notifications.filter((item) => !item.is_read).length;
+                renderCounts();
+                renderNotifications();
+            } catch (error) {
+                notifications = [];
+                notificationsTableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load notifications.</td></tr>';
+                updateSelectionControls();
+            }
+        }
+
+        async function markRead(id) {
+            try {
+                const response = await API.markNotificationRead(id);
+                if (response.success) {
+                    const item = notifications.find((notification) => Number(notification.id) === id);
+                    if (item && !item.is_read) {
+                        item.is_read = 1;
+                        unreadCount = Math.max(0, unreadCount - 1);
+                        if (currentUnreadOnly) {
+                            notifications = notifications.filter((notification) => Number(notification.id) !== id);
+                        }
+                    }
+                    renderCounts();
+                    renderNotifications();
+                    showAlert('Notification updated.', 'success');
+                }
+            } catch (error) {
+                showAlert(error.message || 'Failed to update notification.', 'danger');
+            }
+        }
+
+        function openDeleteModal(mode, ids = []) {
+            if (isDeleting) return;
+
+            if (mode === 'all') {
+                pendingDelete = { mode, ids: [] };
+                deleteModalMessage.textContent = 'Delete all of your notifications, including read and unread notifications?';
+            } else {
+                const safeIds = [...new Set(ids.map(Number).filter((id) => Number.isSafeInteger(id) && id > 0))];
+                if (safeIds.length === 0) return;
+                pendingDelete = { mode, ids: safeIds };
+                deleteModalMessage.textContent = safeIds.length === 1
+                    ? 'Delete this notification?'
+                    : `Delete the ${safeIds.length} selected notifications?`;
+            }
+
+            deleteConfirmationModal.classList.add('active');
+            deleteConfirmationModal.setAttribute('aria-hidden', 'false');
+            confirmDeleteButton.focus();
+        }
+
+        function closeDeleteModal() {
+            if (isDeleting) return;
+            deleteConfirmationModal.classList.remove('active');
+            deleteConfirmationModal.setAttribute('aria-hidden', 'true');
+            pendingDelete = null;
+        }
+
+        function removeNotificationsFromPage(ids) {
+            const idSet = new Set(ids);
+            const removedItems = notifications.filter((item) => idSet.has(Number(item.id)));
+            notifications = notifications.filter((item) => !idSet.has(Number(item.id)));
+            removedItems.forEach((item) => {
+                totalCount = Math.max(0, totalCount - 1);
+                if (!item.is_read) unreadCount = Math.max(0, unreadCount - 1);
+            });
+            ids.forEach((id) => selectedNotificationIds.delete(id));
+            renderCounts();
+            renderNotifications();
+        }
+
+        async function confirmPendingDeletion() {
+            if (isDeleting || !pendingDelete) return;
+
+            isDeleting = true;
+            const deletion = { mode: pendingDelete.mode, ids: [...pendingDelete.ids] };
+            confirmDeleteButton.disabled = true;
+            cancelDeleteButton.disabled = true;
+            closeDeleteModalButton.disabled = true;
+            confirmDeleteButton.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Deleting';
+            renderCounts();
+            updateSelectionControls();
+
+            try {
+                let response;
+                if (deletion.mode === 'all') {
+                    response = await API.deleteAllNotifications();
+                } else if (deletion.mode === 'bulk') {
+                    response = await API.deleteNotificationsBulk(deletion.ids);
+                } else {
+                    response = await API.deleteNotification(deletion.ids[0]);
+                }
+
+                if (response.success) {
+                    if (deletion.mode === 'all') {
+                        notifications = [];
+                        selectedNotificationIds.clear();
+                        totalCount = 0;
+                        unreadCount = 0;
+                        renderCounts();
+                        renderNotifications();
+                    } else {
+                        removeNotificationsFromPage(deletion.ids);
+                    }
+                    showAlert(response.message || 'Notification deletion completed.', 'success');
+                }
+            } catch (error) {
+                showAlert(error.message || 'Failed to delete notification.', 'danger');
+            } finally {
+                isDeleting = false;
+                pendingDelete = null;
+                confirmDeleteButton.disabled = false;
+                cancelDeleteButton.disabled = false;
+                closeDeleteModalButton.disabled = false;
+                confirmDeleteButton.innerHTML = '<i class="fas fa-trash-alt" aria-hidden="true"></i> Delete';
+                deleteConfirmationModal.classList.remove('active');
+                deleteConfirmationModal.setAttribute('aria-hidden', 'true');
+                renderCounts();
+                updateSelectionControls();
+            }
+        }
+
+        notificationsTableBody.addEventListener('change', (event) => {
+            const checkbox = event.target.closest('.row-notification-checkbox');
+            if (!checkbox) return;
+            const id = Number(checkbox.dataset.notificationId);
+            if (checkbox.checked) selectedNotificationIds.add(id);
+            else selectedNotificationIds.delete(id);
+            updateSelectionControls();
+        });
+
+        notificationsTableBody.addEventListener('click', (event) => {
+            const markReadButton = event.target.closest('.mark-read-button');
+            if (markReadButton) {
+                markRead(Number(markReadButton.dataset.notificationId));
+                return;
+            }
+
+            const deleteButton = event.target.closest('.delete-notification-button');
+            if (deleteButton) openDeleteModal('one', [Number(deleteButton.dataset.notificationId)]);
+        });
+
+        selectAllNotifications.addEventListener('change', () => {
+            notifications.forEach((item) => {
+                const id = Number(item.id);
+                if (selectAllNotifications.checked) selectedNotificationIds.add(id);
+                else selectedNotificationIds.delete(id);
+            });
+            renderNotifications();
+        });
+
+        deleteSelectedButton.addEventListener('click', () => openDeleteModal('bulk', [...selectedNotificationIds]));
+        deleteAllButton.addEventListener('click', () => openDeleteModal('all'));
+        confirmDeleteButton.addEventListener('click', confirmPendingDeletion);
+        cancelDeleteButton.addEventListener('click', closeDeleteModal);
+        closeDeleteModalButton.addEventListener('click', closeDeleteModal);
+        unreadOnlyButton.addEventListener('click', () => loadNotifications(true));
+        loadAllButton.addEventListener('click', () => loadNotifications(false));
+
+        deleteConfirmationModal.addEventListener('click', (event) => {
+            if (event.target === deleteConfirmationModal) closeDeleteModal();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && deleteConfirmationModal.classList.contains('active')) closeDeleteModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => loadNotifications(false));
+    </script>
+    <script src="../assets/js/toast.js"></script>
+</body>
+
+</html>

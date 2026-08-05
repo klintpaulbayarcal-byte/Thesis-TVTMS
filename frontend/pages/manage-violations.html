@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Violations - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260412">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-overview.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>All Tickets</span>
+                </a>
+                <a href="license-plate-lookup.html" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search Violator</span>
+                </a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item active">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="payments.html" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="disputes.html" class="nav-item">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Disputes</span>
+                </a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="notifications.html" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="admin-settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">Admin</h4>
+                        <p class="user-role">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Manage Violations</h2>
+                </div>
+                <div class="topbar-right">
+                    <button class="btn btn-primary" onclick="showAddViolationModal()">
+                        <i class="fas fa-plus"></i> Add New Violation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Violation Types</h3>
+                        <div class="search-bar" style="max-width: 300px;">
+                            <input type="text" placeholder="Search violations..." id="searchInput">
+                            <button onclick="searchViolations()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="violationsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Violation Name</th>
+                                        <th>Description</th>
+                                        <th>Penalty</th>
+                                        <th>Demerit Points</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="violationsTableBody">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center;">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Violation Modal -->
+    <div id="violationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Violation</h3>
+                <span class="close" onclick="closeViolationModal()">&times;</span>
+            </div>
+            <form id="violationForm">
+                <input type="hidden" id="violationId">
+
+                <div class="form-group">
+                    <label for="violationCode" class="required">Violation Code</label>
+                    <input type="text" id="violationCode" name="violation_code" required placeholder="e.g., NO-HELMET">
+                </div>
+
+                <div class="form-group">
+                    <label for="violationName" class="required">Violation Name</label>
+                    <input type="text" id="violationName" name="violation_name" required placeholder="e.g., No Helmet">
+                </div>
+
+                <div class="form-group">
+                    <label for="violationDescription">Description</label>
+                    <textarea id="violationDescription" name="description" rows="3"
+                        placeholder="Detailed description of the violation"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="penaltyAmount" class="required">Penalty Amount (₱)</label>
+                    <input type="number" id="penaltyAmount" name="penalty_amount" required step="0.01" min="0"
+                        placeholder="500.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="demeritPoints">Demerit Points</label>
+                    <input type="number" id="demeritPoints" name="demerit_points" min="0" value="0" placeholder="0">
+                </div>
+
+                <div class="form-group">
+                    <label for="violationStatus" class="required">Status</label>
+                    <select id="violationStatus" name="status" required>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeViolationModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveViolationBtn">Save Violation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script>
+        // Require authentication
+        requireAuth();
+
+        // Only admins can access this page
+        if (!isAdmin()) {
+            window.location.href = 'officer-dashboard.html';
+        }
+
+        // Populate user info
+        populateUserInfo();
+
+        let violations = [];
+        let editingViolationId = null;
+
+        // Load violations on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadViolations();
+        });
+
+        function handleViolationAccessError(error, fallbackMessage) {
+            const message = error?.message || fallbackMessage;
+
+            if (message.toLowerCase().includes('access denied')) {
+                showAlert('Access denied for Violations page. Redirecting...', 'warning', 1500);
+                setTimeout(() => {
+                    window.location.href = 'officer-dashboard.html';
+                }, 1500);
+                return;
+            }
+
+            showAlert(message, 'danger');
+        }
+
+        // Load all violations
+        async function loadViolations() {
+            try {
+                const response = await API.getViolations();
+                if (response.success) {
+                    violations = response.violations;
+                    displayViolations(violations);
+                } else {
+                    handleViolationAccessError({ message: response.message }, 'Failed to load violations');
+                }
+            } catch (error) {
+                console.error('Error loading violations:', error);
+                handleViolationAccessError(error, 'Error loading violations');
+            }
+        }
+
+        // Display violations in table
+        function displayViolations(violationsToDisplay) {
+            const tbody = document.getElementById('violationsTableBody');
+
+            if (violationsToDisplay.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No violations found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = violationsToDisplay.map(violation => `
+                <tr>
+                    <td><strong>${escapeHtmlText(violation.violation_code)}</strong></td>
+                    <td>${escapeHtmlText(violation.violation_name)}</td>
+                    <td>${escapeHtmlText(violation.description || 'N/A')}</td>
+                    <td>${formatCurrency(violation.penalty_amount)}</td>
+                    <td>${violation.demerit_points || 0}</td>
+                    <td>${getStatusBadge(violation.status)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="editViolation(${Number(violation.id) || 0})" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteViolation(${Number(violation.id) || 0})" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Search violations
+        function searchViolations() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = violations.filter(v =>
+                v.violation_code.toLowerCase().includes(searchTerm) ||
+                v.violation_name.toLowerCase().includes(searchTerm) ||
+                (v.description && v.description.toLowerCase().includes(searchTerm))
+            );
+            displayViolations(filtered);
+        }
+
+        // Show add violation modal
+        function showAddViolationModal() {
+            editingViolationId = null;
+            document.getElementById('modalTitle').textContent = 'Add New Violation';
+            document.getElementById('violationForm').reset();
+            document.getElementById('violationId').value = '';
+            document.getElementById('violationModal').style.display = 'block';
+        }
+
+        // Edit violation
+        async function editViolation(id) {
+            const violation = violations.find(v => v.id === id);
+            if (!violation) return;
+
+            editingViolationId = id;
+            document.getElementById('modalTitle').textContent = 'Edit Violation';
+            document.getElementById('violationId').value = violation.id;
+            document.getElementById('violationCode').value = violation.violation_code;
+            document.getElementById('violationName').value = violation.violation_name;
+            document.getElementById('violationDescription').value = violation.description || '';
+            document.getElementById('penaltyAmount').value = violation.penalty_amount;
+            document.getElementById('demeritPoints').value = violation.demerit_points || 0;
+            document.getElementById('violationStatus').value = violation.status;
+            document.getElementById('violationModal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeViolationModal() {
+            document.getElementById('violationModal').style.display = 'none';
+            document.getElementById('violationForm').reset();
+            editingViolationId = null;
+        }
+
+        // Save violation (add or edit)
+        document.getElementById('violationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                violation_code: document.getElementById('violationCode').value,
+                violation_name: document.getElementById('violationName').value,
+                description: document.getElementById('violationDescription').value,
+                penalty_amount: parseFloat(document.getElementById('penaltyAmount').value),
+                demerit_points: parseInt(document.getElementById('demeritPoints').value) || 0,
+                status: document.getElementById('violationStatus').value
+            };
+
+            const saveBtn = document.getElementById('saveViolationBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                let response;
+                if (editingViolationId) {
+                    response = await API.updateViolation(editingViolationId, formData);
+                } else {
+                    response = await API.createViolation(formData);
+                }
+
+                if (response.success) {
+                    showAlert(response.message || 'Violation saved successfully', 'success');
+                    closeViolationModal();
+                    loadViolations();
+                } else {
+                    showAlert(response.message || 'Failed to save violation', 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving violation:', error);
+                showAlert(error.message || 'Error saving violation', 'danger');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Violation';
+            }
+        });
+
+        // Delete violation
+        async function deleteViolation(id) {
+            const violation = violations.find(v => v.id === id);
+            if (!violation) return;
+
+            if (!confirmAction(`Are you sure you want to delete violation "${escapeHtmlText(violation.violation_name)}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await API.deleteViolation(id);
+                if (response.success) {
+                    showAlert('Violation deleted successfully', 'success');
+                    loadViolations();
+                } else {
+                    showAlert(response.message || 'Failed to delete violation', 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting violation:', error);
+                showAlert(error.message || 'Error deleting violation', 'danger');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('violationModal');
+            if (event.target === modal) {
+                closeViolationModal();
+            }
+        }
+    </script>
+    <script src="../assets/js/toast.js"></script>
+</body>
+
+</html>

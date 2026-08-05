@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Details - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/print.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .ticket-detail-card {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .ticket-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            text-align: center;
+        }
+
+        .ticket-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .detail-section {
+            padding: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+
+        .detail-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-item {
+            margin-bottom: 15px;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 15px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .penalty-highlight {
+            font-size: 28px;
+            color: var(--danger-color);
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            margin: 10px 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        .inline-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th,
+        .history-table td {
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .sidebar,
+            .topbar,
+            .action-buttons {
+                display: none !important;
+            }
+
+            .main-content {
+                margin: 0 !important;
+                padding: 20px !important;
+            }
+
+            .ticket-detail-card {
+                box-shadow: none !important;
+                border: 2px solid #000;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar no-print">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item active">
+                    <i class="fas fa-list"></i>
+                    <span>View Tickets</span>
+                </a>
+
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">User</h4>
+                        <p class="user-role">Role</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar no-print">
+                <div class="topbar-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Ticket Details</h2>
+                </div>
+                <div class="topbar-right">
+                    <a href="view-tickets.html" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Tickets
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <div class="card ticket-detail-card">
+                    <div id="ticketContent">
+                        <div class="text-center" style="padding: 50px;">
+                            <div class="spinner"></div>
+                            <p>Loading ticket details...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+                <!-- QR Code Section -->
+                <div id="ticketQRSection" style="display:none;
+                    background:white; border-radius:16px; padding:24px;
+                    border:1px solid #e2e8f0; text-align:center; margin-top:20px;
+                    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+                ">
+                    <div style="font-size:13px;font-weight:700;color:#0b2545;margin-bottom:4px">
+                        <i class="fas fa-qrcode" style="color:#2563eb"></i> Ticket QR Code
+                    </div>
+                    <div style="font-size:11px;color:#6b7280;margin-bottom:14px">
+                        Vehicle owner can scan this to view their violation record
+                    </div>
+                    <div id="ticketQRCode" style="display:inline-block;padding:12px;
+                        border:2px solid #e2e8f0;border-radius:12px;background:white"></div>
+                    <div id="qrTicketNumber" style="font-size:12px;font-weight:700;
+                        color:#374151;margin-top:10px;font-family:monospace"></div>
+                    <br>
+                    <button onclick="printQRCode()" style="
+                        margin-top:10px; padding:8px 18px; border-radius:8px;
+                        border:1.5px solid #e2e8f0; background:white;
+                        color:#374151; font-size:12px; font-weight:600; cursor:pointer;
+                    "><i class="fas fa-print"></i> Print QR Code</button>
+                </div>
+
+</main>
+    </div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/dashboard.js?v=20260427c"></script>
+    <script>
+        const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
+        
+        // Require authentication
+        requireAuth();
+        populateUserInfo();
+
+        let currentTicket = null;
+        let currentPayments = [];
+        let currentDisputes = [];
+        let currentEvidence = [];
+        let evidenceObjectUrls = [];
+        const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[ch]);
+        const normalizeCoordinate = (value, min, max) => {
+            const number = Number(value);
+            return Number.isFinite(number) && number >= min && number <= max ? number : null;
+        };
+        const shouldAutoPrint = new URLSearchParams(window.location.search).get('print') === '1';
+        let hasAutoPrinted = false;
+
+        // Get ticket ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticketId = urlParams.get('id');
+        const numericTicketId = Number(ticketId);
+
+        if (!Number.isInteger(numericTicketId) || numericTicketId <= 0) {
+            window.location.replace('view-tickets.html');
+        }
+
+        // Load ticket details
+        async function loadTicketDetails() {
+            try {
+                const response = await API.getTicketById(ticketId);
+
+                if (response.success && response.ticket) {
+                    currentTicket = response.ticket;
+                    await Promise.all([
+                        loadTicketPayments(),
+                        loadTicketDisputes(),
+                        loadTicketEvidence()
+                    ]);
+                    displayTicketDetails(currentTicket);
+
+                    if (shouldAutoPrint && !hasAutoPrinted) {
+                        hasAutoPrinted = true;
+                        setTimeout(() => window.print(), 250);
+                    }
+                } else {
+                    throw new Error('Ticket not found');
+                }
+            } catch (error) {
+                console.error('Error loading ticket:', error);
+                document.getElementById('ticketContent').innerHTML = `
+                    <div class="text-center" style="padding: 50px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: var(--danger-color);"></i>
+                        <h3>Failed to load ticket</h3>
+                        <p>${escapeHtml(error.message || 'An error occurred')}</p>
+                        <a href="view-tickets.html" class="btn btn-primary">Back to Tickets</a>
+                    </div>
+                `;
+            }
+        }
+
+        // Display ticket details
+        function displayTicketDetails(ticket) {
+            const user = getUser();
+            const canRecordPayment = user && user.role === 'admin';
+            const canDispute = user && (user.role === 'admin' || user.role === 'apprehending_officer');
+
+            // Feature 1: Ticket Activity Timeline (Ticket Created + every status change)
+            const statusIcon = (status) => {
+                const s = String(status || '').toLowerCase();
+                if (s.includes('paid')) return 'fa-check-circle';
+                if (s.includes('cancel') || s.includes('void')) return 'fa-ban';
+                if (s.includes('dispute')) return 'fa-balance-scale';
+                if (s.includes('closed')) return 'fa-flag-checkered';
+                return 'fa-circle';
+            };
+
+            const timelineEvents = [
+                {
+                    label: 'Ticket Created',
+                    detail: `Issued to ${ticket.owner_name || 'owner'} for plate ${ticket.plate_number || '-'}`,
+                    date: ticket.created_at || ticket.date_issued,
+                    icon: 'fa-file-alt'
+                },
+                ...((ticket.timeline || []).map(h => ({
+                    label: `Status changed to ${String(h.new_status || '').replace('_', ' ').toUpperCase()}`,
+                    detail: `${h.changed_by_name ? 'By ' + h.changed_by_name : 'System'}${h.reason ? ' — ' + h.reason : ''}`,
+                    date: h.created_at,
+                    icon: statusIcon(h.new_status)
+                })))
+            ];
+
+            const timelineHtml = timelineEvents.map((ev, idx) => `
+                <div class="timeline-item" style="display:flex; gap:14px; padding:10px 0; ${idx < timelineEvents.length - 1 ? 'border-bottom:1px dashed #e5e7eb;' : ''}">
+                    <div style="width:32px; height:32px; border-radius:50%; background:#eef2f7; color:#0b2545;
+                                display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fas ${ev.icon}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600; font-size:14px;">${escapeHtml(ev.label)}</div>
+                        <div style="font-size:12px; color:#6b7280;">${escapeHtml(ev.detail || '')}</div>
+                        <div style="font-size:11px; color:#9ca3af; margin-top:2px;">${escapeHtml(ev.date ? formatDate(ev.date) : '')}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const paymentRows = currentPayments.length > 0
+                ? currentPayments.map(payment => `
+                    <tr>
+                        <td>${escapeHtml(payment.or_number || 'N/A')}</td>
+                        <td>${formatCurrency(payment.amount_paid)}</td>
+                        <td>${escapeHtml(String(payment.payment_status || 'unknown').replace('_', ' ').toUpperCase())}</td>
+                        <td>${escapeHtml(formatDate(payment.payment_date))}</td>
+                    </tr>
+                `).join('')
+                : `
+                    <tr>
+                        <td colspan="5" class="text-center">No payment history yet</td>
+                    </tr>
+                `;
+
+            const disputeRows = currentDisputes.length > 0
+                ? currentDisputes.map(dispute => `
+                    <tr>
+                        <td>#${Number(dispute.id) || 0}</td>
+                        <td>${escapeHtml(String(dispute.status || 'unknown').replace('_', ' ').toUpperCase())}</td>
+                        <td>${escapeHtml(dispute.submitted_by_name || dispute.contact_name || 'N/A')}</td>
+                        <td>${escapeHtml(formatDate(dispute.created_at))}</td>
+                    </tr>
+                `).join('')
+                : `
+                    <tr>
+                        <td colspan="4" class="text-center">No disputes filed</td>
+                    </tr>
+                `;
+
+            const isImageFile = (mime) => /^image\//.test(mime || '');
+
+            const evidenceGalleryHtml = currentEvidence.length > 0
+                ? `<div class="evidence-gallery" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:16px;">
+                    ${currentEvidence.map(item => {
+                        const rawFileUrl = item.secure_url || '';
+                        const fileUrl = rawFileUrl.startsWith('blob:') ? escapeHtml(rawFileUrl) : '';
+                        const latitude = normalizeCoordinate(item.gps_lat, -90, 90);
+                        const longitude = normalizeCoordinate(item.gps_lng, -180, 180);
+                        const hasGps = latitude !== null && longitude !== null;
+                        const fileSizeKb = Math.max(0, Math.round((Number(item.file_size) || 0) / 1024));
+                        return `
+                        <div class="evidence-card" style="border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; background:#fff;">
+                            <a href="${fileUrl || '#'}" target="_blank" rel="noopener" onclick="if(!this.getAttribute('href')||this.getAttribute('href')==='#')event.preventDefault()" style="display:block; background:#f3f4f6; height:130px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                                ${isImageFile(item.mime_type)
+                                    ? `<img src="${fileUrl}" alt="${escapeHtml(item.file_name || 'Evidence file')}" style="width:100%; height:100%; object-fit:cover;">`
+                                    : `<i class="fas fa-file-pdf" style="font-size:36px; color:#9ca3af;"></i>`}
+                            </a>
+                            <div style="padding:10px 12px;">
+                                <div style="font-size:12px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(item.file_name || 'Evidence file')}">${escapeHtml(item.file_name || 'Evidence file')}</div>
+                                <div style="font-size:11px; color:#6b7280; margin-top:2px;">${escapeHtml(item.uploaded_by_name || 'N/A')} · ${escapeHtml(formatDate(item.created_at))}</div>
+                                <div style="font-size:11px; color:#9ca3af;">${fileSizeKb} KB</div>
+                                ${hasGps
+                                    ? `<a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank" rel="noopener" style="font-size:11px; color:#1f8ea3; display:inline-flex; align-items:center; gap:4px; margin-top:4px;">
+                                        <i class="fas fa-map-marker-alt"></i> View location
+                                       </a>`
+                                    : ''}
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`
+                : `<p class="text-center" style="color:#9ca3af; padding:20px 0;">No evidence uploaded yet.</p>`;
+
+            // Feature 5: Clear Ticket Lifecycle indicator.
+            // Determine current lifecycle stage: prefer the latest ticket_status_history
+            // entry (has the fine-grained stage), fall back to mapping the legacy
+            // tickets.status column when no history exists yet.
+            const legacyToStage = { unpaid: 'pending_payment', paid: 'paid', cancelled: 'cancelled' };
+            const latestHistoryEntry = (ticket.timeline || [])
+                .filter(h => h.new_status)
+                .slice(-1)[0];
+            const currentStage = latestHistoryEntry
+                ? latestHistoryEntry.new_status
+                : (legacyToStage[ticket.status] || 'pending_payment');
+
+            const hasOpenDispute = currentDisputes.some(d => !['approved', 'rejected', 'closed'].includes(d.status));
+            const isException = ['cancelled', 'voided'].includes(currentStage) || hasOpenDispute;
+
+            const lifecycleSteps = [
+                { key: 'issued', label: 'Issued', icon: 'fa-file-signature' },
+                { key: 'pending_payment', label: 'Unpaid', icon: 'fa-hourglass-half' },
+                { key: 'paid', label: 'Paid', icon: 'fa-check-circle' },
+                { key: 'closed', label: 'Closed', icon: 'fa-flag-checkered' }
+            ];
+            const stageOrder = ['draft', 'issued', 'pending_payment', 'partially_paid', 'paid', 'closed'];
+            const currentIndex = Math.max(stageOrder.indexOf(currentStage), 0);
+            const normalizedCurrent = currentStage === 'partially_paid' ? 'pending_payment' : currentStage;
+
+            const lifecycleStepperHtml = isException
+                ? `<div style="margin-top:10px; padding:10px 16px; border-radius:8px; background:${hasOpenDispute ? '#fff7ed' : '#fef2f2'}; color:${hasOpenDispute ? '#c2410c' : '#b91c1c'}; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:8px;">
+                    <i class="fas ${hasOpenDispute ? 'fa-balance-scale' : 'fa-ban'}"></i>
+                    ${hasOpenDispute ? 'DISPUTED — under review' : (currentStage === 'voided' ? 'VOIDED' : 'CANCELLED')}
+                   </div>`
+                : `<div style="display:flex; align-items:center; gap:6px; margin-top:10px; flex-wrap:wrap;">
+                    ${lifecycleSteps.map((step, idx) => {
+                        const stepStageIndex = stageOrder.indexOf(step.key);
+                        const isCurrent = step.key === normalizedCurrent;
+                        const state = isCurrent ? 'current' : (stepStageIndex < currentIndex ? 'done' : 'upcoming');
+                        const colors = {
+                            done: 'background:#dcfce7; color:#166534;',
+                            current: 'background:#0b2545; color:#fff;',
+                            upcoming: 'background:#f3f4f6; color:#9ca3af;'
+                        };
+                        return `
+                            <div style="display:flex; align-items:center; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; ${colors[state]}">
+                                <i class="fas ${state === 'done' ? 'fa-check' : step.icon}" style="margin-right:6px;"></i>${step.label}
+                            </div>
+                            ${idx < lifecycleSteps.length - 1 ? '<i class="fas fa-chevron-right" style="color:#d1d5db; font-size:10px;"></i>' : ''}
+                        `;
+                    }).join('')}
+                   </div>`;
+
+            const html = `
+                <div class="ticket-header">
+                    <h1>VEHICLE VIOLATION TICKET</h1>
+                    <div class="ticket-number">${escapeHtml(ticket.ticket_number)}</div>
+                    <div>${getStatusBadge(ticket.status)}</div>
+                    ${lifecycleStepperHtml}
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-calendar"></i> Date & Time Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Date Issued</div>
+                            <div class="detail-value">${escapeHtml(formatDate(ticket.date_issued))}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Time Issued</div>
+                            <div class="detail-value">${escapeHtml(formatTime(ticket.time_issued))}</div>
+                        </div>
+                        ${ticket.payment_date ? `
+                            <div class="detail-item">
+                                <div class="detail-label">Payment Date</div>
+                                <div class="detail-value">${escapeHtml(formatDate(ticket.payment_date))}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-car"></i> Vehicle Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Plate Number</div>
+                            <div class="detail-value">${escapeHtml(ticket.plate_number || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Vehicle Type</div>
+                            <div class="detail-value">${escapeHtml(ticket.vehicle_type || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Owner Name</div>
+                            <div class="detail-value">${escapeHtml(ticket.owner_name || 'N/A')}</div>
+                        </div>
+                        ${ticket.owner_email ? `
+                            <div class="detail-item">
+                                <div class="detail-label">Owner Email</div>
+                                <div class="detail-value">${escapeHtml(ticket.owner_email)}</div>
+                            </div>
+                        ` : ''}
+                        ${ticket.owner_address ? `
+                            <div class="detail-item">
+                                <div class="detail-label">Owner Address</div>
+                                <div class="detail-value">${escapeHtml(ticket.owner_address)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Violation Information</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Violation Type</div>
+                            <div class="detail-value">${escapeHtml(ticket.violation_name || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Violation Code</div>
+                            <div class="detail-value">${escapeHtml(ticket.violation_code || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Location</div>
+                            <div class="detail-value">${escapeHtml(ticket.location || 'N/A')}</div>
+                        </div>
+                        ${ticket.remarks ? `
+                            <div class="detail-item" style="grid-column: 1 / -1;">
+                                <div class="detail-label">Remarks</div>
+                                <div class="detail-value">${escapeHtml(ticket.remarks)}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-user"></i> Issued By</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Apprehending Officer Name</div>
+                            <div class="detail-value">${escapeHtml(ticket.officer_name || 'N/A')}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Apprehending Officer Email</div>
+                            <div class="detail-value">${escapeHtml(ticket.officer_email || 'N/A')}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-money-bill-wave"></i> Penalty Amount</h3>
+                    <div class="penalty-highlight">
+                        ${formatCurrency(ticket.penalty_amount)}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-stream"></i> Ticket Timeline</h3>
+                    <div class="ticket-timeline">
+                        ${timelineHtml}
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-receipt"></i> Payment History</h3>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>OR Number</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${paymentRows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-balance-scale"></i> Disputes</h3>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Status</th>
+                                <th>Submitted By</th>
+                                <th>Date Filed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${disputeRows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="detail-section">
+                    <h3><i class="fas fa-camera"></i> Evidence</h3>
+                    <div class="inline-row" style="margin-bottom: 14px;">
+                        <input type="file" id="evidenceFile" accept=".jpg,.jpeg,.png,.webp,.pdf">
+                        <button class="btn btn-primary" onclick="uploadEvidence()">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                    ${evidenceGalleryHtml}
+                </div>
+
+                <div class="action-buttons no-print">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print Ticket
+                    </button>
+                    
+                    ${ticket.status !== 'paid' && canRecordPayment ? `
+                        <button class="btn btn-warning" onclick="recordPayment()">
+                            <i class="fas fa-money-check"></i> Record Payment
+                        </button>
+                    ` : ''}
+                    ${canDispute ? `
+                        <button class="btn btn-secondary" onclick="submitDispute()">
+                            <i class="fas fa-gavel"></i> File Dispute
+                        </button>
+                    ` : ''}
+                    ${ticket.status === 'unpaid' && isAdmin() ? `
+                        <button class="btn btn-danger" onclick="cancelTicket()">
+                            <i class="fas fa-times-circle"></i> Cancel Ticket
+                        </button>
+                    ` : ''}
+                    <a href="view-tickets.html" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to List
+                    </a>
+                </div>
+            `;
+
+            document.getElementById('ticketContent').innerHTML = html;
+            if (typeof generateTicketQR === 'function') generateTicketQR(ticket.ticket_number, ticket.plate_number);
+        }
+
+        async function loadTicketPayments() {
+            try {
+                const response = await API.getTicketPayments(ticketId);
+                if (response.success) {
+                    currentPayments = response.payments || response.data || [];
+                }
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                currentPayments = [];
+            }
+        }
+
+        async function loadTicketDisputes() {
+            try {
+                const response = await API.getDisputes({ ticketId });
+                if (response.success) {
+                    currentDisputes = response.disputes || response.data || [];
+                }
+            } catch (error) {
+                console.error('Error loading disputes:', error);
+                currentDisputes = [];
+            }
+        }
+
+        async function loadTicketEvidence() {
+            evidenceObjectUrls.forEach(url => URL.revokeObjectURL(url));
+            evidenceObjectUrls = [];
+            try {
+                const response = await API.getTicketEvidence(ticketId);
+                const metadata = response.success ? (response.evidence || response.data || []) : [];
+                currentEvidence = await Promise.all(metadata.map(async item => {
+                    try {
+                        const blob = await API.getEvidenceFile(item.id);
+                        const secureUrl = URL.createObjectURL(blob);
+                        evidenceObjectUrls.push(secureUrl);
+                        return { ...item, secure_url: secureUrl };
+                    } catch (error) {
+                        console.error(`Unable to load evidence ${item.id}:`, error);
+                        return { ...item, secure_url: '' };
+                    }
+                }));
+            } catch (error) {
+                console.error('Error loading evidence:', error);
+                currentEvidence = [];
+            }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            evidenceObjectUrls.forEach(url => URL.revokeObjectURL(url));
+        });
+
+        async function uploadEvidence() {
+            const input = document.getElementById('evidenceFile');
+            const file = input?.files?.[0];
+
+            if (!file) {
+                showAlert('Please choose a file first.', 'warning');
+                return;
+            }
+
+            try {
+                const response = await API.uploadTicketEvidence(ticketId, file);
+                if (response.success) {
+                    showAlert('Evidence uploaded successfully.', 'success');
+                    input.value = '';
+                    await loadTicketDetails();
+                }
+            } catch (error) {
+                console.error('Upload evidence error:', error);
+                showAlert(error.message || 'Failed to upload evidence.', 'danger');
+            }
+        }
+
+        async function recordPayment() {
+            if (!currentTicket) return;
+
+            const orNumber = prompt('Enter OR Number');
+            if (!orNumber) return;
+
+            const amount = prompt('Enter Amount Paid');
+            if (!amount) return;
+
+            try {
+                const response = await API.recordPayment({
+                    ticket_id: Number(ticketId),
+                    or_number: orNumber.trim(),
+                    amount_paid: Number(amount),
+                    payment_method: 'cash'
+                });
+
+                if (response.success) {
+                    showAlert('Payment recorded successfully', 'success');
+                    await loadTicketDetails();
+                } else {
+                    throw new Error(response.message || 'Failed to record payment');
+                }
+            } catch (error) {
+                console.error('Error recording payment:', error);
+                showAlert(error.message || 'Failed to record payment', 'danger');
+            }
+        }
+
+        async function submitDispute() {
+            if (!currentTicket) return;
+
+            const reason = prompt('Enter dispute reason (minimum 10 characters)');
+            if (!reason) return;
+
+            try {
+                const response = await API.createDispute({
+                    ticket_id: Number(ticketId),
+                    reason
+                });
+
+                if (response.success) {
+                    showAlert('Dispute submitted successfully', 'success');
+                    await loadTicketDetails();
+                } else {
+                    throw new Error(response.message || 'Failed to submit dispute');
+                }
+            } catch (error) {
+                console.error('Error submitting dispute:', error);
+                showAlert(error.message || 'Failed to submit dispute', 'danger');
+            }
+        }
+
+
+        // Cancel ticket
+        async function cancelTicket() {
+            const reason = prompt('Enter the cancellation reason (minimum 5 characters)');
+            if (!reason || reason.trim().length < 5) return;
+
+            try {
+                const response = await API.updateTicketStatus(ticketId, {
+                    status: 'cancelled',
+                    reason: reason.trim()
+                });
+
+                if (response.success) {
+                    showAlert('Ticket cancelled successfully', 'success');
+                    loadTicketDetails(); // Reload to show updated status
+                } else {
+                    throw new Error(response.message || 'Failed to cancel ticket');
+                }
+            } catch (error) {
+                console.error('Error cancelling ticket:', error);
+                showAlert(error.message || 'Failed to cancel ticket', 'danger');
+            }
+        }
+
+        // Load ticket on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTicketDetails();
+        });
+    </script>
+    <script src="../assets/js/toast.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+    function generateTicketQR(ticketNumber, plateNumber) {
+        const section=document.getElementById('ticketQRSection');
+        const container=document.getElementById('ticketQRCode');
+        const label=document.getElementById('qrTicketNumber');
+        if(!section||!container||!ticketNumber||typeof QRCode==='undefined')return;
+        const baseUrl=window.location.origin+window.location.pathname.replace('ticket-details.html','public-ticket-lookup.html');
+        container.innerHTML='';
+        new QRCode(container,{text:`${baseUrl}?ticket=${encodeURIComponent(ticketNumber)}`,width:140,height:140,colorDark:'#0b2545',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+        if(label)label.textContent=`${ticketNumber}${plateNumber?' | '+plateNumber:''}`;
+        section.style.display='block';
+    }
+    function printQRCode(){
+        const canvas=document.querySelector('#ticketQRCode canvas'); if(!canvas)return;
+        const ticketNum=document.getElementById('qrTicketNumber')?.textContent||'';
+        const win=window.open('','_blank','noopener,noreferrer'); if(!win)return;
+        win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Ticket QR</title><style>body{text-align:center;font-family:Arial;padding:40px}img{padding:16px;border:1px solid #ccc}</style></head><body><h3>Municipal Traffic Violation Ticket</h3><p>${escapeHtml(ticketNum)}</p><img src="${canvas.toDataURL('image/png')}"><script>window.onload=()=>window.print();<\/script></body></html>`);
+        win.document.close();
+    }
+    window.generateTicketQR=generateTicketQR;
+    window.printQRCode=printQRCode;
+    </script>
+</body>
+</html>

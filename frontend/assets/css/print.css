@@ -1,0 +1,254 @@
+/* ==============================================
+   PRINT STYLES FOR VIOLATION TICKETS
+   ============================================== */
+
+@media print {
+    /* Hide everything except the ticket */
+    body * {
+        visibility: hidden;
+    }
+    
+    .ticket-print, .ticket-print * {
+        visibility: visible;
+    }
+    
+    .ticket-print {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    /* Hide buttons and navigation when printing */
+    .btn,
+    .sidebar,
+    .topbar,
+    .no-print {
+        display: none !important;
+    }
+    
+    /* Page settings */
+    @page {
+        size: A4;
+        margin: 20mm;
+    }
+    
+    /* Ticket styling for print */
+    .ticket-container {
+        background: white;
+        padding: 40px;
+        border: 2px solid #000;
+    }
+    
+    .ticket-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .ticket-logo {
+        width: 80px;
+        height: auto;
+    }
+    
+    .ticket-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin: 10px 0;
+        color: #000;
+    }
+    
+    .ticket-subtitle {
+        font-size: 14px;
+        color: #333;
+    }
+    
+    .ticket-body {
+        margin: 20px 0;
+    }
+    
+    .ticket-row {
+        display: flex;
+        margin-bottom: 15px;
+        page-break-inside: avoid;
+    }
+    
+    .ticket-label {
+        font-weight: bold;
+        width: 180px;
+        color: #000;
+    }
+    
+    .ticket-value {
+        flex: 1;
+        color: #333;
+    }
+    
+    .ticket-footer {
+        margin-top: 40px;
+        border-top: 2px solid #000;
+        padding-top: 20px;
+    }
+    
+    .signature-section {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 60px;
+    }
+    
+    .signature-box {
+        text-align: center;
+    }
+    
+    .signature-line {
+        border-top: 1px solid #000;
+        width: 200px;
+        margin-bottom: 5px;
+    }
+    
+    .ticket-qr {
+        text-align: center;
+        margin-top: 20px;
+    }
+    
+    /* Force colors for print */
+    .badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+/* Screen view of ticket */
+.ticket-print-preview {
+    background: white;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 40px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow-lg);
+}
+
+.ticket-container {
+    border: 3px solid var(--primary-color);
+    padding: 30px;
+}
+
+.ticket-header {
+    text-align: center;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 20px;
+    margin-bottom: 30px;
+}
+
+.ticket-logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.ticket-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin: 10px 0;
+}
+
+.ticket-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.ticket-number {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 15px 0;
+}
+
+.ticket-body {
+    margin: 30px 0;
+}
+
+.ticket-section {
+    margin-bottom: 30px;
+}
+
+.ticket-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ticket-row {
+    display: flex;
+    margin-bottom: 12px;
+}
+
+.ticket-label {
+    font-weight: 600;
+    width: 200px;
+    color: var(--text-primary);
+}
+
+.ticket-value {
+    flex: 1;
+    color: var(--text-secondary);
+}
+
+.penalty-amount {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--danger-color);
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+}
+
+.ticket-footer {
+    margin-top: 40px;
+    border-top: 2px solid var(--border-color);
+    padding-top: 20px;
+}
+
+.ticket-instructions {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius);
+}
+
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 60px;
+}
+
+.signature-box {
+    text-align: center;
+}
+
+.signature-line {
+    border-top: 2px solid var(--text-primary);
+    width: 250px;
+    margin-bottom: 8px;
+}
+
+.signature-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.print-actions {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}

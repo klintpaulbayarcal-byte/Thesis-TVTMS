@@ -1,0 +1,4599 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Municipal Traffic Violation Ticketing and Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&family=Fraunces:opsz,wght,ital@9..144,300..700,0..1&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+  <style>
+    .lucide {
+      width: 1em;
+      height: 1em;
+      stroke-width: 1.8;
+      vertical-align: -0.14em;
+      flex-shrink: 0;
+    }
+
+    .sc-tab .lucide, .sc-search-btn .lucide, .sc-portal .lucide,
+    .btn-primary .lucide, .btn-ghost .lucide {
+      margin-right: 0.42rem;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --primary: #0F172A;
+      /* page background */
+      --secondary: #1E3A8A;
+      /* deep blue */
+      --accent: #2563EB;
+      /* accent blue */
+      --gold: #FBBF24;
+      /* accent gold */
+      --muted: #94a3b8;
+      --glass: rgba(255, 255, 255, 0.04);
+      --glass-strong: rgba(255, 255, 255, 0.06);
+      --border: rgba(148, 163, 184, 0.10);
+      --text: #e6eef8;
+      --card: rgba(7, 13, 26, 0.7);
+      /* Legacy names used by original stylesheet (keeps compatibility) */
+      --slate: #94a3b8;
+      --slate2: #cbd5e1;
+      --slate3: #e2e8f0;
+      --blue: #2563eb;
+      --blue2: #3b82f6;
+      --blue3: #60a5fa;
+      --gold2: #fbbf24;
+      --gold3: #fcd34d;
+      --teal: #10b981;
+      --teal2: #34d399;
+      --border2: rgba(148, 163, 184, 0.18);
+      --card-2: #111827;
+      --radius-lg: 20px;
+      --font-serif: 'Fraunces', serif;
+    }
+
+    .editorial-label {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--gold);
+    }
+
+    .ghost-numeral {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-style: italic;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(148, 163, 184, 0.22);
+      line-height: 0.8;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto }
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ── ACCESSIBILITY: FOCUS & SKIP LINK ── */
+    :focus-visible {
+      outline: 2px solid #60a5fa;
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline-offset: 4px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: -60px;
+      left: 16px;
+      z-index: 10000;
+      background: var(--accent);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      transition: top 0.2s ease;
+    }
+
+    .skip-link:focus {
+      top: 16px;
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: linear-gradient(180deg, var(--primary), #061028 140%);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* decorative watermark */
+    body::before {
+      content: '';
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      width: 220px;
+      height: 220px;
+      background-image: url('images/calape-logo.webp');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.08;
+      pointer-events: none;
+      filter: grayscale(60%);
+    }
+
+    canvas#bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none
+    }
+
+    /* NAV - refined */
+    nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(18px, 5vw, 56px);
+      background: rgba(5, 13, 30, 0.92);
+      backdrop-filter: blur(20px) saturate(175%);
+      z-index: 1200;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+      transition: all 220ms ease;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-link {
+      color: rgba(241, 245, 249, 0.82);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: color 180ms ease;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: white;
+    }
+
+    .nav-hotline {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      text-align: right;
+      font-size: 11px;
+      color: var(--slate);
+    }
+
+    .nav-hotline span {
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .nav-hotline strong {
+      display: block;
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .nav-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(37, 99, 235, 0.12);
+      transition: transform 200ms
+    }
+
+    .nav-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    .nav-logo:focus,
+    .nav-logo:hover {
+      transform: translateY(-2px)
+    }
+
+    .nav-text-main {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text)
+    }
+
+    .nav-text-sub {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.6px
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .nav-pill {
+      padding: 8px 16px;
+      border-radius: 12px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 180ms
+    }
+
+    .nav-pill:hover {
+      background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent);
+      color: var(--accent);
+      transform: translateY(-2px)
+    }
+
+    .nav-cta {
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--secondary), var(--accent));
+      color: white;
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.18);
+      transition: transform 180ms
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-3px)
+    }
+
+    /* Mobile navigation toggle */
+    .nav-toggle{display:none;background:transparent;border:1px solid rgba(255,255,255,0.04);width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;cursor:pointer}
+    .nav-toggle svg{width:20px;height:20px;color:var(--text)}
+    .nav-mobile-menu{display:none;position:fixed;top:72px;left:0;right:0;background:linear-gradient(180deg,rgba(6,12,28,0.98),rgba(6,10,20,0.98));backdrop-filter:blur(8px);z-index:1199;padding:18px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .nav-mobile-menu.open{display:block}
+    .nav-mobile-menu a{display:block;padding:12px 8px;border-radius:8px;color:var(--text);text-decoration:none;font-weight:700}
+    .nav-mobile-menu a:hover{background:rgba(255,255,255,0.02)}
+
+    /* Page loader */
+    #pageLoader{position:fixed;inset:0;background:linear-gradient(180deg,rgba(3,7,18,0.9),rgba(6,10,18,0.95));display:flex;align-items:center;justify-content:center;z-index:20000;transition:opacity 320ms,visibility 320ms}
+    #pageLoader.hidden{opacity:0;visibility:hidden}
+    .loader-box{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .loader-spinner{width:68px;height:68px;border-radius:50%;border:6px solid rgba(255,255,255,0.06);border-top-color:var(--accent);animation:spin 1s linear infinite;box-shadow:0 8px 30px rgba(37,99,235,0.12)}
+    @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+    /* HERO - background image + overlays + glass */
+    .hero {
+      position: relative;
+      min-height: 92vh;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+      padding: 120px clamp(24px, 5vw, 60px) 60px;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url('images/background.webp');
+      background-size: cover;
+      background-position: center center;
+      filter: contrast(1.16) saturate(1.18) brightness(0.72);
+      opacity: 1;
+      z-index: -3;
+      transform: translateY(calc(var(--hero-scroll, 0px))) scale(1.08);
+      transition: transform 0.2s ease-out;
+      will-change: transform;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 25% 40%, rgba(59, 130, 246, 0.16), transparent 24%),
+                  linear-gradient(180deg, rgba(8, 17, 41, 0.2), rgba(5, 8, 20, 0.9));
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .hero-left {
+      flex: 1;
+      max-width: 660px;
+      position: relative;
+      z-index: 3;
+      padding-right: 12px;
+    }
+
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.28);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #f5d34f;
+      margin-bottom: 28px;
+      animation: chipPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .chip-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #60a5fa;
+      animation: blink 2.4s infinite
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.7)
+      }
+    }
+
+    @keyframes chipPop {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.9)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1)
+      }
+    }
+
+    .hero-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(42px, 7vw, 80px);
+      font-weight: 800;
+      line-height: 1.0;
+      color: white;
+      margin-bottom: 24px;
+      text-shadow: 0 22px 55px rgba(0, 0, 0, 0.22);
+      animation: titleSlide 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+    }
+
+    @keyframes titleSlide {
+      from {
+        opacity: 0;
+        transform: translateY(30px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .hero-title .line1 {
+      display: block
+    }
+
+    .hero-title .line2 {
+      display: block;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24, #fcd34d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-title .line3 {
+      display: block
+    }
+
+    .hero-sub {
+      font-size: 16px;
+      line-height: 1.75;
+      color: var(--slate);
+      max-width: 520px;
+      margin-bottom: 36px;
+      font-weight: 400;
+      animation: titleSlide 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+      animation: titleSlide 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+    }
+
+    .btn-primary {
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: white;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 4px 24px rgba(37, 99, 235, 0.45);
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Manrope', sans-serif;
+      letter-spacing: 0.1px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.6)
+    }
+
+    .btn-ghost {
+      padding: 13px 28px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border2);
+      color: var(--slate2);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      border-color: rgba(148, 163, 184, 0.35)
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 22px;
+      animation: titleSlide 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .stat-item {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      padding: 18px 20px;
+      min-width: 120px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+      cursor: pointer;
+    }
+
+    .stat-item:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.35);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+    }
+
+    .stat-lbl {
+      font-size: 12px;
+      color: var(--slate);
+      margin-top: 4px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .hero-sub {
+      max-width: 620px;
+    }
+
+    .hero-actions {
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    /* ── SEARCH CARD (hero right) ── */
+    .hero-right {
+      flex: 0 0 min(460px, 100%);
+      align-self: flex-end;
+      animation: cardFloat 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+    }
+
+    @keyframes cardFloat {
+      from {
+        opacity: 0;
+        transform: translateY(40px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .search-card {
+      background: rgba(7, 13, 26, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 28px;
+      padding: 38px 36px;
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 28px 72px rgba(3, 9, 24, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .search-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 70%);
+      pointer-events: none;
+    }
+
+    .sc-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .sc-label::before {
+      content: '';
+      width: 16px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      border-radius: 1px
+    }
+
+    .sc-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+      line-height: 1.25;
+    }
+
+    .sc-desc {
+      font-size: 12px;
+      color: var(--slate);
+      margin-bottom: 22px;
+      line-height: 1.6
+    }
+
+    .sc-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 16px
+    }
+
+    .sc-tab {
+      padding: 9px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--slate);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .sc-tab.active {
+      background: rgba(37, 99, 235, 0.15);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #93c5fd;
+    }
+
+    .sc-tab:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--slate2)
+    }
+
+    .sc-input-wrap {
+      position: relative;
+      margin-bottom: 12px
+    }
+
+    .sc-input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--slate);
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .sc-input {
+      width: 100%;
+      padding: 13px 14px 13px 42px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.04);
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: 'Manrope', sans-serif;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .sc-input::placeholder {
+      color: #334155;
+      font-weight: 400
+    }
+
+    .sc-input:focus {
+      border-color: rgba(59, 130, 246, 0.5);
+      background: rgba(37, 99, 235, 0.06);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12)
+    }
+
+    .sc-search-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb, #3b82f6);
+      color: white;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: 'Manrope', sans-serif;
+      letter-spacing: 0.2px;
+      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.45);
+      transition: all 0.22s;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sc-search-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+      transition: left 0.5s;
+    }
+
+    .sc-search-btn:hover::before {
+      left: 100%
+    }
+
+    .sc-search-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(37, 99, 235, 0.6)
+    }
+
+    .sc-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--border2);
+      font-size: 11px;
+      font-weight: 600;
+      margin: 12px 0;
+      color: #1e3251;
+    }
+
+    .sc-divider::before,
+    .sc-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border)
+    }
+
+    .sc-portal {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--slate);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .sc-portal:hover {
+      background: rgba(255, 255, 255, 0.07);
+      color: white;
+      border-color: rgba(148, 163, 184, 0.3)
+    }
+
+    .portal-arrow {
+      transition: transform 0.2s
+    }
+
+    .sc-portal:hover .portal-arrow {
+      transform: translateX(4px)
+    }
+
+    .sc-result {
+      margin-top: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .sc-result.show {
+      display: block;
+      animation: chipPop 0.3s ease both
+    }
+
+    .sc-result-head {
+      padding: 10px 14px;
+      background: rgba(37, 99, 235, 0.1);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sc-result-head h4 {
+      font-size: 12px;
+      font-weight: 700;
+      color: #93c5fd
+    }
+
+    .sc-result-head p {
+      font-size: 10px;
+      color: var(--slate);
+      margin-top: 1px
+    }
+
+    .sc-result-list {
+      max-height: 180px;
+      overflow-y: auto
+    }
+
+    .sc-result-item {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sc-result-item:last-child {
+      border-bottom: none
+    }
+
+    .sc-result-item:hover {
+      background: rgba(255, 255, 255, 0.04)
+    }
+
+    .sc-ri-plate {
+      font-size: 12px;
+      font-weight: 700;
+      color: white
+    }
+
+    .sc-ri-name {
+      font-size: 10px;
+      color: var(--slate);
+      margin-top: 1px
+    }
+
+    .sc-badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700
+    }
+
+    .sc-badge-paid {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7
+    }
+
+    .sc-badge-unpaid {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5
+    }
+
+    .sc-err {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .sc-err.show {
+      display: flex;
+      align-items: center;
+      gap: 7px
+    }
+
+    /* ── TICKER BAND ── */
+    .ticker {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.015);
+      padding: 14px 0;
+      overflow: hidden;
+      -webkit-mask: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+      mask: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 64px;
+      white-space: nowrap;
+      animation: ticker 24s linear infinite;
+      width: max-content;
+    }
+
+    @keyframes ticker {
+      from {
+        transform: translateX(0)
+      }
+
+      to {
+        transform: translateX(-50%)
+      }
+    }
+
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate);
+      letter-spacing: 0.3px;
+    }
+
+    .ticker-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--blue2)
+    }
+
+    /* ── SECTION BASE ── */
+    .section {
+      position: relative;
+      z-index: 1;
+      padding: 96px clamp(20px, 5vw, 64px)
+    }
+
+    .section-max {
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #93c5fd;
+      margin-bottom: 14px;
+    }
+
+    .eyebrow::before {
+      content: '';
+      width: 20px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--blue), transparent);
+      border-radius: 1px
+    }
+
+    .sec-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(32px, 5vw, 54px);
+      font-weight: 800;
+      color: white;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .sec-sub {
+      font-size: 16px;
+      color: var(--slate);
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: 56px
+    }
+
+    /* ── TIMELINE (How It Works, editorial) ── */
+    .timeline {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 31px;
+      top: 12px;
+      bottom: 12px;
+      width: 1px;
+      background: linear-gradient(180deg, rgba(148,163,184,0.3), rgba(148,163,184,0.06));
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: 32px;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+
+    .timeline-marker {
+      position: relative;
+      z-index: 1;
+    }
+
+    .timeline-body {
+      max-width: 640px;
+    }
+
+    .timeline-body .step-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      margin-bottom: 16px;
+    }
+
+    .timeline-body .step-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .timeline-body .step-desc {
+      font-size: 14px;
+      color: var(--slate);
+      line-height: 1.75;
+    }
+
+    @media(max-width: 640px) {
+      .timeline-item { grid-template-columns: 40px 1fr; gap: 18px; }
+      .timeline::before { left: 19px; }
+      .timeline-marker .ghost-numeral { font-size: 36px !important; }
+    }
+
+    /* ── HOW IT WORKS ── */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      position: relative
+    }
+
+    .steps-grid::before {
+      content: '';
+      position: absolute;
+      top: 40px;
+      left: calc(16.66% + 16px);
+      right: calc(16.66% + 16px);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--blue2), transparent);
+      z-index: 0;
+    }
+
+    .step-card {
+      position: relative;
+      z-index: 1;
+      background: rgba(7, 13, 26, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 28px;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      opacity: 0;
+      transform: translateY(32px);
+    }
+
+    .step-card.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .step-card:hover {
+      border-color: rgba(59, 130, 246, 0.3);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(2, 8, 23, 0.5)
+    }
+
+    .step-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.1));
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #93c5fd;
+      margin-bottom: 20px;
+    }
+
+    .step-icon-wrap {
+      font-size: 28px;
+      margin-bottom: 14px
+    }
+
+    .step-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 8px
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.65
+    }
+
+    /* ── ROLES ── */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px
+    }
+
+    .role-card {
+      background: rgba(7, 13, 26, 0.7);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px 28px;
+      backdrop-filter: blur(12px);
+      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(36px);
+    }
+
+    .role-card.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .role-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: 24px 24px 0 0;
+    }
+
+    .role-card.admin::before {
+      background: linear-gradient(90deg, #1d4ed8, #3b82f6, transparent)
+    }
+
+    .role-card.officer::before {
+      background: linear-gradient(90deg, #d97706, #f59e0b, transparent)
+    }
+
+    .role-card.driver::before {
+      background: linear-gradient(90deg, #059669, #10b981, transparent)
+    }
+
+    .role-card::after {
+      content: '';
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      top: -60px;
+      right: -60px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .role-card.admin::after {
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.1), transparent 70%)
+    }
+
+    .role-card.officer::after {
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.1), transparent 70%)
+    }
+
+    .role-card.driver::after {
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 70%)
+    }
+
+    .role-card:hover::after {
+      opacity: 1
+    }
+
+    .role-card:hover {
+      border-color: rgba(148, 163, 184, 0.25);
+      transform: translateY(-6px);
+      box-shadow: 0 24px 56px rgba(2, 8, 23, 0.55)
+    }
+
+    .role-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .role-icon-wrap.admin {
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.2)
+    }
+
+    .role-icon-wrap.officer {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.2)
+    }
+
+    .role-icon-wrap.driver {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.2)
+    }
+
+    .role-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px
+    }
+
+    .role-access {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .role-access.a {
+      color: #93c5fd
+    }
+
+    .role-access.o {
+      color: #fcd34d
+    }
+
+    .role-access.d {
+      color: #6ee7b7
+    }
+
+    .role-desc {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.65;
+      margin-bottom: 20px
+    }
+
+    .role-list {
+      list-style: none
+    }
+
+    .role-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--slate2);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .role-list li .chk {
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px
+    }
+
+    .admin .chk {
+      color: #60a5fa
+    }
+
+    .officer .chk {
+      color: #fcd34d
+    }
+
+    .driver .chk {
+      color: #34d399
+    }
+
+    /* ── FEATURES: EDITORIAL HEADER + BENTO GRID ── */
+    .feat-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 32px;
+      align-items: end;
+      margin-bottom: 48px;
+    }
+
+    .feat-header-label {
+      line-height: 1;
+    }
+
+    .feat-header-sub {
+      font-size: 15px;
+      color: var(--slate);
+      max-width: 480px;
+      margin-top: 14px;
+      line-height: 1.7;
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: minmax(160px, auto);
+      gap: 16px;
+    }
+
+    .bento-grid .feat-card {
+      grid-column: span 2;
+    }
+
+    .bento-grid .feat-card--large {
+      grid-column: span 2;
+      grid-row: span 2;
+      background: linear-gradient(160deg, rgba(37,99,235,0.14), rgba(7,13,26,0.7));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .bento-grid .feat-card--large .feat-icon {
+      width: 52px;
+      height: 52px;
+      font-size: 22px;
+    }
+
+    .bento-grid .feat-card--large .feat-title {
+      font-size: 22px;
+    }
+
+    .bento-grid .feat-card--large .feat-desc {
+      font-size: 14px;
+    }
+
+    .feat-tag {
+      display: inline-flex;
+      margin-top: 16px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: fit-content;
+    }
+
+    @media(max-width: 860px) {
+      .feat-header { grid-template-columns: 1fr; }
+      .feat-header-label { display: none; }
+      .bento-grid { grid-template-columns: repeat(2, 1fr); }
+      .bento-grid .feat-card--large { grid-column: span 2; grid-row: span 1; }
+    }
+
+    @media(max-width: 560px) {
+      .bento-grid { grid-template-columns: 1fr; }
+      .bento-grid .feat-card, .bento-grid .feat-card--large { grid-column: span 1; }
+    }
+
+    /* ── FEATURES GRID (legacy, kept for compatibility) ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .feat-card {
+      background: rgba(7, 13, 26, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 22px;
+      backdrop-filter: blur(10px);
+      transition: all 0.28s;
+      opacity: 0;
+      transform: translateY(24px);
+    }
+
+    .feat-card.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .feat-card:hover {
+      border-color: rgba(148, 163, 184, 0.22);
+      transform: translateY(-3px);
+      background: rgba(7, 13, 26, 0.85)
+    }
+
+    .feat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+
+    .feat-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 6px
+    }
+
+    .feat-desc {
+      font-size: 12px;
+      color: var(--slate);
+      line-height: 1.6
+    }
+
+    /* ── STATS ── */
+    .stats-strip {
+      background: rgba(7, 13, 26, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 48px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stats-strip::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.05), transparent 70%);
+      pointer-events: none;
+    }
+
+    .gov-section {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .gov-section > * {
+      flex: 1 1 320px;
+      background: rgba(7, 13, 26, 0.78);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 24px;
+      padding: 28px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+    }
+
+    .panel-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 14px;
+      line-height: 1.1;
+    }
+
+    .panel-sub {
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--slate);
+      margin: 0;
+    }
+
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .benefit-card {
+      background: rgba(7, 13, 26, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      backdrop-filter: blur(10px);
+      transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .benefit-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(37, 99, 235, 0.24);
+      box-shadow: 0 20px 40px rgba(3, 9, 24, 0.18);
+    }
+
+    .benefit-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    .benefit-card p {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.75;
+      margin: 0;
+    }
+
+    .hotline {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      align-items: center;
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      background: rgba(37, 99, 235, 0.08);
+      border-radius: 18px;
+      padding: 18px 20px;
+    }
+
+    .hotline .num {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.25;
+    }
+
+    .gov-section aside {
+      min-width: 260px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .stat-s {
+      text-align: center;
+      position: relative;
+      z-index: 1
+    }
+
+    .stat-s-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 52px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-s-lbl {
+      font-size: 13px;
+      color: var(--slate);
+      font-weight: 500
+    }
+
+    .stat-s-sub {
+      font-size: 11px;
+      color: var(--slate);
+      margin-top: 2px;
+      opacity: 0.6
+    }
+
+    /* ── CTA ── */
+    .cta-box {
+      background: linear-gradient(135deg, rgba(29, 78, 216, 0.12), rgba(37, 99, 235, 0.06));
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 24px;
+      padding: 64px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.1), transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 800;
+      color: white;
+      margin-bottom: 14px;
+      line-height: 1.1;
+    }
+
+    .cta-sub {
+      font-size: 15px;
+      color: var(--slate);
+      margin-bottom: 36px
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 32px clamp(20px, 5vw, 60px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .footer-brand {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--slate)
+    }
+
+    .footer-meta {
+      font-size: 11px;
+      color: #334155
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px) {
+      .hero {
+        flex-direction: column;
+        min-height: auto;
+        padding-top: 100px
+      }
+
+      .hero-right {
+        flex: auto;
+        width: 100%
+      }
+
+      .roles-grid {
+        grid-template-columns: 1fr
+      }
+
+      .steps-grid {
+        grid-template-columns: 1fr;
+        gap: 12px
+      }
+
+      .steps-grid::before {
+        display: none
+      }
+
+      .stats-strip {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center
+      }
+      /* show mobile nav toggle */
+      .nav-right .nav-pill, .nav-right .nav-cta { display: none }
+      .nav-toggle { display: flex }
+    }
+
+    @media(max-width:600px) {
+      .hero-stats {
+        gap: 20px
+      }
+
+      .stats-strip {
+        grid-template-columns: 1fr 1fr;
+        padding: 32px 24px
+      }
+
+      .cta-box {
+        padding: 40px 24px
+      }
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    /* ── MODULES MODAL ── */
+    .modules-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modules-modal.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modules-content {
+      background: linear-gradient(135deg, rgba(7, 13, 26, 0.95) 0%, rgba(10, 20, 40, 0.95) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 24px;
+      padding: 48px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modules-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .modules-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: white;
+      margin: 0;
+    }
+
+    .modules-close {
+      font-size: 28px;
+      background: none;
+      border: none;
+      color: var(--slate);
+      cursor: pointer;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .modules-close:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: white;
+    }
+
+    .modules-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .module-item {
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      transition: all 0.2s;
+    }
+
+    .module-item:hover {
+      background: rgba(37, 99, 235, 0.12);
+      border-color: rgba(37, 99, 235, 0.3);
+      transform: translateX(4px);
+    }
+
+    .module-icon {
+      font-size: 24px;
+      min-width: 32px;
+      text-align: center;
+    }
+
+    .module-text {
+      flex: 1;
+    }
+
+    .module-name {
+      font-weight: 700;
+      color: white;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .module-desc {
+      font-size: 12px;
+      color: var(--slate);
+      line-height: 1.5;
+    }
+
+    .stat-item.clickable {
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .stat-item.clickable:hover {
+      transform: translateY(-4px);
+      opacity: 0.9;
+    }
+
+    @media(max-width:600px) {
+      .modules-content {
+        padding: 32px 24px;
+      }
+
+      .modules-title {
+        font-size: 24px;
+      }
+    }
+
+    /* ── ACTIVITY / VIOLATIONS TABLE (shared) ── */
+    .activity-table-wrap {
+      background: rgba(7, 13, 26, 0.7);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 8px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 48px rgba(2, 8, 23, 0.4);
+    }
+
+    .activity-table-scroll {
+      overflow-x: auto;
+    }
+
+    .activity-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 640px;
+    }
+
+    .activity-table thead th {
+      text-align: left;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-table tbody td {
+      padding: 16px 20px;
+      font-size: 13px;
+      color: var(--slate2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .activity-table tbody tr {
+      transition: background 0.18s;
+    }
+
+    .activity-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .activity-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .activity-table .ticket-id {
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .activity-table .plate {
+      font-weight: 700;
+      color: white;
+    }
+
+    .activity-table .fine {
+      font-weight: 700;
+      color: white;
+    }
+
+    .sc-badge-disputed {
+      background: rgba(251, 191, 36, 0.12);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      color: var(--gold);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .activity-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      padding: 14px 0 6px;
+    }
+
+    /* ── SKELETON LOADING STATE ── */
+    .skeleton-row td {
+      padding: 18px 20px;
+    }
+
+    .skeleton-bar {
+      height: 14px;
+      border-radius: 7px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 37%, rgba(255,255,255,0.04) 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.6s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 100% 50% }
+      100% { background-position: 0 50% }
+    }
+
+    /* ── EMPTY / ERROR STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+      opacity: 0.7;
+    }
+
+    .empty-state-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--slate2);
+      margin-bottom: 4px;
+    }
+
+    .empty-state-sub {
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 340px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── VIOLATIONS SEARCH & FILTER ── */
+    .viol-search-wrap {
+      margin-bottom: 28px;
+    }
+
+    .viol-search {
+      max-width: 520px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .viol-search input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: white;
+      font-size: 13px;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .viol-search input::placeholder {
+      color: var(--muted);
+    }
+
+    .viol-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .viol-pill {
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--slate);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+      transition: all 0.18s;
+    }
+
+    .viol-pill:hover {
+      color: white;
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .viol-pill.active {
+      background: rgba(37, 99, 235, 0.18);
+      border-color: rgba(59, 130, 246, 0.5);
+      color: #93c5fd;
+    }
+
+    .viol-cat-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      background: rgba(37, 99, 235, 0.1);
+      color: #93c5fd;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .viol-name {
+      color: white;
+      font-weight: 700;
+      display: block;
+    }
+
+    .viol-desc {
+      color: var(--muted);
+      font-size: 11px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ── ABOUT ── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      align-items: center;
+    }
+
+    .about-media {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 60px rgba(2, 8, 23, 0.45);
+    }
+
+    .about-media-frame {
+      overflow: hidden;
+      background: #000;
+    }
+
+    .about-media img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/11;
+      object-fit: cover;
+      object-position: center 35%;
+    }
+
+    .about-media-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 18px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      background: rgba(7,13,26,0.9);
+    }
+
+    .about-media-caption .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .about-media-est {
+      color: var(--gold);
+      font-weight: 800;
+    }
+
+    .about-badge {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      border-radius: 16px;
+      padding: 16px 22px;
+      box-shadow: 0 16px 40px rgba(37, 99, 235, 0.35);
+      transform: rotate(-2deg);
+    }
+
+    .about-quote {
+      position: relative;
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 22px;
+      line-height: 1.5;
+      color: #dbe4f3;
+      padding-left: 28px;
+      border-left: 2px solid var(--gold);
+      margin: 0 0 24px;
+    }
+
+    .about-quote em {
+      color: var(--gold);
+      font-style: italic;
+    }
+
+    .about-quote-mark {
+      font-family: var(--font-serif);
+      font-size: 44px;
+      color: var(--gold);
+      opacity: 0.6;
+      position: absolute;
+      left: -6px;
+      top: -18px;
+      line-height: 1;
+    }
+
+    .about-badge-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      line-height: 1;
+    }
+
+    .about-badge-lbl {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-top: 4px;
+    }
+
+    .about-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .about-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--slate2);
+    }
+
+    .about-pill .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    /* ── ANNOUNCEMENTS ── */
+    .announce-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 20px;
+    }
+
+    .announce-card.featured {
+      grid-row: span 2;
+      padding: 32px;
+    }
+
+    .announce-card.featured .announce-title {
+      font-size: 22px;
+    }
+
+    .announce-card.featured .announce-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 21px;
+    }
+
+    @media(max-width: 720px) {
+      .announce-grid { grid-template-columns: 1fr; }
+      .announce-card.featured { grid-row: span 1; }
+    }
+
+    .announce-card {
+      background: rgba(7, 13, 26, 0.65);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px;
+      backdrop-filter: blur(10px);
+      transition: all 0.28s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .announce-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(148, 163, 184, 0.24);
+      box-shadow: 0 20px 44px rgba(2, 8, 23, 0.4);
+    }
+
+    .announce-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .announce-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .announce-badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .announce-badge.road { background: rgba(251, 191, 36, 0.12); border: 1px solid rgba(251, 191, 36, 0.3); color: var(--gold); }
+    .announce-badge.enforce { background: rgba(37, 99, 235, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); color: #93c5fd; }
+    .announce-badge.payment { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+    .announce-badge.community { background: rgba(236, 72, 153, 0.12); border: 1px solid rgba(236, 72, 153, 0.3); color: #f9a8d4; }
+
+    .announce-date {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .announce-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .announce-desc {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.6;
+      flex: 1;
+      margin-bottom: 16px;
+    }
+
+    .announce-link {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold);
+      text-decoration: none;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .announce-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ── FAQ ── */
+    .faq-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 56px;
+      align-items: start;
+    }
+
+    .faq-side {
+      position: sticky;
+      top: 120px;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    @media(max-width: 860px) {
+      .faq-layout { grid-template-columns: 1fr; gap: 24px; }
+      .faq-side { position: static; }
+      .faq-side .ghost-numeral { display: none !important; }
+    }
+
+    .faq-item {
+      background: rgba(7, 13, 26, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .faq-item.open {
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+
+    .faq-q {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 22px 26px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .faq-icon {
+      flex-shrink: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--slate);
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .faq-item.open .faq-icon {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--gold);
+    }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .faq-item.open .faq-a {
+      max-height: 240px;
+    }
+
+    .faq-a p {
+      padding: 0 26px 24px;
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.75;
+    }
+
+    /* ── CONTACT ── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+
+    .contact-info-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .contact-info-icon {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      border-radius: 10px;
+      background: rgba(37, 99, 235, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+    }
+
+    .contact-info-lbl {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .contact-info-val {
+      font-size: 13px;
+      color: var(--slate);
+      line-height: 1.6;
+    }
+
+    .contact-img {
+      margin-top: 8px;
+      width: 100%;
+      max-width: 320px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      object-fit: cover;
+    }
+
+    .contact-form {
+      background: rgba(7, 13, 26, 0.8);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .contact-form-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .cf-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--slate2);
+      margin: 14px 0 6px;
+    }
+
+    .contact-form textarea.sc-input {
+      resize: vertical;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .contact-form .sc-search-btn {
+      margin-top: 22px;
+    }
+
+    .cf-note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+      min-height: 14px;
+      font-weight: 600;
+    }
+
+    .cf-note.success { color: #6ee7b7 }
+    .cf-note.error { color: #fca5a5 }
+
+    .sc-input.invalid {
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.05);
+    }
+
+    /* ── FOOTER (expanded) ── */
+    .site-footer {
+      display: block;
+      padding: 56px clamp(20px, 5vw, 60px) 0;
+    }
+
+    .footer-top {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 40px;
+      padding-bottom: 40px;
+    }
+
+    .footer-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-col-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .footer-col a {
+      font-size: 13px;
+      color: var(--slate);
+      text-decoration: none;
+    }
+
+    .footer-col a:hover {
+      color: white;
+    }
+
+    .footer-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-top: 14px;
+      max-width: 340px;
+    }
+
+    .footer-bottom {
+      max-width: 1200px;
+      margin: 0 auto;
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    @media(max-width: 900px) {
+      .about-grid { grid-template-columns: 1fr; gap: 32px; }
+      .contact-grid { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr; }
+    }
+  
+
+    /* ── PROFESSIONAL MOTION SYSTEM (2026-08-04) ── */
+    :root {
+      --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --motion-fast: 220ms;
+      --motion-base: 560ms;
+      --motion-slow: 760ms;
+    }
+
+    /* Existing reveal targets gain a softer fade + move + scale treatment. */
+    .reveal,
+    .step-card,
+    .role-card,
+    .feat-card,
+    .motion-item {
+      --motion-x: 0px;
+      --motion-y: 26px;
+      --motion-scale: 0.985;
+      --motion-rotate: 0deg;
+      --motion-delay: 0ms;
+      opacity: 0;
+      filter: blur(3px);
+      transform:
+        translate3d(var(--motion-x), var(--motion-y), 0)
+        scale(var(--motion-scale))
+        rotate(var(--motion-rotate));
+      transition:
+        opacity var(--motion-base) var(--motion-ease) var(--motion-delay),
+        transform var(--motion-base) var(--motion-ease) var(--motion-delay),
+        filter var(--motion-base) var(--motion-ease) var(--motion-delay),
+        border-color var(--motion-fast) ease,
+        box-shadow 320ms ease,
+        background-color var(--motion-fast) ease;
+      will-change: opacity, transform, filter;
+    }
+
+    .reveal.visible,
+    .step-card.visible,
+    .role-card.visible,
+    .feat-card.visible,
+    .motion-item.motion-in {
+      opacity: 1;
+      filter: blur(0);
+      transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+      will-change: auto;
+    }
+
+    .motion-from-left {
+      --motion-x: -30px;
+      --motion-y: 4px;
+      --motion-rotate: -0.35deg;
+    }
+
+    .motion-from-right {
+      --motion-x: 30px;
+      --motion-y: 4px;
+      --motion-rotate: 0.35deg;
+    }
+
+    .motion-scale-in {
+      --motion-y: 14px;
+      --motion-scale: 0.955;
+    }
+
+    .motion-soft-rotate {
+      --motion-y: 22px;
+      --motion-scale: 0.975;
+      --motion-rotate: 0.55deg;
+    }
+
+    /* Professional micro-interactions: restrained lift and scale only. */
+    .step-card,
+    .role-card,
+    .feat-card,
+    .benefit-card,
+    .module-item,
+    .faq-item,
+    .contact-info-row,
+    .stat-item,
+    .search-card {
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+    }
+
+    .feat-icon,
+    .role-icon-wrap,
+    .step-icon-wrap,
+    .module-icon,
+    .contact-info-icon,
+    .sc-input-icon,
+    .btn-primary svg,
+    .btn-ghost svg,
+    .nav-cta svg,
+    .sc-search-btn svg {
+      transition:
+        transform 320ms var(--motion-ease),
+        color var(--motion-fast) ease,
+        stroke var(--motion-fast) ease;
+      transform-origin: center;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .step-card.visible:hover,
+      .role-card.visible:hover,
+      .feat-card.visible:hover,
+      .benefit-card.motion-in:hover {
+        transform: translate3d(0, -6px, 0) scale(1.012) rotate(-0.12deg);
+      }
+
+      .step-card.visible:hover .step-icon-wrap,
+      .role-card.visible:hover .role-icon-wrap,
+      .feat-card.visible:hover .feat-icon,
+      .module-item:hover .module-icon,
+      .contact-info-row:hover .contact-info-icon {
+        transform: translateY(-1px) scale(1.06) rotate(2.5deg);
+      }
+
+      .btn-primary:hover svg,
+      .nav-cta:hover svg,
+      .sc-search-btn:hover svg {
+        transform: translateX(2px) scale(1.04);
+      }
+
+      .btn-ghost:hover svg {
+        transform: translateX(1px);
+      }
+    }
+
+    .btn-primary,
+    .btn-ghost,
+    .nav-cta,
+    .nav-pill,
+    .sc-search-btn,
+    .sc-tab,
+    .viol-pill,
+    .modules-close,
+    .faq-q {
+      transition:
+        transform var(--motion-fast) var(--motion-ease),
+        box-shadow 300ms ease,
+        background-color var(--motion-fast) ease,
+        border-color var(--motion-fast) ease,
+        color var(--motion-fast) ease;
+    }
+
+    .btn-primary:active,
+    .btn-ghost:active,
+    .nav-cta:active,
+    .sc-search-btn:active,
+    .sc-tab:active,
+    .viol-pill:active,
+    .modules-close:active,
+    .faq-q:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    /* Hero lookup card gets a subtle pointer-following perspective effect. */
+    .search-card.motion-tilt {
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      --tilt-lift: 0px;
+      transform:
+        perspective(1100px)
+        rotateX(var(--tilt-x))
+        rotateY(var(--tilt-y))
+        translate3d(0, var(--tilt-lift), 0);
+      transition:
+        transform 180ms ease-out,
+        box-shadow 360ms var(--motion-ease),
+        border-color var(--motion-fast) ease;
+    }
+
+    .search-card.motion-tilt:hover {
+      --tilt-lift: -2px;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.07),
+        0 34px 82px rgba(3, 9, 24, 0.54),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    /* Modal content enters with scale and a tiny rotation for depth. */
+    .modules-modal.active .modules-content {
+      animation: motionModalIn 420ms var(--motion-ease) both;
+    }
+
+    @keyframes motionModalIn {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.97) rotate(0.2deg);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+    }
+
+    #nav {
+      animation: motionNavIn 520ms var(--motion-ease) both;
+    }
+
+    @keyframes motionNavIn {
+      from {
+        opacity: 0;
+        transform: translateY(-14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .motion-spin {
+      animation: motionSpin 900ms linear infinite;
+    }
+
+    @keyframes motionSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 760px) {
+      .motion-from-left,
+      .motion-from-right {
+        --motion-x: 0px;
+        --motion-y: 22px;
+        --motion-rotate: 0deg;
+      }
+
+      .search-card.motion-tilt {
+        transform: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal,
+      .step-card,
+      .role-card,
+      .feat-card,
+      .motion-item,
+      .search-card.motion-tilt,
+      .modules-modal.active .modules-content,
+      #nav {
+        opacity: 1 !important;
+        filter: none !important;
+        transform: none !important;
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+  </style>
+  <script src="../app-config.js"></script>
+</head>
+
+<body>
+
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <canvas id="bg" aria-hidden="true"></canvas>
+  <!-- Page loader -->
+  <div id="pageLoader">
+    <div class="loader-box">
+      <div class="loader-spinner" aria-hidden="true"></div>
+      <div style="color:var(--muted);font-weight:600">Loading Calape Ticket Portal…</div>
+    </div>
+  </div>
+
+  <!-- ── NAV ── -->
+  <nav id="nav">
+    <a class="nav-brand" href="landing.html">
+      <div class="nav-logo">
+        <img src="images/calape-logo.webp" alt="Logo"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <span class="nav-logo-fallback"
+          style="display:none;width:100%;height:100%;align-items:center;justify-content:center">M</span>
+      </div>
+      <div>
+        <div class="nav-text-main">Calape Traffic Enforcement</div>
+        <div class="nav-text-sub">Public Violation Lookup &amp; Records</div>
+      </div>
+    </a>
+    <div class="nav-right">
+      <button class="nav-toggle" aria-expanded="false" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <a href="landing.html" class="nav-pill">Home</a>
+      <a href="#features" class="nav-pill">Services</a>
+      <a href="#violations" class="nav-pill">Violations</a>
+      <a href="#how-it-works" class="nav-pill">How It Works</a>
+      <a href="#about" class="nav-pill">About</a>
+      <a href="#faq" class="nav-pill">FAQ</a>
+      <div class="nav-hotline">
+        <span>Hotline</span>
+        <strong>0998-598-6408</strong>
+      </div>
+      <a href="#search-card" class="nav-pill" style="border:1px solid var(--border2)">Ticket Lookup</a>
+      <a href="login.html" class="nav-cta">Officer Login</a>
+    </div>
+  </nav>
+  <div class="nav-mobile-menu" id="navMobileMenu" aria-hidden="true">
+    <a href="landing.html">Home</a>
+    <a href="#features">Services</a>
+    <a href="#violations">Violations</a>
+    <a href="#how-it-works">How It Works</a>
+    <a href="#roles">Workflow</a>
+    <a href="#about">About</a>
+    <a href="#faq">FAQ</a>
+    <a href="#search-card">Ticket Lookup</a>
+    <a href="#contact">Contact</a>
+    <a href="login.html">Officer Login</a>
+  </div>
+
+  <!-- ── HERO ── -->
+  <section class="hero" id="main-content" style="max-width:1280px;margin:0 auto">
+    <div class="hero-left">
+      <div class="hero-chip"><span class="chip-dot"></span> Municipality of Calape, Bohol</div>
+      <h1 class="hero-title">
+        <span class="line1">Traffic Violation</span>
+        <span class="line2">Ticketing &amp;</span>
+        <span class="line3">Management System</span>
+      </h1>
+      <p class="hero-sub">
+        A modern digital platform for the Calape Municipal Police Station that supports citation issuance, traffic-record management, public ticket lookup, and accountable municipal reporting.
+      </p>
+      <div class="hero-actions">
+        <a href="#search-card" class="btn-primary">Check My Ticket →</a>
+        <a href="#how-it-works" class="btn-ghost">How It Works</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item clickable" id="rolesStatBtn">
+          <div class="stat-num" data-count="3">0</div>
+          <div class="stat-lbl">Official Roles</div>
+        </div>
+        <div class="stat-item clickable" id="modulesStatBtn">
+          <div class="stat-num" data-count="10">0</div>
+          <div class="stat-lbl">Integrated Features</div>
+        </div>
+        <div class="stat-item clickable" id="auditActionsStatBtn">
+          <div class="stat-num" data-count="20">0</div>
+          <div class="stat-lbl">Auditable Actions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEARCH CARD -->
+    <div class="hero-right" id="search-card">
+      <div class="search-card">
+        <div class="sc-label">Quick Lookup</div>
+        <h3 class="sc-title">Check Violation Status</h3>
+        <p class="sc-desc">Enter your ticket number or plate number to instantly view violation details and payment status.</p>
+
+        <div class="sc-tabs">
+          <div class="sc-tab active" id="tab-plate" onclick="switchTab('plate')"><i data-lucide="car-front"></i> Plate Number</div>
+          <div class="sc-tab" id="tab-ticket" onclick="switchTab('ticket')"><i data-lucide="ticket"></i> Ticket Number</div>
+        </div>
+
+        <div class="sc-input-wrap">
+          <span class="sc-input-icon"><i data-lucide="search"></i></span>
+          <input class="sc-input" type="text" id="searchInput" placeholder="e.g., ABC 1234" autocomplete="off"
+            oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
+        </div>
+
+        <button class="sc-search-btn" onclick="doSearch()">
+          <i data-lucide="search"></i> Look Up Ticket
+        </button>
+
+        <div class="sc-err" id="scErr" role="alert" aria-live="assertive"><i data-lucide="triangle-alert"></i> <span id="scErrText">No records found.</span></div>
+        <div class="sc-result" id="scResult">
+          <div class="sc-result-head">
+            <h4 id="scResultTitle">Results</h4>
+            <p id="scResultSub">Click to view full details</p>
+          </div>
+          <div class="sc-result-list" id="scResultList"></div>
+        </div>
+
+        <div class="sc-divider">or</div>
+        <a href="login.html" class="sc-portal"><i data-lucide="shield-user"></i> Apprehending Officer &amp; Admin Portal <span
+            class="portal-arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TICKER ── -->
+  <div class="ticker">
+    <div class="ticker-track" id="tickerTrack">
+      <span class="ticker-item"><span class="ticker-dot"></span> Role-Based Access Control</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Repeat Offender Tracking</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Audit Trail &amp; Accountability</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Real-Time Ticket Issuance</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Dispute Management</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Analytics &amp; Reports</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Payment Tracking</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Photo Evidence Upload</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Role-Based Access Control</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Repeat Offender Tracking</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Audit Trail &amp; Accountability</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Real-Time Ticket Issuance</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Dispute Management</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Analytics &amp; Reports</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Payment Tracking</span>
+      <span class="ticker-item"><span class="ticker-dot"></span> Photo Evidence Upload</span>
+    </div>
+  </div>
+
+
+  <!-- ── LIVE DATABASE STATS ─────────────────────── -->
+  <section class="section">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:40px">
+        <span class="eyebrow">Live Enforcement</span>
+        <h2 class="sec-title">Public Ticketing & Compliance Metrics</h2>
+        <p class="sec-sub">Real-time enforcement statistics from the Calape traffic database. Live counts for tickets, payments, and registered vehicles.</p>
+      </div>
+      <div id="liveStatsBar" style="
+        background:rgba(7,13,26,0.7);
+        border:1px solid rgba(148,163,184,0.12);
+        border-radius:20px;padding:36px 48px;
+        display:grid;grid-template-columns:repeat(5,1fr);
+        gap:24px;backdrop-filter:blur(12px);
+        box-shadow:0 16px 48px rgba(2,8,23,0.4);
+        position:relative;overflow:hidden;">
+        <!-- glow -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+          width:400px;height:200px;border-radius:50%;pointer-events:none;
+          background:radial-gradient(circle,rgba(37,99,235,0.06),transparent 70%)"></div>
+        <div style="text-align:center;position:relative;z-index:1">
+          <div id="ls-total"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;color:white;line-height:1">—
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500">Total Tickets</div>
+        </div>
+        <div style="text-align:center;position:relative;z-index:1">
+          <div id="ls-paid"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;color:#34d399;line-height:1">
+            —</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500">Paid Tickets</div>
+        </div>
+        <div style="text-align:center;position:relative;z-index:1">
+          <div id="ls-unpaid"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;color:#f87171;line-height:1">
+            —</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500">Unpaid Tickets</div>
+        </div>
+        <div style="text-align:center;position:relative;z-index:1">
+          <div id="ls-today"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;color:#fcd34d;line-height:1">
+            —</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500">Today’s Tickets</div>
+        </div>
+        <div style="text-align:center;position:relative;z-index:1">
+          <div id="ls-vehicles"
+            style="font-family:'Barlow Condensed',sans-serif;font-size:44px;font-weight:800;color:#93c5fd;line-height:1">
+            —</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px;font-weight:500">Registered Vehicles</div>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:11px;color:#94a3b8;margin-top:14px">
+        ● Live data from the enforcement database · updates automatically when the page loads
+      </p>
+    </div>
+  </section>
+  <!-- ── WHY DIGITAL vs MANUAL ─────────────────── -->
+  <section class="section">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:40px">
+        <span class="eyebrow">System Advantage</span>
+        <h2 class="sec-title">Manual Process vs Digital Enforcement</h2>
+        <p class="sec-sub">Compare the old way with the new standard for Calape traffic enforcement. The difference is speed, transparency, and accountability.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <!-- Manual (red) -->
+        <div
+          style="background:rgba(127,29,29,0.12);border:1px solid rgba(239,68,68,0.18);border-radius:20px;padding:28px 28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <div
+              style="width:40px;height:40px;border-radius:10px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">
+              <i data-lucide="clipboard-list"></i></div>
+            <div style="font-size:16px;font-weight:700;color:#fca5a5">Manual Process</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#fca5a5"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="x"></i></span> Paper-based tickets that can be lost or damaged</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#fca5a5"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="x"></i></span> Re-enter data for every apprehension</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#fca5a5"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="x"></i></span> No central history for repeat offenders</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#fca5a5"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="x"></i></span> Audit trails are manual and incomplete</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#fca5a5"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="x"></i></span> Reporting takes hours of manual work</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#fca5a5"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="x"></i></span> Disputes are recorded informally</div>
+          </div>
+        </div>
+        <!-- Digital (green) -->
+        <div
+          style="background:rgba(5,46,22,0.2);border:1px solid rgba(16,185,129,0.25);border-radius:20px;padding:28px 28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <div
+              style="width:40px;height:40px;border-radius:10px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;font-size:18px">
+              <i data-lucide="monitor-check"></i></div>
+            <div style="font-size:16px;font-weight:700;color:#6ee7b7">MTVTMS — Digital Enforcement</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#6ee7b7"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="check"></i></span> Digital tickets with unique identifiers and instant lookup</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#6ee7b7"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="check"></i></span> Search by plate or ticket and view history immediately</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#6ee7b7"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="check"></i></span> Repeat-offender detection and automated record linking</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#6ee7b7"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="check"></i></span> Audit trail for every action with timestamp and user details</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#6ee7b7"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="check"></i></span> Built-in reporting for daily, monthly, and incident summaries</div>
+            <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:#6ee7b7"><span
+                style="flex-shrink:0;margin-top:2px"><i data-lucide="check"></i></span> Formal dispute workflow with documented status updates</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ── -->
+  <section class="section" id="how-it-works">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:64px;max-width:640px">
+        <span class="eyebrow">Workflow</span>
+        <h2 class="sec-title" style="text-align:left;margin:0 0 14px">From Violation to Resolution</h2>
+        <p class="sec-sub" style="text-align:left;margin:0">From roadside apprehension to digital enforcement record: fast, secure, and fully accountable for both officers and citizens.</p>
+      </div>
+      <div class="timeline">
+        <div class="timeline-item step-card">
+          <div class="timeline-marker">
+            <span class="ghost-numeral" style="font-size:64px">01</span>
+          </div>
+          <div class="timeline-body">
+            <div class="step-icon-wrap"><i data-lucide="search"></i></div>
+            <div class="step-title">Search Violator Record</div>
+            <p class="step-desc">Officer searches by plate number, owner name, or license number. System checks for
+              existing records and detects repeat offenders automatically.</p>
+          </div>
+        </div>
+        <div class="timeline-item step-card">
+          <div class="timeline-marker">
+            <span class="ghost-numeral" style="font-size:64px">02</span>
+          </div>
+          <div class="timeline-body">
+            <div class="step-icon-wrap"><i data-lucide="file-pen-line"></i></div>
+            <div class="step-title">Issue Digital Ticket</div>
+            <p class="step-desc">If first-time, officer encodes details. If repeat offender, system pre-fills from
+              existing profile. Select violation type, enter location, upload photo evidence.</p>
+          </div>
+        </div>
+        <div class="timeline-item step-card">
+          <div class="timeline-marker">
+            <span class="ghost-numeral" style="font-size:64px">03</span>
+          </div>
+          <div class="timeline-body">
+            <div class="step-icon-wrap"><i data-lucide="circle-check-big"></i></div>
+            <div class="step-title">Record &amp; Notify</div>
+            <p class="step-desc">Ticket is saved instantly. Admin is notified. Audit log records the action. Vehicle owner
+              can check their violation online at any time via public portal.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ROLES ── -->
+  <section class="section" id="roles" style="padding-top:20px">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:56px">
+        <span class="eyebrow">Access Control</span>
+        <h2 class="sec-title">Two Staff Roles. Clear Public Access.</h2>
+        <p class="sec-sub">Administrators and apprehending officers use authenticated workspaces, while citizens can verify traffic citations through the public portal without an account.</p>
+      </div>
+      <div class="roles-grid">
+        <div class="role-card admin">
+          <div class="role-icon-wrap admin"><i data-lucide="shield-check"></i></div>
+          <div class="role-name">Administrator</div>
+          <div class="role-access a"><i data-lucide="lock-keyhole"></i> Requires login · Full system access</div>
+          <p class="role-desc">Complete control over the system. Manages users, configures violations, generates
+            reports, and monitors all activity through the audit trail.</p>
+          <ul class="role-list">
+            <li><span class="chk"><i data-lucide="check"></i></span> Manage Apprehending Officer accounts</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Configure violations &amp; penalty amounts</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> View all tickets, payments, disputes</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Full audit trail access &amp; export</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Reports, analytics &amp; dashboards</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> System-wide settings configuration</li>
+          </ul>
+        </div>
+        <div class="role-card officer">
+          <div class="role-icon-wrap officer"><i data-lucide="badge"></i></div>
+          <div class="role-name">Apprehending Officer</div>
+          <div class="role-access o"><i data-lucide="lock-keyhole"></i> Requires login · Field access</div>
+          <p class="role-desc">Issues violation tickets in the field in real time. Requires active WiFi or mobile data
+            connection to search records and submit tickets.</p>
+          <ul class="role-list">
+            <li><span class="chk"><i data-lucide="check"></i></span> Search violators: plate, name, license</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Issue violation tickets with evidence</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Auto-detect 2nd &amp; 3rd-time offenders</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Upload photo evidence from mobile</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> View own issued ticket history</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Receive system notifications</li>
+          </ul>
+        </div>
+        <div class="role-card driver">
+          <div class="role-icon-wrap driver"><i data-lucide="car-front"></i></div>
+          <div class="role-name">Citizen / Vehicle Owner</div>
+          <div class="role-access d"><i data-lucide="globe-2"></i> No login required · Public access</div>
+          <p class="role-desc">Vehicle owners can check their violation records anytime using this public portal. No
+            account or registration needed.</p>
+          <ul class="role-list">
+            <li><span class="chk"><i data-lucide="check"></i></span> Search by plate or ticket number</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> View matched citations, violations, and amounts due</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Check payment status (paid / unpaid)</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> View citation date, location, and payment status</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> File a dispute against a ticket</li>
+            <li><span class="chk"><i data-lucide="check"></i></span> Submit a concern for administrator review</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FEATURES ── -->
+  <section id="features" class="section" style="padding-top:20px">
+    <div class="section-max">
+      <div class="feat-header reveal">
+        <div class="feat-header-label">
+          <span class="ghost-numeral" style="font-size:72px">02</span>
+        </div>
+        <div class="feat-header-copy">
+          <span class="eyebrow">Key Features</span>
+          <h2 class="sec-title" style="text-align:left;margin:0 0 14px">Built around how officers<br>actually work.</h2>
+          <p class="feat-header-sub">Ten integrated modules, but they all trace back to one idea: nothing should be re-typed twice, and nothing should slip through unrecorded.</p>
+        </div>
+      </div>
+      <div class="bento-grid">
+        <div class="feat-card feat-card--large">
+          <div class="feat-icon" style="background:rgba(37,99,235,0.12)"><i data-lucide="search"></i></div>
+          <div class="feat-title">Repeat Offender Detection</div>
+          <p class="feat-desc">Search by plate, name, or license number the moment a ticket is opened. New violations auto-link to the existing profile — no duplicate records, no missed history.</p>
+          <div class="feat-tag">Panel-required</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(245,158,11,0.12)"><i data-lucide="clipboard-list"></i></div>
+          <div class="feat-title">Full Audit Trail</div>
+          <p class="feat-desc">Every login, ticket, payment, and dispute is tracked with timestamp, IP, and user
+            details.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(16,185,129,0.12)"><i data-lucide="chart-no-axes-combined"></i></div>
+          <div class="feat-title">Analytics &amp; Reports</div>
+          <p class="feat-desc">Violation trends, collection summaries, officer performance, and hotspot mapping.</p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(239,68,68,0.12)"><i data-lucide="scale"></i></div>
+          <div class="feat-title">Dispute Management</div>
+          <p class="feat-desc">Formal appeal workflow. Violators file disputes; admin reviews and resolves each case.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(59,130,246,0.12)"><i data-lucide="wallet-cards"></i></div>
+          <div class="feat-title">Payment Tracking</div>
+          <p class="feat-desc">Record official receipt numbers, track paid vs. unpaid status, view collection summaries.
+          </p>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon" style="background:rgba(168,85,247,0.12)"><i data-lucide="camera"></i></div>
+          <div class="feat-title">Photo Evidence</div>
+          <p class="feat-desc">Officers upload evidence directly from their mobile devices at the time of apprehension.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VIOLATION TYPES & PENALTIES ─────────────────────── -->
+  <section class="section" id="violations">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:40px;text-align:center">
+        <span class="eyebrow" style="justify-content:center">Reference Guide</span>
+        <h2 class="sec-title">Violation Types &amp; Penalties</h2>
+        <p class="sec-sub" style="margin:0 auto">Current active violation references configured by the authorized municipal administrator. Official ordinances and notices remain controlling.</p>
+      </div>
+
+      <div class="viol-search-wrap reveal">
+        <div class="viol-search">
+          <span class="sc-input-icon" style="position:static"><i data-lucide="search"></i></span>
+          <input id="violSearchInput" type="text" placeholder="Search violation or code…" autocomplete="off">
+        </div>
+
+      </div>
+
+      <div class="activity-table-wrap reveal">
+        <div class="activity-table-scroll">
+          <table class="activity-table" id="violTable">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Violation</th>
+                <th>Description</th>
+                <th>Base Penalty</th>
+                <th>Demerit Points</th>
+              </tr>
+            </thead>
+            <tbody id="violTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STATS ── -->
+  <section class="section" style="padding-top:20px">
+    <div class="section-max">
+      <div class="stats-strip reveal">
+        <div class="stat-s">
+          <div class="stat-s-num" data-count="2" style="color:#60a5fa">0</div>
+          <div class="stat-s-lbl">System Roles</div>
+          <div class="stat-s-sub">Administrator and Apprehending Officer</div>
+        </div>
+        <div class="stat-s">
+          <div class="stat-s-num" data-count="10" style="color:#fcd34d">0+</div>
+          <div class="stat-s-lbl">System Modules</div>
+          <div class="stat-s-sub">End-to-end coverage</div>
+        </div>
+        <div class="stat-s">
+          <div class="stat-s-num" data-count="20" style="color:#6ee7b7">0+</div>
+          <div class="stat-s-lbl">Audit Actions Tracked</div>
+          <div class="stat-s-sub">Traceable system activity</div>
+        </div>
+        <div class="stat-s">
+          <div class="stat-s-num" data-count="1" style="color:#f87171">0</div>
+          <div class="stat-s-lbl">Centralized Database</div>
+          <div class="stat-s-sub">Structured municipal records</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PUBLIC SERVICE SECTIONS ── -->
+  <section class="section" aria-labelledby="mv-title">
+    <div class="section-max">
+      <div class="gov-section" style="display:flex;gap:24px;align-items:flex-start">
+        <div style="flex:1">
+          <h3 id="mv-title" class="panel-title">Mission & Vision</h3>
+          <p class="panel-sub">Our mission is to provide a transparent, accountable, and efficient traffic enforcement
+            platform
+            that protects road users and supports local governance. Our vision is a safer municipality empowered
+            by data-driven enforcement and fair processes.</p>
+          <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+            <a href="#features" class="btn-primary">View Public Services</a>
+            <a href="#contact" class="btn-ghost">Contact the Station</a>
+          </div>
+        </div>
+        <div style="width:320px">
+          <h4 class="panel-title" style="font-size:16px;margin-bottom:8px">Municipality & Police Station</h4>
+          <p class="panel-sub" style="margin-bottom:12px">Municipality of Calape · Calape Municipal Police Station</p>
+          <div class="hotline" role="group" aria-label="Hotline numbers">
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--muted)">Emergency Hotline</div>
+              <div class="num">0998-598-6408</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:12px;color:var(--muted)">PNP Calape</div>
+              <div class="num">0926-202-6150</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT CALAPE (NEW) ─────────────────────── -->
+  <section class="section" id="about">
+    <div class="section-max">
+      <div class="about-grid reveal">
+        <div class="about-media">
+          <div class="about-media-frame">
+          <img src="images/background.webp" alt="Calape Municipal Police Station"
+            onerror="this.style.display='none'">
+          </div>
+          <div class="about-media-caption">
+            <span><span class="dot"></span> Official PNP Calape hotline reference</span>
+            <span class="about-media-est">Est. 1902</span>
+          </div>
+        </div>
+        <div class="about-copy">
+          <span class="eyebrow">About Calape</span>
+          <h2 class="sec-title" style="margin-bottom:24px">Serving the Municipality<br>of Calape, Bohol</h2>
+          <blockquote class="about-quote">
+            <span class="about-quote-mark">&ldquo;</span>
+            Digitizing the citation process ensures <em>transparency</em>, <em>accountability</em>, and <em>efficiency</em> in every violation handled.
+          </blockquote>
+          <p class="panel-sub" style="margin-bottom:16px">Calape is a first-class municipality in the province of Bohol, comprising 33 barangays with a growing population and increasing vehicular traffic. As the community expands, so does the need for organized and efficient traffic management.</p>
+          <p class="panel-sub" style="margin-bottom:24px">The <strong style="color:var(--text)">Calape Municipal Police Station</strong>, under the leadership of the local government unit, is committed to maintaining peace and order on our roads. This system represents a significant step forward in modernizing our law enforcement capabilities.</p>
+          <div class="about-badges">
+            <span class="about-pill"><span class="dot" style="background:var(--accent)"></span> 33 Barangays</span>
+            <span class="about-pill"><span class="dot" style="background:var(--gold)"></span> First-Class LGU</span>
+            <span class="about-pill"><span class="dot" style="background:#94a3b8"></span> Bohol Province</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section" aria-labelledby="why-title">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:24px">
+        <span class="eyebrow">Why Digital</span>
+        <h2 id="why-title" class="sec-title">Why Use This System</h2>
+        <p class="sec-sub">Built for accountability and efficiency — designed for officers, citizens, and
+          administrators.</p>
+      </div>
+
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <h4>For Citizens</h4>
+          <p>Instant access to your records, clear payment status, and a formal dispute workflow for fair review.</p>
+        </div>
+        <div class="benefit-card">
+          <h4>For Officers</h4>
+          <p>Quick issuance, photo evidence upload, repeat-offender detection and audit logs for accountability.</p>
+        </div>
+        <div class="benefit-card">
+          <h4>For LGU Administrators</h4>
+          <p>Robust reporting, exportable analytics, centralized user management, and permission controls.</p>
+        </div>
+        <div class="benefit-card">
+          <h4>Security & Transparency</h4>
+          <p>Recorded audit trails, role-based access, and authorized evidence management for accountable system use.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FAQ (NEW) ─────────────────────── -->
+  <section class="section" id="faq">
+    <div class="section-max">
+      <div class="faq-layout">
+        <div class="faq-side reveal">
+          <span class="ghost-numeral" style="font-size:88px;display:block;margin-bottom:8px">?</span>
+          <span class="eyebrow">FAQ</span>
+          <h2 class="sec-title" style="margin-bottom:14px">Questions, answered plainly.</h2>
+          <p class="sec-sub" style="margin:0">Common questions from Calape residents and motorists about the ticketing and management system.</p>
+        </div>
+        <div class="faq-list reveal" id="faqList">
+        <div class="faq-item open">
+          <button class="faq-q" type="button" aria-expanded="true">
+            <span>What types of traffic violations does the system cover?</span>
+            <span class="faq-icon">−</span>
+          </button>
+          <div class="faq-a">
+            <p>The system covers common traffic violations enforced under Philippine traffic laws and local Calape ordinances, including reckless driving, driving without a license, expired vehicle registration, illegal parking, disregarding traffic signs, overloading, obstruction, driving under the influence, and helmet law violations for motorcycles.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>Who can access and use the ticketing system?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            <p>The system has two authenticated staff roles: Administrator and Apprehending Officer. Citizens and vehicle owners use the public ticket-lookup service without creating a system account.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>How do I pay for a traffic violation ticket?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Fines are settled at the Municipal Treasury or other authorized payment centers listed on your printed citation. Once payment is confirmed, your ticket status is updated to "Paid" and can be verified anytime through the public lookup above.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>Can I dispute or contest a traffic citation?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Yes. Vehicle owners can file a formal dispute against a ticket through the public portal. Administrators review each submission and update the case status once a decision is reached.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q" type="button" aria-expanded="false">
+            <span>Is my data kept secure and private?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-a">
+            <p>Access is role-based and every login, ticket, payment, and dispute action is recorded in an audit trail, so records stay accountable and traceable to an authorized user.</p>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="section" aria-labelledby="hotline-title">
+    <div class="section-max">
+      <div class="reveal" style="margin-bottom:40px;text-align:center">
+        <span class="eyebrow" style="justify-content:center">Get In Touch</span>
+        <h2 id="hotline-title" class="sec-title">Have Questions? Contact Us Today</h2>
+        <p class="sec-sub" style="margin:0 auto">Whether you're a motorist with a citation inquiry or a stakeholder interested in the system, the Calape Municipal Police Station is ready to assist you.</p>
+      </div>
+      <div class="contact-grid reveal">
+        <div class="contact-info">
+          <div class="contact-info-row">
+            <div class="contact-info-icon"><i data-lucide="map-pin"></i></div>
+            <div>
+              <div class="contact-info-lbl">Visit Us</div>
+              <div class="contact-info-val">Calape Municipal Police Station<br>Poblacion, Calape, Bohol 6328, Philippines</div>
+            </div>
+          </div>
+          <div class="contact-info-row">
+            <div class="contact-info-icon"><i data-lucide="phone"></i></div>
+            <div>
+              <div class="contact-info-lbl">Call Us</div>
+              <div class="contact-info-val">0998-598-6408<br>0926-202-6150<br>411-7797</div>
+            </div>
+          </div>
+          <div class="contact-info-row">
+            <div class="contact-info-icon"><i data-lucide="clock-3"></i></div>
+            <div>
+              <div class="contact-info-lbl">Office Hours</div>
+              <div class="contact-info-val">Monday to Friday<br>8:00 AM – 5:00 PM</div>
+            </div>
+          </div>
+          <div style="margin-top:8px"><a class="btn-primary" href="tel:09985986408"><i data-lucide="phone-call"></i> Call Now</a></div>
+          <img src="images/background.webp" alt="Calape Municipal Police Station" class="contact-img"
+            onerror="this.style.display='none'">
+        </div>
+        <form class="contact-form" id="contactForm" novalidate>
+          <h3 class="contact-form-title">Send Us a Message</h3>
+          <label class="cf-label" for="cfName">Full Name</label>
+          <input class="sc-input" id="cfName" name="full_name" type="text" placeholder="Your full name" maxlength="120" required>
+          <label class="cf-label" for="cfEmail">Email Address</label>
+          <input class="sc-input" id="cfEmail" name="email" type="email" placeholder="your.email@example.com" maxlength="190" required>
+          <label class="cf-label" for="cfSubject">Subject</label>
+          <input class="sc-input" id="cfSubject" name="subject" type="text" placeholder="What is this about?" maxlength="150" required>
+          <label class="cf-label" for="cfMessage">Message</label>
+          <textarea class="sc-input" id="cfMessage" name="message" rows="4" placeholder="Tell us how we can help you…" minlength="10" maxlength="3000" required></textarea>
+          <button type="submit" class="sc-search-btn" id="cfSubmit"><i data-lucide="send"></i> Send Message</button>
+          <p class="cf-note" id="cfNote" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section class="section">
+    <div class="section-max">
+      <div class="cta-box reveal">
+        <h2 class="cta-title">Ready to Check Your Violation?</h2>
+        <p class="cta-sub">No login needed. Search your plate number or ticket number to view your records instantly.
+        </p>
+        <div class="cta-actions">
+          <a href="#search-card" class="btn-primary"><i data-lucide="search"></i> Search My Plate</a>
+          <a href="login.html" class="btn-ghost"><i data-lucide="shield-user"></i> Officer Login <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="site-footer">
+    <div class="footer-top">
+      <div class="footer-col footer-brand-col">
+        <div class="nav-brand" style="pointer-events:none">
+          <div class="nav-logo">
+            <img src="images/calape-logo.webp" alt="Logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <span class="nav-logo-fallback" style="display:none;width:100%;height:100%;align-items:center;justify-content:center">M</span>
+          </div>
+          <div>
+            <div class="nav-text-main">Calape Municipal</div>
+            <div class="nav-text-sub">Police Station · Bohol</div>
+          </div>
+        </div>
+        <p class="footer-desc">Municipal Traffic Violation Ticketing and Management System — a digital enforcement platform for the Calape Municipal Police Station.</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Quick Links</div>
+        <a href="#features">Services</a>
+        <a href="#violations">Violations</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Emergency Numbers</div>
+        <a href="tel:09985986408">Emergency: 0998-598-6408</a>
+        <a href="tel:09262026150">Station: 0926-202-6150</a>
+        <a href="tel:4117797">Landline: 411-7797</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-brand">Municipal Traffic Violation Ticketing &amp; Management System</div>
+      <div class="footer-meta">BISU Calape Campus · BS Computer Science Thesis Project · AY 2025–2026</div>
+    </div>
+  </footer>
+
+  <!-- ── ROLES MODAL ── -->
+  <div class="modules-modal" id="rolesModal">
+    <div class="modules-content">
+      <div class="modules-header">
+        <h2 class="modules-title">Clear Roles and Public Access</h2>
+        <button class="modules-close" onclick="closeModal('rolesModal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modules-list">
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="shield-check"></i></div>
+          <div class="module-text">
+            <div class="module-name">Administrator</div>
+            <div class="module-desc">Full system access. Manages users, configures violations, generates reports, and
+              monitors all activity.</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="badge"></i></div>
+          <div class="module-text">
+            <div class="module-name">Apprehending Officer</div>
+            <div class="module-desc">Issues tickets in the field. Searches violators, uploads evidence, auto-detects
+              repeat offenders.</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="car-front"></i></div>
+          <div class="module-text">
+            <div class="module-name">Citizen / Vehicle Owner</div>
+            <div class="module-desc">Public access. Checks violation records, views tickets, files disputes, tracks
+              payments.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODULES MODAL ── -->
+  <div class="modules-modal" id="modulesModal">
+    <div class="modules-content">
+      <div class="modules-header">
+        <h2 class="modules-title">10 System Modules</h2>
+        <button class="modules-close" onclick="closeModal('modulesModal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modules-list">
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="lock-keyhole"></i></div>
+          <div class="module-text">
+            <div class="module-name">Authentication & Access Control</div>
+            <div class="module-desc">Login, user management, role-based permissions</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="car-front"></i></div>
+          <div class="module-text">
+            <div class="module-name">Vehicle Management</div>
+            <div class="module-desc">Store and manage vehicle records, plate numbers, owner info</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="clipboard-list"></i></div>
+          <div class="module-text">
+            <div class="module-name">Ticket Issuance</div>
+            <div class="module-desc">Officers issue violation tickets in real-time</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="chart-no-axes-combined"></i></div>
+          <div class="module-text">
+            <div class="module-name">Analytics & Reports</div>
+            <div class="module-desc">Generate reports, trends, officer performance metrics</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="scale"></i></div>
+          <div class="module-text">
+            <div class="module-name">Dispute Management</div>
+            <div class="module-desc">Handle appeals and formal dispute workflows</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="wallet-cards"></i></div>
+          <div class="module-text">
+            <div class="module-name">Payment Tracking</div>
+            <div class="module-desc">Record payments, track paid/unpaid status</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="camera"></i></div>
+          <div class="module-text">
+            <div class="module-name">Evidence Management</div>
+            <div class="module-desc">Upload and store photo evidence from apprehensions</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="bell"></i></div>
+          <div class="module-text">
+            <div class="module-name">Notifications</div>
+            <div class="module-desc">Alert users about tickets, payments, dispute status</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="user-round"></i></div>
+          <div class="module-text">
+            <div class="module-name">User Management</div>
+            <div class="module-desc">Manage administrator and apprehending officer accounts</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="clipboard-list"></i></div>
+          <div class="module-text">
+            <div class="module-name">Audit Logging</div>
+            <div class="module-desc">Track all system actions with timestamps and accountability</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AUDIT ACTIONS MODAL ── -->
+  <div class="modules-modal" id="auditActionsModal">
+    <div class="modules-content">
+      <div class="modules-header">
+        <h2 class="modules-title">20+ Audit Actions</h2>
+        <button class="modules-close" onclick="closeModal('auditActionsModal')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modules-list">
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="lock-keyhole-open"></i></div>
+          <div class="module-text">
+            <div class="module-name">User Login</div>
+            <div class="module-desc">Records when users log into the system with timestamp and IP</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="lock-keyhole"></i></div>
+          <div class="module-text">
+            <div class="module-name">User Logout</div>
+            <div class="module-desc">Tracks user session termination</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="circle-plus"></i></div>
+          <div class="module-text">
+            <div class="module-name">Ticket Created</div>
+            <div class="module-desc">Records new violation ticket issuance by officer</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="square-pen"></i></div>
+          <div class="module-text">
+            <div class="module-name">Ticket Modified</div>
+            <div class="module-desc">Logs changes made to existing tickets</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="trash-2"></i></div>
+          <div class="module-text">
+            <div class="module-name">Ticket Deleted</div>
+            <div class="module-desc">Records ticket removal with reason</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="credit-card"></i></div>
+          <div class="module-text">
+            <div class="module-name">Payment Recorded</div>
+            <div class="module-desc">Tracks payment submissions with receipt details</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="refresh-cw"></i></div>
+          <div class="module-text">
+            <div class="module-name">Payment Modified</div>
+            <div class="module-desc">Logs adjustments to payment records</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="file-pen-line"></i></div>
+          <div class="module-text">
+            <div class="module-name">Dispute Filed</div>
+            <div class="module-desc">Records new dispute submissions by violators</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="circle-check-big"></i></div>
+          <div class="module-text">
+            <div class="module-name">Dispute Resolved</div>
+            <div class="module-desc">Tracks dispute closure and outcomes</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="camera"></i></div>
+          <div class="module-text">
+            <div class="module-name">Evidence Uploaded</div>
+            <div class="module-desc">Records photo evidence submissions</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="user-round"></i></div>
+          <div class="module-text">
+            <div class="module-name">Account Created</div>
+            <div class="module-desc">Logs new user account creation</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="settings"></i></div>
+          <div class="module-text">
+            <div class="module-name">Account Modified</div>
+            <div class="module-desc">Records changes to user profiles and permissions</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="ban"></i></div>
+          <div class="module-text">
+            <div class="module-name">Account Deactivated</div>
+            <div class="module-desc">Tracks user account deactivation</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="wrench"></i></div>
+          <div class="module-text">
+            <div class="module-name">Settings Changed</div>
+            <div class="module-desc">Logs system configuration and violation setup changes</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="search"></i></div>
+          <div class="module-text">
+            <div class="module-name">Data Searched</div>
+            <div class="module-desc">Records all violation and vehicle database queries</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="file-text"></i></div>
+          <div class="module-text">
+            <div class="module-name">Report Generated</div>
+            <div class="module-desc">Tracks PDF and analytics report creation</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="chart-no-axes-combined"></i></div>
+          <div class="module-text">
+            <div class="module-name">Dashboard Accessed</div>
+            <div class="module-desc">Logs access to admin and officer dashboards</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="upload"></i></div>
+          <div class="module-text">
+            <div class="module-name">Data Exported</div>
+            <div class="module-desc">Records ticket and report export activities</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="mail"></i></div>
+          <div class="module-text">
+            <div class="module-name">Notification Sent</div>
+            <div class="module-desc">Tracks system notifications to users</div>
+          </div>
+        </div>
+        <div class="module-item">
+          <div class="module-icon"><i data-lucide="lock-keyhole"></i></div>
+          <div class="module-text">
+            <div class="module-name">Permission Changed</div>
+            <div class="module-desc">Logs role and access permission modifications</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── CANVAS BACKGROUND ──
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const canvas = document.getElementById('bg'), ctx = canvas.getContext('2d');
+    let W, H, dots = [];
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; initDots() }
+    function initDots() {
+      dots = [];
+      if (prefersReducedMotion) return;
+      const count = Math.floor((W * H) / 14000);
+      for (let i = 0; i < count; i++) {
+        dots.push({
+          x: Math.random() * W, y: Math.random() * H,
+          vx: (Math.random() - .5) * 0.25, vy: (Math.random() - .5) * 0.25,
+          r: Math.random() * 1.2 + 0.3,
+          a: Math.random() * 0.5 + 0.1
+        });
+      }
+    }
+    function drawBg() {
+      ctx.clearRect(0, 0, W, H);
+      // connections
+      for (let i = 0; i < dots.length; i++) {
+        for (let j = i + 1; j < dots.length; j++) {
+          const dx = dots[i].x - dots[j].x, dy = dots[i].y - dots[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(dots[i].x, dots[i].y);
+            ctx.lineTo(dots[j].x, dots[j].y);
+            ctx.strokeStyle = `rgba(37,99,235,${0.08 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      // dots
+      dots.forEach(d => {
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(96,165,250,${d.a})`;
+        ctx.fill();
+        d.x += d.vx; d.y += d.vy;
+        if (d.x < 0 || d.x > W) d.vx *= -1;
+        if (d.y < 0 || d.y > H) d.vy *= -1;
+      });
+      requestAnimationFrame(drawBg);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    if (!prefersReducedMotion) drawBg();
+
+    // ── COUNTER ANIMATION ──
+    function animCounter(el) {
+      const target = parseInt(el.dataset.count);
+      const suffix = el.textContent.includes('+') ? '+' : el.textContent.includes('%') ? '%' : '';
+      let start = null;
+      const dur = 1200;
+      function step(ts) {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.floor(ease * target) + (suffix);
+        if (p < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ── SCROLL REVEAL ──
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          // trigger counters
+          e.target.querySelectorAll('[data-count]').forEach(animCounter);
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll('.reveal,.step-card,.role-card,.feat-card').forEach((el, i) => {
+      el.style.transitionDelay = (i % 4) * 0.08 + 's';
+      obs.observe(el);
+    });
+
+    // ── HERO COUNTERS ──
+    setTimeout(() => {
+      document.querySelectorAll('.hero-left [data-count]').forEach(animCounter);
+    }, 600);
+
+    // ── NAV SCROLL ──
+    window.addEventListener('scroll', () => {
+      document.getElementById('nav').style.background =
+        window.scrollY > 60 ? 'rgba(4,8,15,0.92)' : 'rgba(4,8,15,0.7)';
+    });
+
+    // ── MODALS FUNCTIONALITY ──
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    // Open modals on stat click
+    document.getElementById('rolesStatBtn').addEventListener('click', () => openModal('rolesModal'));
+    document.getElementById('modulesStatBtn').addEventListener('click', () => openModal('modulesModal'));
+    document.getElementById('auditActionsStatBtn').addEventListener('click', () => openModal('auditActionsModal'));
+
+    // Close modal on outside click
+    ['rolesModal', 'modulesModal', 'auditActionsModal'].forEach(modalId => {
+      document.getElementById(modalId).addEventListener('click', (e) => {
+        if (e.target.id === modalId) {
+          closeModal(modalId);
+        }
+      });
+    });
+
+    // Close modal on ESC key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        ['rolesModal', 'modulesModal', 'auditActionsModal'].forEach(modalId => {
+          if (document.getElementById(modalId).classList.contains('active')) {
+            closeModal(modalId);
+          }
+        });
+      }
+    });
+
+    // ── SEARCH ──
+    const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) ||
+      ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
+    const API = `${API_ORIGIN}/api`;
+    let tab = 'plate';
+    function switchTab(t) {
+      tab = t;
+      ['plate', 'ticket'].forEach(k => {
+        document.getElementById('tab-' + k).classList.toggle('active', k === t);
+      });
+      const input = document.getElementById('searchInput');
+      input.value = '';
+      input.placeholder = t === 'plate' ? 'e.g., ABC 1234' : 'e.g., TVT-2026-0001';
+      document.getElementById('scResult').classList.remove('show');
+      document.getElementById('scErr').classList.remove('show');
+    }
+
+    function showErr(msg) {
+      document.getElementById('scErrText').textContent = msg;
+      document.getElementById('scErr').classList.add('show');
+      document.getElementById('scResult').classList.remove('show');
+    }
+
+    function escapePublicText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[ch]);
+    }
+
+    async function doSearch() {
+      const rawValue = document.getElementById('searchInput').value.trim();
+      const val = rawValue.toUpperCase();
+      if (!val) { showErr('Please enter a value to search.'); return; }
+
+      const btn = document.querySelector('.sc-search-btn');
+      btn.innerHTML = '<i data-lucide="loader-circle" class="motion-spin"></i> Searching...';
+      btn.disabled = true;
+      if (window.lucide) lucide.createIcons();
+      document.getElementById('scErr').classList.remove('show');
+
+      try {
+        if (tab === 'plate') {
+          const normalizedPlate = val.replace(/[\s-]/g, '');
+          const r = await fetch(`${API}/public/vehicle-lookup?plate_number=${encodeURIComponent(normalizedPlate)}`);
+          const d = await r.json();
+          if (!r.ok || !d.success || !d.vehicle) {
+            showErr(d.message || ('No records found for: ' + val));
+            return;
+          }
+
+          const v = d.vehicle;
+          const viols = Array.isArray(d.violations) ? d.violations : [];
+          document.getElementById('scResultTitle').textContent = `Plate ${v.plate_number || val}`;
+          document.getElementById('scResultSub').textContent = `${viols.length} traffic citation record(s) found`;
+          document.getElementById('scResultList').innerHTML = viols.length === 0
+            ? '<div style="padding:18px;text-align:center;color:#475569;font-size:12px"><i data-lucide="circle-check"></i> No citations on file for this plate.</div>'
+            : viols.map(t => {
+                const ticketNumber = escapePublicText(t.ticket_number || '—');
+                const violationName = escapePublicText(t.violation_name || t.violation_type || 'Traffic violation');
+                const status = escapePublicText(String(t.status || 'unpaid').toUpperCase());
+                const statusClass = t.status === 'paid' ? 'sc-badge-paid' : 'sc-badge-unpaid';
+                const issued = t.date_issued
+                  ? new Date(t.date_issued).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })
+                  : 'Date unavailable';
+                const penalty = Number(t.remaining_balance ?? t.penalty_amount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+                const ticketUrl = `public-ticket-lookup.html?ticket=${encodeURIComponent(t.ticket_number || '')}`;
+                return `<a class="sc-result-item" href="${ticketUrl}" style="text-decoration:none;color:inherit">
+                  <div><div class="sc-ri-plate">${ticketNumber} · ${violationName}</div>
+                  <div class="sc-ri-name">${escapePublicText(issued)} · ₱${penalty}</div></div>
+                  <span class="sc-badge ${statusClass}">${status}</span>
+                </a>`;
+              }).join('');
+          document.getElementById('scResult').classList.add('show');
+        } else {
+          const r = await fetch(`${API}/public/ticket-lookup?ticket=${encodeURIComponent(val)}`);
+          const d = await r.json();
+          const tickets = Array.isArray(d.tickets) ? d.tickets : [];
+          if (!r.ok || !d.success || tickets.length === 0) {
+            showErr(d.message || ('No ticket found: ' + val));
+            return;
+          }
+
+          const t = tickets[0];
+          document.getElementById('scResultTitle').textContent = `Ticket: ${t.ticket_number}`;
+          document.getElementById('scResultSub').textContent = `${t.violation_name || t.violation_type || 'Traffic violation'} · Plate ${t.plate_number || '—'}`;
+          const ticketNumber = escapePublicText(t.ticket_number || '—');
+          const violationName = escapePublicText(t.violation_name || t.violation_type || 'Traffic violation');
+          const plateNumber = escapePublicText(t.plate_number || '—');
+          const status = escapePublicText(String(t.status || 'unpaid').toUpperCase());
+          const statusClass = t.status === 'paid' ? 'sc-badge-paid' : 'sc-badge-unpaid';
+          const penalty = Number(t.remaining_balance ?? t.penalty_amount ?? 0).toLocaleString('en-PH', { minimumFractionDigits: 2 });
+          const ticketUrl = `public-ticket-lookup.html?ticket=${encodeURIComponent(t.ticket_number || '')}`;
+          document.getElementById('scResultList').innerHTML = `<a class="sc-result-item" href="${ticketUrl}" style="text-decoration:none;color:inherit">
+            <div><div class="sc-ri-plate">${ticketNumber} · ${violationName}</div>
+            <div class="sc-ri-name">Plate: ${plateNumber} · ₱${penalty}</div></div>
+            <span class="sc-badge ${statusClass}">${status}</span>
+          </a>`;
+          document.getElementById('scResult').classList.add('show');
+        }
+        if (window.lucide) lucide.createIcons();
+      } catch (error) {
+        console.error('Public lookup failed:', error);
+        showErr('Connection error. Please try again shortly.');
+      } finally {
+        btn.innerHTML = '<i data-lucide="search"></i> Search Violation Records';
+        if (window.lucide) lucide.createIcons();
+        btn.disabled = false;
+      }
+    }
+  </script>
+  <script src="../assets/js/toast.js"></script>
+  <script>
+    // ── LOAD LIVE STATS FROM DATABASE ──────────────
+    (async function loadLiveStats() {
+      try {
+        const res = await fetch(`${API}/public/stats`);
+        const data = await res.json();
+        if (!data.success) return;
+        const s = data.stats;
+
+        function animCount(el, target) {
+          if (!el) return;
+          let start = 0;
+          const dur = 1400;
+          const t0 = performance.now();
+          function step(now) {
+            const p = Math.min((now - t0) / dur, 1);
+            const ease = 1 - Math.pow(1 - p, 3);
+            el.textContent = Math.floor(ease * target).toLocaleString();
+            if (p < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+        }
+
+        animCount(document.getElementById('ls-total'), s.total_tickets);
+        animCount(document.getElementById('ls-paid'), s.total_paid);
+        animCount(document.getElementById('ls-unpaid'), s.total_unpaid);
+        animCount(document.getElementById('ls-today'), s.today_tickets);
+        animCount(document.getElementById('ls-vehicles'), s.total_vehicles);
+        // populate new government dashboard numbers (presentation section)
+        animCount(document.getElementById('gov-total'), s.total_tickets);
+        animCount(document.getElementById('gov-paid'), s.total_paid);
+        animCount(document.getElementById('gov-unpaid'), s.total_unpaid);
+      } catch (e) {
+        // System offline - show dashes (already there)
+        console.log('Live stats unavailable (system offline)');
+      }
+    })();
+
+  </script>
+  <script>
+    (function(){
+      const loader = document.getElementById('pageLoader');
+      const navToggle = document.querySelector('.nav-toggle');
+      const mobileMenu = document.getElementById('navMobileMenu');
+
+      function hideLoader(){ if(!loader) return; loader.classList.add('hidden'); }
+
+      function preloadImage(src){
+        return new Promise(res=>{
+          try{
+            const img = new Image();
+            img.src = src;
+            if(img.complete) return res(true);
+            img.onload = ()=>res(true);
+            img.onerror = ()=>res(true);
+          }catch(e){ res(true); }
+        });
+      }
+
+      const heroImgPath = 'images/background.webp';
+
+      const windowLoaded = new Promise(res=>{
+        if(document.readyState === 'complete') return res();
+        window.addEventListener('load', ()=>res());
+      });
+
+      const heroLoaded = preloadImage(heroImgPath);
+
+      // Wait for both window load and hero image, then hide loader.
+      Promise.all([windowLoaded, heroLoaded]).then(()=>{
+        // small buffer so canvas/animations can kick in
+        setTimeout(hideLoader, 300);
+      }).catch(()=> setTimeout(hideLoader, 600));
+
+      // mobile nav wiring (ready on DOMContentLoaded)
+      const hero = document.querySelector('.hero');
+      let heroTicking = false;
+
+      function updateHeroScroll(){
+        if(!hero || prefersReducedMotion) return;
+        const rect = hero.getBoundingClientRect();
+        const offset = Math.max(Math.min(-rect.top * 0.18, 90), -90);
+        hero.style.setProperty('--hero-scroll', `${offset}px`);
+        heroTicking = false;
+      }
+
+      window.addEventListener('scroll', ()=>{
+        if(heroTicking) return;
+        heroTicking = true;
+        requestAnimationFrame(updateHeroScroll);
+      });
+
+      updateHeroScroll();
+
+      document.addEventListener('DOMContentLoaded', ()=>{
+        if(navToggle && mobileMenu){
+          navToggle.addEventListener('click', ()=>{
+            const isOpen = mobileMenu.classList.toggle('open');
+            navToggle.setAttribute('aria-expanded', String(!!isOpen));
+            mobileMenu.setAttribute('aria-hidden', String(!isOpen));
+          });
+
+          mobileMenu.querySelectorAll('a').forEach(a=> a.addEventListener('click', ()=>{
+            mobileMenu.classList.remove('open');
+            navToggle.setAttribute('aria-expanded','false');
+            mobileMenu.setAttribute('aria-hidden','true');
+          }));
+
+          document.addEventListener('click', (ev)=>{
+            if(!mobileMenu.classList.contains('open')) return;
+            if(ev.target.closest('#nav') || ev.target.closest('#navMobileMenu')) return;
+            mobileMenu.classList.remove('open');
+            navToggle.setAttribute('aria-expanded','false');
+            mobileMenu.setAttribute('aria-hidden','true');
+          });
+        }
+      });
+    })();
+  </script>
+
+  <!-- ── FAQ, VIOLATIONS TABLE, AND CONTACT FORM ── -->
+  <script>
+    (function () {
+      // ── FAQ ACCORDION ──
+      document.querySelectorAll('.faq-item .faq-q').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = btn.closest('.faq-item');
+          const wasOpen = item.classList.contains('open');
+          document.querySelectorAll('.faq-item.open').forEach(i => {
+            i.classList.remove('open');
+            i.querySelector('.faq-icon').textContent = '+';
+            i.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+          });
+          if (!wasOpen) {
+            item.classList.add('open');
+            item.querySelector('.faq-icon').textContent = '−';
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+
+      // ── VIOLATION TYPES & PENALTIES ──
+      let VIOLATIONS = [];
+      const escapeViolationText = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[ch]));
+      const peso = value => `₱${Number(value || 0).toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+
+      function renderViolations(list, message = '') {
+        const body = document.getElementById('violTableBody');
+        if (!body) return;
+        if (!list.length) {
+          body.innerHTML = `<tr><td colspan="5"><div class="empty-state">
+            <div class="empty-state-icon"><i data-lucide="${message ? 'circle-alert' : 'search-x'}"></i></div>
+            <div class="empty-state-title">${escapeViolationText(message || 'No matching violations found')}</div>
+            <div class="empty-state-sub">${message ? 'Please try again later or contact the municipal office.' : 'Try a different keyword.'}</div>
+          </div></td></tr>`;
+          if (window.lucide) lucide.createIcons();
+          return;
+        }
+        body.innerHTML = list.map(v => `
+          <tr>
+            <td class="ticket-id">${escapeViolationText(v.code)}</td>
+            <td><span class="viol-name">${escapeViolationText(v.name)}</span></td>
+            <td><span class="viol-desc" style="display:block">${escapeViolationText(v.desc || '—')}</span></td>
+            <td class="fine">${peso(v.penalty)}</td>
+            <td>${Number(v.points || 0)}</td>
+          </tr>`).join('');
+      }
+
+      function filterViolations() {
+        const q = (document.getElementById('violSearchInput')?.value || '').trim().toLowerCase();
+        const filtered = VIOLATIONS.filter(v => !q || [v.code, v.name, v.desc]
+          .some(value => String(value || '').toLowerCase().includes(q)));
+        renderViolations(filtered);
+      }
+
+      async function loadPublicViolations() {
+        if (!document.getElementById('violTableBody')) return;
+        renderViolations([], 'Loading current violation references…');
+        try {
+          const response = await fetch(`${API}/public/violations`, { headers: { Accept: 'application/json' } });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.success !== true || !Array.isArray(data.violations)) {
+            throw new Error(data.message || 'Violation references are unavailable.');
+          }
+          VIOLATIONS = data.violations.map(v => ({
+            code: v.violation_code,
+            name: v.violation_name,
+            desc: v.description,
+            penalty: Number(v.penalty_amount || 0),
+            points: Number(v.demerit_points || 0)
+          }));
+          renderViolations(VIOLATIONS);
+        } catch (error) {
+          console.error('Unable to load public violations:', error);
+          renderViolations([], 'Violation references are temporarily unavailable');
+        }
+      }
+
+      if (document.getElementById('violTableBody')) {
+        document.getElementById('violSearchInput')?.addEventListener('input', filterViolations);
+        loadPublicViolations();
+      }
+
+      // ── CONTACT FORM ──
+      // Submit to the system Administrator inbox. SMTP is an optional server-side copy.
+      const contactForm = document.getElementById('contactForm');
+      let contactIsSubmitting = false;
+      const CONTACT_REQUEST_TIMEOUT_MS = 12000;
+      if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (contactIsSubmitting) return;
+
+          const btn = document.getElementById('cfSubmit');
+          const note = document.getElementById('cfNote');
+          const nameInput = document.getElementById('cfName');
+          const emailInput = document.getElementById('cfEmail');
+          const subjectInput = document.getElementById('cfSubject');
+          const messageInput = document.getElementById('cfMessage');
+          const payload = {
+            full_name: nameInput.value.trim(),
+            email: emailInput.value.trim(),
+            subject: subjectInput.value.trim(),
+            message: messageInput.value.trim(),
+          };
+
+          note.textContent = '';
+          note.classList.remove('success', 'error');
+
+          let validationMessage = '';
+          let invalidInput = null;
+          if (!payload.full_name) {
+            validationMessage = 'Please enter your full name.';
+            invalidInput = nameInput;
+          } else if (!payload.email || emailInput.validity.typeMismatch) {
+            validationMessage = 'Please enter a valid email address.';
+            invalidInput = emailInput;
+          } else if (!payload.subject) {
+            validationMessage = 'Please enter a subject.';
+            invalidInput = subjectInput;
+          } else if (payload.message.length < 10 || payload.message.length > 3000) {
+            validationMessage = 'Message must contain 10–3000 characters.';
+            invalidInput = messageInput;
+          }
+
+          if (validationMessage) {
+            note.textContent = validationMessage;
+            note.classList.add('error');
+            invalidInput?.focus();
+            return;
+          }
+
+          contactIsSubmitting = true;
+          btn.disabled = true;
+          btn.setAttribute('aria-busy', 'true');
+          btn.innerHTML = '<i data-lucide="loader-circle" class="motion-spin"></i> Sending...';
+          if (window.lucide) lucide.createIcons();
+
+          const controller = new AbortController();
+          const timeoutId = window.setTimeout(() => controller.abort(), CONTACT_REQUEST_TIMEOUT_MS);
+          try {
+            const res = await fetch(`${API}/public/contact`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              signal: controller.signal
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success !== false) {
+              note.textContent = data.message || 'Message submitted to the system Administrator.';
+              note.classList.add('success');
+              contactForm.reset();
+            } else {
+              throw new Error(data.message || 'Unable to send your message right now.');
+            }
+          } catch (err) {
+            note.textContent = err?.name === 'AbortError'
+              ? 'The request timed out. Please try again or use the published hotline.'
+              : (err.message || 'Could not reach the server. Please try again or use the published hotline.');
+            note.classList.add('error');
+          } finally {
+            window.clearTimeout(timeoutId);
+            contactIsSubmitting = false;
+            btn.disabled = false;
+            btn.removeAttribute('aria-busy');
+            btn.innerHTML = '<i data-lucide="send"></i> Send Message';
+            if (window.lucide) lucide.createIcons();
+          }
+        });
+      }
+      // ── SCROLLSPY: highlight current section in nav ──
+      const navPills = Array.from(document.querySelectorAll('.nav-pill[href^="#"]'));
+      const spySections = navPills
+        .map(a => document.querySelector(a.getAttribute('href')))
+        .filter(Boolean);
+      if (spySections.length && 'IntersectionObserver' in window) {
+        const spy = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const id = '#' + entry.target.id;
+            navPills.forEach(a => a.classList.toggle('active', a.getAttribute('href') === id));
+          });
+        }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+        spySections.forEach(s => spy.observe(s));
+      }
+    })();
+  </script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', function () {
+      const iconObserverOptions = { childList: true, subtree: true };
+      let iconObserver = null;
+      const renderIcons = () => {
+        if (!window.lucide) return;
+        // Lucide replaces <i data-lucide> nodes with SVG nodes. Temporarily
+        // disconnect so those internal replacements cannot recursively trigger
+        // this observer and block the browser's main thread.
+        iconObserver?.disconnect();
+        window.lucide.createIcons();
+        iconObserver?.observe(document.body, iconObserverOptions);
+      };
+
+      // Re-render icons inserted by dynamic search and form states.
+      iconObserver = new MutationObserver((mutations) => {
+        const hasNewIcon = mutations.some((mutation) =>
+          Array.from(mutation.addedNodes).some((node) =>
+            node.nodeType === 1 &&
+            (node.matches?.('i[data-lucide]') || node.querySelector?.('i[data-lucide]'))
+          )
+        );
+        if (hasNewIcon) renderIcons();
+      });
+      renderIcons();
+    });
+  </script>
+
+  <script>
+    // ── PROFESSIONAL MOTION SYSTEM (2026-08-04) ──
+    (() => {
+      const initProfessionalMotion = () => {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+        // Give existing reveal targets varied but restrained directions.
+        const revealTargets = Array.from(
+          document.querySelectorAll('.reveal, .step-card, .role-card, .feat-card')
+        );
+
+        revealTargets.forEach((el, index) => {
+          if (el.classList.contains('faq-side')) {
+            el.classList.add('motion-from-left');
+          } else if (el.classList.contains('faq-list')) {
+            el.classList.add('motion-from-right');
+          } else if (el.classList.contains('about-grid') || el.classList.contains('contact-grid') || el.classList.contains('cta-box')) {
+            el.classList.add('motion-scale-in');
+          } else if (el.classList.contains('role-card')) {
+            el.classList.add(index % 2 === 0 ? 'motion-from-left' : 'motion-from-right');
+          } else if (el.classList.contains('feat-card')) {
+            el.classList.add(index % 3 === 0 ? 'motion-soft-rotate' : 'motion-scale-in');
+          } else {
+            const variants = ['motion-from-left', 'motion-scale-in', 'motion-from-right'];
+            el.classList.add(variants[index % variants.length]);
+          }
+        });
+
+        // Add staggered reveals to useful supporting content that previously appeared instantly.
+        const additionalItems = Array.from(document.querySelectorAll(
+          '.benefit-card, .contact-info-row, .about-pill, #liveStatsBar > div:not(:first-child)'
+        ));
+
+        additionalItems.forEach((el, index) => {
+          el.classList.add('motion-item');
+          el.style.setProperty('--motion-delay', `${(index % 5) * 65}ms`);
+          const variant = index % 3 === 0
+            ? 'motion-from-left'
+            : index % 3 === 1
+              ? 'motion-scale-in'
+              : 'motion-from-right';
+          el.classList.add(variant);
+        });
+
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+          additionalItems.forEach(el => el.classList.add('motion-in'));
+        } else {
+          const itemObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('motion-in');
+              observer.unobserve(entry.target);
+            });
+          }, { threshold: 0.14, rootMargin: '0px 0px -7% 0px' });
+
+          additionalItems.forEach(el => itemObserver.observe(el));
+        }
+
+        // Subtle perspective motion for the hero lookup card only.
+        const searchCard = document.querySelector('.search-card');
+        if (searchCard && finePointer && !reduceMotion) {
+          searchCard.classList.add('motion-tilt');
+          let frame = null;
+
+          const updateTilt = (event) => {
+            const rect = searchCard.getBoundingClientRect();
+            const px = (event.clientX - rect.left) / rect.width;
+            const py = (event.clientY - rect.top) / rect.height;
+            const rotateY = (px - 0.5) * 3.2;
+            const rotateX = (0.5 - py) * 2.4;
+
+            if (frame) cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => {
+              searchCard.style.setProperty('--tilt-x', `${rotateX.toFixed(2)}deg`);
+              searchCard.style.setProperty('--tilt-y', `${rotateY.toFixed(2)}deg`);
+            });
+          };
+
+          const resetTilt = () => {
+            if (frame) cancelAnimationFrame(frame);
+            searchCard.style.setProperty('--tilt-x', '0deg');
+            searchCard.style.setProperty('--tilt-y', '0deg');
+          };
+
+          searchCard.addEventListener('pointermove', updateTilt, { passive: true });
+          searchCard.addEventListener('pointerleave', resetTilt, { passive: true });
+          searchCard.addEventListener('blur', resetTilt, true);
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProfessionalMotion, { once: true });
+      } else {
+        initProfessionalMotion();
+      }
+    })();
+  </script>
+
+</body>
+
+</html>

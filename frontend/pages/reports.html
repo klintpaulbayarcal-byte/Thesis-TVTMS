@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260412">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/print.css?v=20260412">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .lgu-section {
+            animation: fadeIn .2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="alertContainer"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/calape-logo.webp" alt="Municipality of Calape logo" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:40px;height:40px;align-items:center;justify-content:center;font-size:20px;background:rgba(255,255,255,0.1);border-radius:8px;"><i class="fas fa-motorcycle" aria-hidden="true"></i></div>
+                    <div class="sidebar-logo-text">
+                        <h3>Municipal Traffic Violation</h3>
+                        <p>Ticketing &amp; Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-overview.html" class="nav-item">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Overview</span>
+                </a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Issue Ticket</span>
+                </a>
+                <a href="view-tickets.html" class="nav-item">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>All Tickets</span>
+                </a>
+                <a href="license-plate-lookup.html" class="nav-item">
+                    <i class="fas fa-search"></i>
+                    <span>Search Violator</span>
+                </a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Violations</span>
+                </a>
+                <a href="manage-users.html" class="nav-item">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </a>
+                <a href="payments.html" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payments</span>
+                </a>
+                <a href="disputes.html" class="nav-item">
+                    <i class="fas fa-balance-scale"></i>
+                    <span>Disputes</span>
+                </a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item active">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+                <a href="analytics-dashboard.html" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item">
+                    <i class="fas fa-history"></i>
+                    <span>Audit Trail</span>
+                </a>
+                <a href="notifications.html" class="nav-item">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </a>
+                <a href="admin-settings.html" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item">
+                    <i class="fas fa-id-card"></i>
+                    <span>Profile</span>
+                </a>
+                <a href="#" onclick="logout()" class="nav-item">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar"></div>
+                    <div class="user-details">
+                        <h4 class="user-name">Admin</h4>
+                        <p class="user-role">Administrator</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Topbar -->
+            <div class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2>Reports</h2>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="dashboard-content">
+                <!-- Report Filters -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Generate Report</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="reportType">Report Type</label>
+                                <select id="reportType" onchange="updateDateFields()">
+                                    <option value="daily">Daily Report</option>
+                                    <option value="monthly">Monthly Report</option>
+                                    <option value="yearly">Yearly Report</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="yearField">
+                                <label for="reportYear">Year</label>
+                                <select id="reportYear">
+                                    <option value="2026">2026</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2024">2024</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="monthField">
+                                <label for="reportMonth">Month</label>
+                                <select id="reportMonth">
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="dayField">
+                                <label for="reportDay">Day</label>
+                                <input type="date" id="reportDay">
+                            </div>
+
+                            <div class="form-group" id="startDateField" style="display: none;">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" id="startDate">
+                            </div>
+
+                            <div class="form-group" id="endDateField" style="display: none;">
+                                <label for="endDate">End Date</label>
+                                <input type="date" id="endDate">
+                            </div>
+
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-chart-bar"></i> Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Results -->
+                <div class="card" id="reportCard" style="display: none;">
+                    <div class="card-header no-print">
+                        <h3 id="reportTitle">Report Results</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" onclick="downloadReportPdf()">
+                                <i class="fas fa-file-pdf"></i> Download PDF
+                            </button>
+                            <button class="btn btn-primary" onclick="window.print()">
+                                <i class="fas fa-print"></i> Print Report
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="reportContent">
+                        <!-- Report content will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Operational Insights (Last 30 Days)</h3>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a class="btn btn-secondary" href="payments.html"><i class="fas fa-receipt"></i>
+                                Payments</a>
+                            <a class="btn btn-secondary" href="disputes.html"><i class="fas fa-balance-scale"></i>
+                                Disputes</a>
+                            <a class="btn btn-secondary" href="notifications.html"><i class="fas fa-bell"></i>
+                                Notifications</a>
+                            <button class="btn btn-secondary" onclick="loadOperationalInsights()">
+                                <i class="fas fa-sync"></i> Refresh Insights
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="insightStats" class="stats-grid"></div>
+                        <div class="row" style="margin-top: 20px;">
+                            <div class="col-6">
+                                <h4>Top Hotspots</h4>
+                                <div id="hotspotList" class="table-responsive"></div>
+                            </div>
+                            <div class="col-6">
+                                <h4>Apprehending Officer Productivity</h4>
+                                <div id="productivityList" class="table-responsive"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── LGU Special Reports ── -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-building"></i> LGU Special Reports</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+                            <button class="btn btn-secondary nav-item" data-lgu="apprehending_officer"
+                                onclick="showLguSection('officerPerfSection')">
+                                <i class="fas fa-user-shield"></i> Apprehending Officer Performance
+                            </button>
+                            <button class="btn btn-secondary nav-item" data-lgu="aging"
+                                onclick="showLguSection('agingSection')">
+                                <i class="fas fa-calendar-times"></i> Delinquent Aging
+                            </button>
+                            <button class="btn btn-secondary nav-item" data-lgu="barangay"
+                                onclick="showLguSection('barangaySection')">
+                                <i class="fas fa-map-marker-alt"></i> Barangay Breakdown
+                            </button>
+                        </div>
+
+                        <div id="officerPerfSection" class="lgu-section" style="display:none">
+                            <h4 style="margin-bottom:12px"><i class="fas fa-user-shield"></i> Apprehending Officer Performance
+                                Report</h4>
+                            <p style="font-size:.85rem;color:#666;margin-bottom:12px">Collection rate, total tickets
+                                issued, and revenue per Apprehending Officer. Use this to brief the traffic chief.</p>
+                            <div id="officerPerfContent">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
+                        <div id="agingSection" class="lgu-section" style="display:none">
+                            <h4 style="margin-bottom:12px"><i class="fas fa-calendar-times"></i> Delinquent Account
+                                Aging</h4>
+                            <p style="font-size:.85rem;color:#666;margin-bottom:12px">Unpaid tickets grouped by how
+                                overdue they are. Red = 60+ days critical. Use for collection prioritization.</p>
+                            <div id="agingContent">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
+                        <div id="barangaySection" class="lgu-section" style="display:none">
+                            <h4 style="margin-bottom:12px"><i class="fas fa-map-marker-alt"></i> Violations by Barangay
+                            </h4>
+                            <p style="font-size:.85rem;color:#666;margin-bottom:12px">Where violations happen most.
+                                Useful for the mayor's budget review — shows where to deploy more Apprehending Officers or install
+                                signage.</p>
+                            <div id="barangayContent">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/dashboard.js?v=20260427c"></script>
+    <script>
+        // LGU section toggle helper
+        function showLguSection(id) {
+            document.querySelectorAll('.lgu-section').forEach(s => s.style.display = 'none');
+            const el = document.getElementById(id);
+            if (el) { el.style.display = 'block'; }
+        }
+        // Require authentication
+        requireAuth();
+
+        // Only admins can access this page
+        if (!isAdmin()) {
+            window.location.href = 'officer-dashboard.html';
+        }
+
+        // Populate user info
+        populateUserInfo();
+
+        // Set current date on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1;
+
+            document.getElementById('reportYear').value = year;
+            document.getElementById('reportMonth').value = month;
+            document.getElementById('reportDay').value = today.toISOString().split('T')[0];
+
+            updateDateFields();
+            loadOperationalInsights();
+        });
+
+        function getLast30DayRange() {
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - 29);
+
+            return {
+                startDate: start.toISOString().split('T')[0],
+                endDate: end.toISOString().split('T')[0]
+            };
+        }
+
+        async function loadOperationalInsights() {
+            const { startDate, endDate } = getLast30DayRange();
+            const insightStats = document.getElementById('insightStats');
+            const hotspotList = document.getElementById('hotspotList');
+            const productivityList = document.getElementById('productivityList');
+
+            insightStats.innerHTML = '<div class="spinner"></div>';
+            hotspotList.innerHTML = '<div class="spinner"></div>';
+            productivityList.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const [collections, hotspots, productivity] = await Promise.all([
+                    API.getCollectionsSummary(startDate, endDate),
+                    API.getHotspotsReport(startDate, endDate),
+                    API.getOfficerProductivity(startDate, endDate)
+                ]);
+
+                const summary = collections.summary || {};
+                insightStats.innerHTML = `
+                    <div class="stat-card warning">
+                        <div class="stat-label">Total Collected</div>
+                        <h2 class="stat-value">${formatCurrency(summary.total_collected || 0)}</h2>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-label">Payments</div>
+                        <h2 class="stat-value">${summary.payment_count || 0}</h2>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Settled Tickets</div>
+                        <h2 class="stat-value">${summary.settled_tickets || 0}</h2>
+                    </div>
+                    <div class="stat-card danger">
+                        <div class="stat-label">Range</div>
+                        <h2 class="stat-value" style="font-size:16px;">${formatDate(startDate)} - ${formatDate(endDate)}</h2>
+                    </div>
+                `;
+
+                const hotspotRows = (hotspots.hotspots || []).slice(0, 10).map((item) => `
+                    <tr>
+                        <td>${escapeHtmlText(item.location || 'Unspecified')}</td>
+                        <td>${Number(item.total_violations) || 0}</td>
+                        <td>${Number(item.paid_count) || 0}</td>
+                    </tr>
+                `).join('');
+
+                hotspotList.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Violations</th>
+                                <th>Paid</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${hotspotRows || '<tr><td colspan="3" class="text-center">No hotspot data</td></tr>'}
+                        </tbody>
+                    </table>
+                `;
+
+                const productivityRows = (productivity.productivity || []).slice(0, 10).map((item) => `
+                    <tr>
+                        <td>${escapeHtmlText(item.name || 'N/A')}</td>
+                        <td>${Number(item.tickets_issued) || 0}</td>
+                        <td>${formatCurrency(item.paid_value || 0)}</td>
+                    </tr>
+                `).join('');
+
+                productivityList.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Apprehending Officer</th>
+                                <th>Tickets</th>
+                                <th>Paid Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${productivityRows || '<tr><td colspan="3" class="text-center">No productivity data</td></tr>'}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Operational insight error:', error);
+                insightStats.innerHTML = '<p class="text-danger">Failed to load insights.</p>';
+                hotspotList.innerHTML = '<p class="text-danger">Failed to load hotspots.</p>';
+                productivityList.innerHTML = '<p class="text-danger">Failed to load productivity.</p>';
+            }
+        }
+
+        // Update date fields based on report type
+        function updateDateFields() {
+            const reportType = document.getElementById('reportType').value;
+
+            // Hide all fields first
+            document.getElementById('yearField').style.display = 'none';
+            document.getElementById('monthField').style.display = 'none';
+            document.getElementById('dayField').style.display = 'none';
+            document.getElementById('startDateField').style.display = 'none';
+            document.getElementById('endDateField').style.display = 'none';
+
+            // Show relevant fields
+            switch (reportType) {
+                case 'daily':
+                    document.getElementById('dayField').style.display = 'block';
+                    break;
+                case 'monthly':
+                    document.getElementById('yearField').style.display = 'block';
+                    document.getElementById('monthField').style.display = 'block';
+                    break;
+                case 'yearly':
+                    document.getElementById('yearField').style.display = 'block';
+                    break;
+                case 'custom':
+                    document.getElementById('startDateField').style.display = 'block';
+                    document.getElementById('endDateField').style.display = 'block';
+                    break;
+            }
+        }
+
+        // Generate report
+        async function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            let response;
+
+            try {
+                // Get date parameters based on report type
+                switch (reportType) {
+                    case 'daily':
+                        const date = document.getElementById('reportDay').value;
+                        response = await API.getDailyReport(date);
+                        break;
+                    case 'monthly':
+                        const year = document.getElementById('reportYear').value;
+                        const month = document.getElementById('reportMonth').value;
+                        response = await API.getMonthlyReport(year, month);
+                        break;
+                    case 'yearly':
+                        const yearValue = document.getElementById('reportYear').value;
+                        response = await API.getYearlyReport(yearValue);
+                        break;
+                    case 'custom':
+                        const startDate = document.getElementById('startDate').value;
+                        const endDate = document.getElementById('endDate').value;
+
+                        if (!startDate || !endDate) {
+                            showAlert('Please select both start and end date', 'warning');
+                            return;
+                        }
+
+                        if (startDate > endDate) {
+                            showAlert('Start date cannot be later than end date', 'warning');
+                            return;
+                        }
+
+                        response = await API.getCustomReport(startDate, endDate);
+                        break;
+                }
+
+                if (response.success) {
+                    displayReport(response, reportType);
+                } else {
+                    showAlert(response.message || 'Failed to generate report', 'danger');
+                }
+            } catch (error) {
+                console.error('Error generating report:', error);
+                showAlert(error.message || 'Error generating report', 'danger');
+            }
+        }
+
+        function downloadReportPdf() {
+            const reportType = document.getElementById('reportType').value;
+            const params = new URLSearchParams();
+            params.set('type', reportType);
+
+            if (reportType === 'daily') {
+                params.set('date', document.getElementById('reportDay').value);
+            } else if (reportType === 'monthly') {
+                params.set('year', document.getElementById('reportYear').value);
+                params.set('month', document.getElementById('reportMonth').value);
+            } else if (reportType === 'yearly') {
+                params.set('year', document.getElementById('reportYear').value);
+            } else if (reportType === 'custom') {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                if (!startDate || !endDate) {
+                    showAlert('Please select both start and end date first', 'warning');
+                    return;
+                }
+
+                if (startDate > endDate) {
+                    showAlert('Start date cannot be later than end date', 'warning');
+                    return;
+                }
+
+                params.set('startDate', startDate);
+                params.set('endDate', endDate);
+            }
+
+            const token = getToken();
+            const url = API.getReportPdfUrl(params.toString());
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to export PDF');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    const blobUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = `${reportType}-report.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(blobUrl);
+                })
+                .catch(error => {
+                    console.error('PDF download error:', error);
+                    showAlert(error.message || 'Failed to download PDF', 'danger');
+                });
+        }
+
+        // Display report
+        function displayReport(response, reportType) {
+            const reportCard = document.getElementById('reportCard');
+            const reportContent = document.getElementById('reportContent');
+            const reportTitle = document.getElementById('reportTitle');
+
+            // Set title
+            let title = '';
+            switch (reportType) {
+                case 'daily':
+                    title = `Daily Report - ${formatDate(response.date)}`;
+                    break;
+                case 'monthly':
+                    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+                    const year = document.getElementById('reportYear').value;
+                    const month = document.getElementById('reportMonth').value;
+                    title = `Monthly Report - ${monthNames[month - 1]} ${year}`;
+                    break;
+                case 'yearly':
+                    const yearValue = document.getElementById('reportYear').value;
+                    title = `Yearly Report - ${yearValue}`;
+                    break;
+                case 'custom':
+                    title = `Custom Range Report - ${formatDate(response.startDate)} to ${formatDate(response.endDate)}`;
+                    break;
+            }
+            reportTitle.textContent = title;
+
+            // Build report content
+            const stats = response.stats || response.summary || {};
+            let html = `
+                <div class="report-header">
+                    <h2>Municipal Traffic Violation Ticketing and Management System</h2>
+                    <h3>Land Transportation Office</h3>
+                    <h4>${title}</h4>
+                    <p>Generated on: ${new Date().toLocaleString()}</p>
+                </div>
+
+                <div class="report-summary">
+                    <h3>Summary</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Tickets</div>
+                            <h2 class="stat-value">${stats.total || 0}</h2>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-label">Paid Tickets</div>
+                            <h2 class="stat-value">${stats.paid || 0}</h2>
+                        </div>
+                        <div class="stat-card danger">
+                            <div class="stat-label">Unpaid Tickets</div>
+                            <h2 class="stat-value">${stats.unpaid || 0}</h2>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-label">Total Revenue</div>
+                            <h2 class="stat-value">${formatCurrency(stats.totalRevenue || 0)}</h2>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add tickets table if available
+            if (response.tickets && response.tickets.length > 0) {
+                html += `
+                    <div class="report-details">
+                        <h3>Ticket Details</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Ticket #</th>
+                                    <th>Date</th>
+                                    <th>Plate Number</th>
+                                    <th>Violation</th>
+                                    <th>Penalty</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${response.tickets.map(ticket => `
+                                    <tr>
+                                        <td>${escapeHtmlText(ticket.ticket_number)}</td>
+                                        <td>${escapeHtmlText(formatDate(ticket.date_issued))}</td>
+                                        <td>${escapeHtmlText(ticket.plate_number)}</td>
+                                        <td>${escapeHtmlText(ticket.violation_name)}</td>
+                                        <td>${formatCurrency(ticket.penalty_amount)}</td>
+                                        <td>${escapeHtmlText(ticket.status)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            reportContent.innerHTML = html;
+            reportCard.style.display = 'block';
+        }
+
+        // ── LGU Special Reports ──────────────────────────────────────
+
+        async function loadOfficerPerformance() {
+            const container = document.getElementById('officerPerfContent');
+            if (!container) return;
+            container.innerHTML = '<div class="spinner"></div>';
+            try {
+                const data = await API.getOfficerPerformanceLGU();
+                if (!data.success || !data.data.length) {
+                    container.innerHTML = '<p style="color:#888">No officer data available.</p>'; return;
+                }
+                container.innerHTML = `<div class="table-container"><table>
+                    <thead><tr><th>Apprehending Officer</th><th>Contact</th><th>Total Tickets</th><th>Paid</th><th>Unpaid</th><th>Collection Rate</th><th>Total Value</th><th>Last Ticket</th></tr></thead>
+                    <tbody>${data.data.map(r => `<tr>
+                        <td><strong>${escapeHtmlText(r.officer_name || 'N/A')}</strong></td>
+                        <td>${escapeHtmlText(r.contact_number || '—')}</td>
+                        <td>${Number(r.total_tickets) || 0}</td>
+                        <td>${Number(r.paid_tickets) || 0}</td>
+                        <td>${Number(r.unpaid_tickets) || 0}</td>
+                        <td><span style="color:${r.collection_rate_pct >= 70 ? '#2e7d32' : '#c62828'};font-weight:600">${r.collection_rate_pct || 0}%</span></td>
+                        <td>${formatCurrency(r.total_value || 0)}</td>
+                        <td>${escapeHtmlText(r.latest_ticket_date ? formatDate(r.latest_ticket_date) : '—')}</td>
+                    </tr>`).join('')}</tbody>
+                </table></div>`;
+            } catch (e) { container.innerHTML = '<p style="color:#c62828">Failed to load officer performance.</p>'; }
+        }
+
+        async function loadAgingReport() {
+            const container = document.getElementById('agingContent');
+            if (!container) return;
+            container.innerHTML = '<div class="spinner"></div>';
+            try {
+                const data = await API.getAgingReport();
+                if (!data.success || !data.data.length) {
+                    container.innerHTML = '<p style="color:#888">No delinquent accounts found.</p>'; return;
+                }
+                container.innerHTML = `<div class="table-container"><table>
+                    <thead><tr><th>Plate</th><th>Vehicle Type</th><th>Owner</th><th>Unpaid Tickets</th><th>Total Due</th><th>Oldest Unpaid</th><th>Days Overdue</th><th>Bucket</th></tr></thead>
+                    <tbody>${data.data.map(r => `<tr>
+                        <td><strong>${escapeHtmlText(r.plate_number || 'N/A')}</strong></td>
+                        <td>${escapeHtmlText(r.vehicle_type || '—')}</td>
+                        <td>${escapeHtmlText(r.owner_name || '—')}</td>
+                        <td style="text-align:center">${Number(r.unpaid_tickets) || 0}</td>
+                        <td><strong style="color:#c62828">${formatCurrency(r.total_due)}</strong></td>
+                        <td>${escapeHtmlText(r.oldest_unpaid_date ? formatDate(r.oldest_unpaid_date) : '—')}</td>
+                        <td style="text-align:center">${Number(r.days_overdue) || 0}</td>
+                        <td><span style="background:${r.days_overdue > 60 ? '#ffebee' : r.days_overdue > 30 ? '#fff3e0' : '#e8f5e9'};color:${r.days_overdue > 60 ? '#b71c1c' : r.days_overdue > 30 ? '#e65100' : '#2e7d32'};padding:2px 8px;border-radius:12px;font-size:.8rem;font-weight:600">${escapeHtmlText(r.aging_bucket || 'Current')}</span></td>
+                    </tr>`).join('')}</tbody>
+                </table></div>`;
+            } catch (e) { container.innerHTML = '<p style="color:#c62828">Failed to load aging report.</p>'; }
+        }
+
+        async function loadBarangayReport() {
+            const container = document.getElementById('barangayContent');
+            if (!container) return;
+            container.innerHTML = '<div class="spinner"></div>';
+            try {
+                const data = await API.getBarangayReport();
+                if (!data.success || !data.data.length) {
+                    container.innerHTML = '<p style="color:#888">No barangay data. Make sure location fields include barangay names.</p>'; return;
+                }
+                container.innerHTML = `<div class="table-container"><table>
+                    <thead><tr><th>Barangay</th><th>Total Violations</th><th>Paid</th><th>Unpaid</th><th>Total Value</th><th>Top Violations</th></tr></thead>
+                    <tbody>${data.data.map(r => `<tr>
+                        <td><strong>${escapeHtmlText(r.barangay || 'Unspecified')}</strong></td>
+                        <td style="text-align:center">${Number(r.total_tickets) || 0}</td>
+                        <td style="text-align:center;color:#2e7d32">${Number(r.paid) || 0}</td>
+                        <td style="text-align:center;color:#c62828">${Number(r.unpaid) || 0}</td>
+                        <td>${formatCurrency(r.total_value || 0)}</td>
+                        <td style="font-size:.8rem;color:#555">${escapeHtmlText((r.top_violations || '').split(', ').slice(0, 2).join(', '))}</td>
+                    </tr>`).join('')}</tbody>
+                </table></div>`;
+            } catch (e) { container.innerHTML = '<p style="color:#c62828">Failed to load barangay report.</p>'; }
+        }
+
+        // Auto-load LGU reports when tabs are shown
+        document.querySelectorAll('.nav-item[data-lgu]').forEach(el => {
+            el.addEventListener('click', () => {
+                const target = el.getAttribute('data-lgu');
+                if (target === 'apprehending_officer') loadOfficerPerformance();
+                if (target === 'aging') loadAgingReport();
+                if (target === 'barangay') loadBarangayReport();
+            });
+        });
+    </script>
+    <script src="../assets/js/toast.js"></script>
+</body>
+
+</html>

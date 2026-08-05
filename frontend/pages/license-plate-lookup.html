@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Plate Lookup - Municipal Traffic Violation Ticketing and Management System</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@500;600;700&display=swap');
+
+        :root {
+            --lookup-bg: #f4f7fb;
+            --lookup-ink: #1f2937;
+            --lookup-muted: #64748b;
+            --lookup-line: #d8e2ef;
+            --lookup-primary: #0f766e;
+            --lookup-primary-dark: #115e59;
+            --lookup-accent: #f59e0b;
+            --lookup-card: #ffffff;
+            --lookup-danger-bg: #fef2f2;
+            --lookup-danger-ink: #991b1b;
+            --lookup-success-bg: #ecfdf5;
+            --lookup-success-ink: #065f46;
+        }
+
+        body {
+            font-family: 'Manrope', 'Segoe UI', Tahoma, sans-serif;
+            color: var(--lookup-ink);
+            background:
+                radial-gradient(circle at 10% 10%, #c9f8f2 0%, rgba(201, 248, 242, 0) 38%),
+                radial-gradient(circle at 95% 15%, #ffe6c4 0%, rgba(255, 230, 196, 0) 35%),
+                linear-gradient(180deg, #f8fbff 0%, var(--lookup-bg) 70%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 24px;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .nav-brand {
+            font-family: 'Sora', 'Segoe UI', Tahoma, sans-serif;
+            font-size: 1.03rem;
+            font-weight: 700;
+            color: #ecfeff;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .nav-links a {
+            color: #e2e8f0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 7px 12px;
+            border-radius: 999px;
+            transition: all 0.25s ease;
+        }
+
+        .nav-links a:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .nav-links a.active {
+            color: #082f49;
+            background: linear-gradient(120deg, #99f6e4 0%, #fde68a 100%);
+            box-shadow: 0 8px 24px rgba(34, 197, 94, 0.2);
+        }
+
+        .lookup-container {
+            max-width: 1100px;
+            margin: 34px auto 48px;
+            padding: 0 20px;
+        }
+
+        .lookup-section {
+            background: var(--lookup-card);
+            padding: 28px;
+            border-radius: 18px;
+            box-shadow:
+                0 8px 26px rgba(15, 23, 42, 0.08),
+                0 2px 6px rgba(15, 23, 42, 0.05);
+            margin-bottom: 22px;
+            border: 1px solid #e8eef5;
+        }
+
+        .section-title {
+            font-family: 'Sora', 'Segoe UI', Tahoma, sans-serif;
+            font-size: 1.42rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 2px dashed #cbd5e1;
+            letter-spacing: 0.2px;
+        }
+
+        .validation-info {
+            background: linear-gradient(135deg, #ecfeff 0%, #fef9c3 100%);
+            border: 1px solid #99f6e4;
+            padding: 16px 18px;
+            margin-bottom: 18px;
+            border-radius: 14px;
+        }
+
+        .validation-info p {
+            margin: 7px 0;
+            color: #155e75;
+            font-size: 0.94rem;
+            line-height: 1.5;
+        }
+
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-form input {
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 15px;
+            border: 1px solid var(--lookup-line);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            transition: border-color 0.22s ease, box-shadow 0.22s ease;
+            background: #fcfdff;
+        }
+
+        .search-form input:focus {
+            outline: none;
+            border-color: #14b8a6;
+            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+        }
+
+        .search-form button {
+            min-height: 48px;
+            padding: 0 30px;
+            background: linear-gradient(135deg, var(--lookup-primary) 0%, #0ea5e9 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.98rem;
+            font-weight: 800;
+            letter-spacing: 0.25px;
+            transition: transform 0.2s ease, box-shadow 0.25s ease;
+            box-shadow: 0 10px 20px rgba(14, 116, 144, 0.24);
+        }
+
+        .search-form button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 26px rgba(14, 116, 144, 0.33);
+        }
+
+        .search-form button:active {
+            transform: translateY(0);
+        }
+
+        .error-message,
+        .success-message {
+            margin-top: 14px;
+            margin-bottom: 0;
+            border-radius: 12px;
+            padding: 13px 14px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .error-message {
+            background: var(--lookup-danger-bg);
+            border: 1px solid #fecaca;
+            color: var(--lookup-danger-ink);
+        }
+
+        .success-message {
+            background: var(--lookup-success-bg);
+            border: 1px solid #a7f3d0;
+            color: var(--lookup-success-ink);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 24px;
+            color: #0f766e;
+            font-weight: 700;
+            background: #f0fdfa;
+            border: 1px dashed #5eead4;
+            border-radius: 12px;
+            margin-top: 14px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+            animation: reveal 0.4s ease;
+        }
+
+        @keyframes reveal {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .vehicle-info {
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 210px 1fr;
+            gap: 14px;
+            margin-bottom: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid #e6edf7;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .label {
+            font-weight: 700;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.35px;
+            font-size: 0.79rem;
+        }
+
+        .value {
+            color: #0f172a;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.73rem;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 0;
+        }
+
+        .summary-card {
+            color: #ffffff;
+            padding: 18px;
+            border-radius: 14px;
+            text-align: left;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            background: linear-gradient(140deg, #1d4ed8 0%, #0ea5e9 100%);
+        }
+
+        .summary-card.unpaid {
+            background: linear-gradient(140deg, #b91c1c 0%, #f97316 100%);
+        }
+
+        .summary-card.paid {
+            background: linear-gradient(140deg, #047857 0%, #14b8a6 100%);
+        }
+
+        .card-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-family: 'Sora', 'Segoe UI', Tahoma, sans-serif;
+            font-size: 1.6rem;
+            line-height: 1.1;
+            font-weight: 700;
+        }
+
+        .tickets-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .tickets-table thead {
+            background: linear-gradient(90deg, #0f766e 0%, #0ea5e9 100%);
+            color: #ffffff;
+        }
+
+        .tickets-table th {
+            padding: 13px 12px;
+            text-align: left;
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tickets-table td {
+            padding: 12px;
+            border-bottom: 1px solid #edf2f7;
+            vertical-align: top;
+            font-size: 0.92rem;
+        }
+
+        .tickets-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .tickets-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-paid,
+        .status-unpaid,
+        .status-disputed {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.73rem;
+            display: inline-block;
+            border: 1px solid transparent;
+            letter-spacing: 0.3px;
+        }
+
+        .status-paid {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+        }
+
+        .status-unpaid {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fca5a5;
+        }
+
+        .status-disputed {
+            background: #fef9c3;
+            color: #854d0e;
+            border-color: #fde047;
+        }
+
+        .no-records td {
+            text-align: center;
+            color: var(--lookup-muted);
+            padding: 24px;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .ticket-link {
+            color: var(--lookup-primary);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .ticket-link:hover {
+            color: var(--lookup-primary-dark);
+            text-decoration: underline;
+        }
+
+        @media (max-width: 1024px) {
+            .summary-cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 12px 16px;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .lookup-container {
+                margin-top: 18px;
+                padding: 0 14px;
+            }
+
+            .lookup-section {
+                padding: 18px;
+                border-radius: 14px;
+            }
+
+            .section-title {
+                font-size: 1.15rem;
+            }
+
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+
+            .search-form button {
+                width: 100%;
+            }
+
+            .info-row {
+                grid-template-columns: 1fr;
+                gap: 6px;
+                padding: 10px 0;
+            }
+
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .tickets-table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .tickets-table th,
+            .tickets-table td {
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-brand">Municipal Traffic Violation Ticketing and Management System</div>
+        <div class="nav-links">
+            <a href="../index.html">Dashboard</a>
+            <a href="manage-violations.html">Violations</a>
+            <a href="license-plate-lookup.html" class="active">Plate Lookup</a>
+            <a href="#" id="logoutBtn">Logout</a>
+        </div>
+    </div>
+
+    <div class="lookup-container">
+        <div class="lookup-section">
+            <div class="section-title"><i class="fas fa-magnifying-glass" aria-hidden="true"></i> License Plate Lookup</div>
+
+            <style>
+                .search-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+                .search-tab { padding: 8px 16px; border: 2px solid #2E5FAC; background: white; color: #2E5FAC; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+                .search-tab.active { background: #2E5FAC; color: white; }
+                .search-tab:hover:not(.active) { background: #EAF2FA; }
+                .search-input-group { flex: 1; }
+                .repeat-offender-badge { display: inline-block; background: #8B0000; color: white; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 8px; }
+                .search-results-list { list-style: none; padding: 0; margin: 0; }
+                .search-results-list li { padding: 10px 14px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.15s; border-radius: 6px; }
+                .search-results-list li:hover { background: #EAF2FA; }
+                .search-results-list li .result-plate { font-weight: bold; color: #1B3A6B; }
+                .search-results-list li .result-name { color: #444; font-size: 13px; }
+                .search-results-list li .result-count { color: #8B0000; font-size: 12px; font-weight: bold; }
+            </style>
+            <div class="validation-info">
+                <p><strong>Philippine License Plate Format:</strong></p>
+                <p>Format examples: ABC 1234, ABC1234, 59525MV</p>
+                <p>System accepts 6-8 alphanumeric characters.</p>
+            </div>
+
+            <!-- Search Type Tabs (Panel Requirement: search by plate, name, license number) -->
+            <div class="search-tabs">
+                <button class="search-tab active" onclick="switchTab('plate')" id="tab-plate"><i class="fas fa-car" aria-hidden="true"></i> By Plate Number</button>
+                <button class="search-tab" onclick="switchTab('name')"  id="tab-name"><i class="fas fa-user" aria-hidden="true"></i> By Owner Name</button>
+                <button class="search-tab" onclick="switchTab('license')" id="tab-license"><i class="fas fa-id-card" aria-hidden="true"></i> By License Number</button>
+            </div>
+
+            <form id="lookupForm" class="search-form">
+                <!-- Plate Number Search -->
+                <div id="input-plate" class="search-input-group">
+                    <input type="text" id="plateInput" placeholder="Enter license plate (e.g., XYZ 1234)"
+                        autocomplete="off" style="text-transform: uppercase;">
+                </div>
+                <!-- Owner Name Search -->
+                <div id="input-name" class="search-input-group" style="display:none;">
+                    <input type="text" id="nameInput" placeholder="Enter vehicle owner's full name">
+                </div>
+                <!-- License Number Search -->
+                <div id="input-license" class="search-input-group" style="display:none;">
+                    <input type="text" id="licenseInput" placeholder="Enter driver's license number (e.g., N01-23-456789)"
+                        autocomplete="off" style="text-transform: uppercase;">
+                </div>
+                <button type="submit" id="searchBtn">Search</button>
+            </form>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            <div class="loading" id="loading">
+                <p><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Searching vehicle records...</p>
+            </div>
+        </div>
+
+        <div id="resultsSection" class="results-section">
+            <!-- Vehicle Information -->
+            <div class="lookup-section">
+                <div class="section-title"><i class="fas fa-car-side" aria-hidden="true"></i> Vehicle Information</div>
+                <div id="vehicleInfo" class="vehicle-info">
+                    <div class="info-row">
+                        <span class="label">License Plate:</span>
+                        <span class="value" id="valPlate">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Vehicle Type:</span>
+                        <span class="value" id="valType">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Owner Name:</span>
+                        <span class="value" id="valOwnerName">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Owner Email:</span>
+                        <span class="value" id="valOwnerEmail">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Owner Address:</span>
+                        <span class="value" id="valOwnerAddress">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Status:</span>
+                        <span class="value" id="valStatus">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Registered Date:</span>
+                        <span class="value" id="valRegistered">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Violation Summary -->
+            <div class="lookup-section">
+                <div class="section-title"><i class="fas fa-chart-bar" aria-hidden="true"></i> Violation Summary</div>
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="card-label">Total Violations</div>
+                        <div class="card-value" id="totalViolations">0</div>
+                    </div>
+                    <div class="summary-card paid">
+                        <div class="card-label">Paid Violations</div>
+                        <div class="card-value" id="paidViolations">0</div>
+                    </div>
+                    <div class="summary-card unpaid">
+                        <div class="card-label">Unpaid Violations</div>
+                        <div class="card-value" id="unpaidViolations">0</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="card-label">Total Outstanding</div>
+                        <div class="card-value" id="totalOutstanding">₱0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Violation Tickets History -->
+            <div class="lookup-section">
+                <div class="section-title"><i class="fas fa-calendar-days" aria-hidden="true"></i> Violation Tickets</div>
+                <table class="tickets-table" id="violationsTable">
+                    <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Violation</th>
+                            <th>Date Issued</th>
+                            <th>Location</th>
+                            <th>Penalty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsBody">
+                        <tr class="no-records">
+                            <td colspan="6">No tickets found for this vehicle.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="../app-config.js"></script>
+    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script>
+        // ─── Tab switching ───────────────────────────────────────────
+        let currentSearchType = 'plate';
+        function switchTab(type) {
+            currentSearchType = type;
+            ['plate', 'name', 'license'].forEach(t => {
+                document.getElementById('input-' + t).style.display = t === type ? 'flex' : 'none';
+                document.getElementById('tab-' + t).classList.toggle('active', t === type);
+            });
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('resultsSection').classList.remove('active');
+        }
+
+        document.getElementById('lookupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (currentSearchType === 'plate') {
+                const platInput = document.getElementById('plateInput').value.trim().toUpperCase();
+                if (!validatePlateNumber(platInput)) {
+                    showError('Invalid license plate format. Use format: ABC 1234 or ABC1234');
+                    return;
+                }
+                const normalizedPlate = normalizeHelperPlateNumber(platInput);
+                await lookupVehicle(normalizedPlate);
+
+            } else if (currentSearchType === 'name') {
+                const nameInput = document.getElementById('nameInput').value.trim();
+                if (!nameInput || nameInput.length < 2) {
+                    showError('Please enter at least 2 characters of the owner\'s name.');
+                    return;
+                }
+                await lookupByName(nameInput);
+
+            } else if (currentSearchType === 'license') {
+                const licenseInput = document.getElementById('licenseInput').value.trim().toUpperCase();
+                if (!licenseInput || licenseInput.length < 5) {
+                    showError('Please enter a valid driver\'s license number.');
+                    return;
+                }
+                await lookupByLicenseNumber(licenseInput);
+            }
+        });
+
+        // ─── Lookup by Owner Name ─────────────────────────────────────
+        async function lookupByName(ownerName) {
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('errorMessage');
+            const resultsSection = document.getElementById('resultsSection');
+
+            loading.classList.add('active');
+            errorMsg.style.display = 'none';
+            resultsSection.classList.remove('active');
+
+            try {
+                if (!requireAuth()) return;
+                const data = await apiRequest(`/vehicles/search?owner_name=${encodeURIComponent(ownerName)}`);
+                
+                if (!data.success || !data.vehicles || data.vehicles.length === 0) {
+                    showError('No records found for this owner name.');
+                    return;
+                }
+
+                if (data.vehicles.length === 1) {
+                    // Single result - show directly
+                    const vehData = await apiRequest(`/vehicles/lookup?plate_number=${encodeURIComponent(data.vehicles[0].plate_number)}`);
+                    if (vehData.success) {
+                        displayVehicleInfo(vehData.vehicle, vehData.violations);
+                        resultsSection.classList.add('active');
+                    }
+                } else {
+                    // Multiple results - show selection list
+                    displaySearchResultsList(data.vehicles);
+                }
+            } catch (error) {
+                showError(error.message || 'Error searching by owner name.');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ─── Lookup by License Number ─────────────────────────────────
+        async function lookupByLicenseNumber(licenseNumber) {
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('errorMessage');
+            const resultsSection = document.getElementById('resultsSection');
+
+            loading.classList.add('active');
+            errorMsg.style.display = 'none';
+            resultsSection.classList.remove('active');
+
+            try {
+                if (!requireAuth()) return;
+                const data = await apiRequest(`/vehicles/search?license_number=${encodeURIComponent(licenseNumber)}`);
+                
+                if (!data.success || !data.vehicles || data.vehicles.length === 0) {
+                    showError('No records found for this license number.');
+                    return;
+                }
+
+                const vehData = await apiRequest(`/vehicles/lookup?plate_number=${encodeURIComponent(data.vehicles[0].plate_number)}`);
+                if (vehData.success) {
+                    displayVehicleInfo(vehData.vehicle, vehData.violations);
+                    resultsSection.classList.add('active');
+                }
+            } catch (error) {
+                showError(error.message || 'Error searching by license number.');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ─── Show multiple name-search results ───────────────────────
+        function displaySearchResultsList(vehicles) {
+            const resultsSection = document.getElementById('resultsSection');
+            const vehicleInfo = document.getElementById('vehicleInfo');
+            vehicleInfo.innerHTML = `
+                <p style="font-weight:600;color:#1B3A6B;margin-bottom:10px;">Multiple records found. Select a vehicle:</p>
+                <ul class="search-results-list">
+                    ${vehicles.map((v, index) => `
+                        <li class="vehicle-search-result" data-result-index="${index}">
+                            <span class="result-plate">${escapeHtmlText(v.plate_number || 'N/A')}</span>
+                            <span class="result-name"> — ${escapeHtmlText(v.owner_name || 'N/A')}</span>
+                            ${Number(v.violation_count) > 0 ? `<span class="repeat-offender-badge"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> ${Number(v.violation_count)} violation${Number(v.violation_count) > 1 ? 's' : ''}</span>` : ''}
+                        </li>`).join('')}
+                </ul>`;
+            vehicleInfo.querySelectorAll('.vehicle-search-result').forEach(item => {
+                item.addEventListener('click', () => {
+                    const index = Number(item.dataset.resultIndex);
+                    const selected = vehicles[index];
+                    if (selected?.plate_number) selectVehicleResult(selected.plate_number);
+                });
+            });
+            resultsSection.classList.add('active');
+        }
+
+        async function selectVehicleResult(plateNumber) {
+            const data = await apiRequest(`/vehicles/lookup?plate_number=${encodeURIComponent(plateNumber)}`);
+            if (data.success) {
+                displayVehicleInfo(data.vehicle, data.violations);
+            }
+        }
+
+        function validatePlateNumber(plate) {
+            const normalized = normalizeHelperPlateNumber(plate);
+            // Accept both modern (ABC1234) and existing legacy demo values (alphanumeric length 6-8).
+            return /^[A-Z0-9]{6,8}$/.test(normalized);
+        }
+
+        function normalizeHelperPlateNumber(plate) {
+            // Store and compare plate identifiers without spaces or hyphens.
+            return plate.replace(/[\s-]+/g, '').toUpperCase();
+        }
+
+        async function lookupVehicle(plateNumber) {
+            const loading = document.getElementById('loading');
+            const errorMsg = document.getElementById('errorMessage');
+            const resultsSection = document.getElementById('resultsSection');
+
+            loading.classList.add('active');
+            errorMsg.style.display = 'none';
+            resultsSection.classList.remove('active');
+
+            try {
+                if (!requireAuth()) {
+                    return;
+                }
+
+                let data;
+                try {
+                    data = await apiRequest(`/vehicles/lookup?plate_number=${encodeURIComponent(plateNumber)}`);
+                } catch (primaryError) {
+                    // Compatibility fallback for older backend versions without /vehicles/lookup.
+                    if ((primaryError.message || '').toLowerCase().includes('endpoint not found')) {
+                        data = await lookupVehicleFromTickets(plateNumber);
+                    } else {
+                        throw primaryError;
+                    }
+                }
+
+                if (!data.success || !data.vehicle) {
+                    showError('No vehicle found with this license plate.');
+                    return;
+                }
+
+                displayVehicleInfo(data.vehicle, data.violations);
+                resultsSection.classList.add('active');
+
+            } catch (error) {
+                console.error('Lookup error:', error);
+                showError(error.message || 'Error retrieving vehicle information');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        async function lookupVehicleFromTickets(plateNumber) {
+            const ticketResponse = await API.getTickets({ search: plateNumber, pageSize: 100 });
+            const ticketList = extractTicketsFromResponse(ticketResponse);
+            const normalized = normalizeHelperPlateNumber(plateNumber);
+            const matched = ticketList.filter(t => normalizeHelperPlateNumber(t.plate_number || '') === normalized);
+
+            if (matched.length === 0) {
+                return {
+                    success: false,
+                    vehicle: null,
+                    violations: []
+                };
+            }
+
+            const source = matched[0];
+            return {
+                success: true,
+                vehicle: {
+                    plate_number: source.plate_number || normalized,
+                    vehicle_type: source.vehicle_type || 'N/A',
+                    owner_name: source.owner_name || 'N/A',
+                    owner_email: source.owner_email || 'N/A',
+                    owner_address: source.owner_address || 'N/A',
+                    status: 'active',
+                    registered_date: source.created_at || null
+                },
+                violations: matched
+            };
+        }
+
+        function extractTicketsFromResponse(response) {
+            if (!response) return [];
+            if (Array.isArray(response.tickets)) return response.tickets;
+            if (Array.isArray(response.data)) return response.data;
+            if (response.data && Array.isArray(response.data.tickets)) return response.data.tickets;
+            return [];
+        }
+
+        function displayVehicleInfo(vehicle, violations = []) {
+            // Vehicle Info
+            document.getElementById('valPlate').textContent = vehicle.plate_number || '-';
+            document.getElementById('valType').textContent = vehicle.vehicle_type || '-';
+            document.getElementById('valOwnerName').textContent = vehicle.owner_name || '-';
+            if (document.getElementById('valLicenseNum')) {
+                document.getElementById('valLicenseNum').textContent = vehicle.driver_license_number || 'N/A';
+            }
+            document.getElementById('valOwnerEmail').textContent = vehicle.owner_email || '-';
+            document.getElementById('valOwnerAddress').textContent = vehicle.owner_address || '-';
+            
+            const statusBadge = vehicle.status === 'active' 
+                ? '<span class="status-badge status-active">Active</span>'
+                : '<span class="status-badge status-inactive">Inactive</span>';
+            document.getElementById('valStatus').innerHTML = statusBadge;
+            
+            document.getElementById('valRegistered').textContent = vehicle.registered_date 
+                ? new Date(vehicle.registered_date).toLocaleDateString()
+                : '-';
+
+            // Violation Summary
+            const totalTickets = violations.length;
+            const paidTickets = violations.filter(v => v.status === 'paid').length;
+            const unpaidTickets = violations.filter(v => v.status === 'unpaid' || v.status === 'pending_payment').length;
+            const totalOutstanding = violations
+                .filter(v => v.status === 'unpaid' || v.status === 'pending_payment')
+                .reduce((sum, v) => sum + parseFloat(v.remaining_balance ?? v.penalty_amount ?? 0), 0);
+
+            document.getElementById('totalViolations').textContent = totalTickets;
+            document.getElementById('paidViolations').textContent = paidTickets;
+            document.getElementById('unpaidViolations').textContent = unpaidTickets;
+            document.getElementById('totalOutstanding').textContent = `₱${totalOutstanding.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+            if (typeof renderDemeritPoints === 'function') renderDemeritPoints(violations);
+
+            // Tickets Table
+            const tbody = document.getElementById('ticketsBody');
+            tbody.innerHTML = '';
+
+            if (violations.length === 0) {
+                tbody.innerHTML = '<tr class="no-records"><td colspan="6">No tickets found for this vehicle.</td></tr>';
+                return;
+            }
+
+            violations.forEach(ticket => {
+                const statusClass = ticket.status === 'paid' ? 'status-paid' : 
+                                   ticket.status === 'disputed' ? 'status-disputed' : 'status-unpaid';
+                const statusText = ticket.status.replace('_', ' ').toUpperCase();
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${escapeHtmlText(ticket.ticket_number || 'N/A')}</strong></td>
+                    <td>${escapeHtmlText(ticket.violation_name || ticket.violation_type || '-')}</td>
+                    <td>${escapeHtmlText(ticket.date_issued || 'N/A')}</td>
+                    <td>${escapeHtmlText(ticket.location || '-')}</td>
+                    <td>₱${Number(ticket.penalty_amount || 0).toFixed(2)}</td>
+                    <td><span class="${statusClass}">${escapeHtmlText(statusText)}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        });
+    </script>
+    <script src="../assets/js/toast.js"></script>
+<div id="demeritSection" style="display:none;padding:0 20px"></div>
+
+    <style>
+    .demerit-bar-wrap { margin: 14px 0; }
+    .demerit-label { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px;
+        display: flex; justify-content: space-between; }
+    .demerit-bar-bg { height: 10px; background: #f1f5f9; border-radius: 999px; overflow: hidden; }
+    .demerit-bar-fill { height: 100%; border-radius: 999px; transition: width 0.8s ease;
+        background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444); }
+    .demerit-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px;
+        border-radius: 999px; font-size: 12px; font-weight: 700; }
+    .demerit-low    { background: #dcfce7; color: #15803d; }
+    .demerit-mid    { background: #fef9c3; color: #854d0e; }
+    .demerit-high   { background: #fef2f2; color: #b91c1c; }
+    </style>
+
+    <script>
+    function renderDemeritPoints(violations) {
+        const container = document.getElementById('demeritSection');
+        if (!container) return;
+        if (!violations || !violations.length) {
+            container.innerHTML = '';
+            container.style.display = 'none';
+            return;
+        }
+
+        const totalPoints = violations.reduce((sum, v) => sum + (parseInt(v.demerit_points) || 0), 0);
+        const maxPoints = 30; // configurable threshold
+        const pct = Math.min((totalPoints / maxPoints) * 100, 100);
+
+        let levelClass = 'demerit-low';
+        let levelText  = 'Low Risk';
+        if (totalPoints >= 10 && totalPoints < 20) { levelClass = 'demerit-mid'; levelText = 'Medium Risk'; }
+        if (totalPoints >= 20) { levelClass = 'demerit-high'; levelText = 'High Risk'; }
+
+        container.innerHTML = `
+            <div style="background:white;border-radius:14px;padding:18px 20px;
+                border:1px solid #e2e8f0;margin-top:16px;box-shadow:0 2px 8px rgba(0,0,0,0.05)">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                    <div style="font-size:14px;font-weight:700;color:#0b2545">
+                        <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:7px"></i>
+                        Demerit Points
+                    </div>
+                    <span class="demerit-badge ${levelClass}">${levelText}</span>
+                </div>
+                <div class="demerit-bar-wrap">
+                    <div class="demerit-label">
+                        <span>Total Accumulated Points</span>
+                        <span><strong>${totalPoints}</strong> / ${maxPoints} pts</span>
+                    </div>
+                    <div class="demerit-bar-bg">
+                        <div class="demerit-bar-fill" style="width:${pct}%"></div>
+                    </div>
+                </div>
+                <div style="font-size:11px;color:#6b7280;margin-top:8px">
+                    Based on ${violations.length} violation record(s).
+                    Points accumulate per violation type as defined by LGU ordinance.
+                </div>
+            </div>
+        `;
+        container.style.display = 'block';
+    }
+    window.renderDemeritPoints = renderDemeritPoints;
+    </script>
+
+</body>
+</html>
+
