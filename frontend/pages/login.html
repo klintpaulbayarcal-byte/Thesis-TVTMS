@@ -321,7 +321,7 @@
         <div style="background:white;border-radius:20px;padding:36px 32px;
             max-width:420px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,0.2);
             position:relative;">
-            <button onclick="closeForgotModal()" style="
+            <button type="button" onclick="closeForgotModal()" style="
                 position:absolute;top:16px;right:16px;background:none;border:none;
                 font-size:20px;cursor:pointer;color:#9ca3af;line-height:1;"><i class="fas fa-xmark" aria-hidden="true"></i></button>
             <div style="text-align:center;margin-bottom:20px">
@@ -334,7 +334,7 @@
                     Enter your email address and we will send you a password reset link.</p>
             </div>
             <div style="margin-bottom:14px">
-                <label style="font-size:12px;font-weight:600;color:#374151;
+                <label for="forgotEmailInput" style="font-size:12px;font-weight:600;color:#374151;
                     display:block;margin-bottom:6px">Email Address</label>
                 <input type="email" id="forgotEmailInput" placeholder="Enter your registered email" style="width:100%;padding:11px 14px;border-radius:10px;
                     border:1.5px solid #e2e8f0;font-size:13px;
@@ -342,7 +342,7 @@
                     color:#0f172a;transition:border-color 0.2s;" onfocus="this.style.borderColor='#2563eb'"
                     onblur="this.style.borderColor='#e2e8f0'" onkeydown="if(event.key==='Enter')submitForgotPassword()">
             </div>
-            <button onclick="submitForgotPassword()" id="forgotSubmitBtn" style="
+            <button type="button" onclick="submitForgotPassword()" id="forgotSubmitBtn" style="
                 width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;
                 background:linear-gradient(135deg,#1d4ed8,#2563eb);
                 color:white;font-size:14px;font-weight:700;

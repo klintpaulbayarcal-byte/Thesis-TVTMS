@@ -662,6 +662,7 @@
     }
 
     .sc-tab {
+      width: 100%;
       padding: 9px 8px;
       border-radius: 10px;
       font-size: 12px;
@@ -676,6 +677,7 @@
       align-items: center;
       justify-content: center;
       gap: 5px;
+      font-family: inherit;
     }
 
     .sc-tab.active {
@@ -2924,7 +2926,7 @@
       </div>
     </a>
     <div class="nav-right">
-      <button class="nav-toggle" aria-expanded="false" aria-label="Open menu">
+      <button type="button" class="nav-toggle" aria-expanded="false" aria-label="Open menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
       </button>
       <a href="landing.html" class="nav-pill">Home</a>
@@ -2994,17 +2996,16 @@
         <p class="sc-desc">Enter your ticket number or plate number to instantly view violation details and payment status.</p>
 
         <div class="sc-tabs">
-          <div class="sc-tab active" id="tab-plate" onclick="switchTab('plate')"><i data-lucide="car-front"></i> Plate Number</div>
-          <div class="sc-tab" id="tab-ticket" onclick="switchTab('ticket')"><i data-lucide="ticket"></i> Ticket Number</div>
+          <button type="button" class="sc-tab active" id="tab-plate" data-lookup-tab="plate" role="tab" aria-selected="true"><i data-lucide="car-front"></i> Plate Number</button>
+          <button type="button" class="sc-tab" id="tab-ticket" data-lookup-tab="ticket" role="tab" aria-selected="false"><i data-lucide="ticket"></i> Ticket Number</button>
         </div>
 
         <div class="sc-input-wrap">
           <span class="sc-input-icon"><i data-lucide="search"></i></span>
-          <input class="sc-input" type="text" id="searchInput" placeholder="e.g., ABC 1234" autocomplete="off"
-            oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
+          <input class="sc-input" type="text" id="searchInput" aria-label="Plate number or ticket number" placeholder="e.g., ABC 1234" autocomplete="off">
         </div>
 
-        <button class="sc-search-btn" onclick="doSearch()">
+        <button type="button" class="sc-search-btn" id="quickLookupButton">
           <i data-lucide="search"></i> Look Up Ticket
         </button>
 
@@ -3333,7 +3334,7 @@
       <div class="viol-search-wrap reveal">
         <div class="viol-search">
           <span class="sc-input-icon" style="position:static"><i data-lucide="search"></i></span>
-          <input id="violSearchInput" type="text" placeholder="Search violation or code…" autocomplete="off">
+          <input id="violSearchInput" type="text" aria-label="Search violations by name or code" placeholder="Search violation or code…" autocomplete="off">
         </div>
 
       </div>
@@ -3648,7 +3649,7 @@
     <div class="modules-content">
       <div class="modules-header">
         <h2 class="modules-title">Clear Roles and Public Access</h2>
-        <button class="modules-close" onclick="closeModal('rolesModal')"><i data-lucide="x"></i></button>
+        <button type="button" class="modules-close" data-close-modal="rolesModal" aria-label="Close roles dialog"><i data-lucide="x"></i></button>
       </div>
       <div class="modules-list">
         <div class="module-item">
@@ -3684,7 +3685,7 @@
     <div class="modules-content">
       <div class="modules-header">
         <h2 class="modules-title">10 System Modules</h2>
-        <button class="modules-close" onclick="closeModal('modulesModal')"><i data-lucide="x"></i></button>
+        <button type="button" class="modules-close" data-close-modal="modulesModal" aria-label="Close modules dialog"><i data-lucide="x"></i></button>
       </div>
       <div class="modules-list">
         <div class="module-item">
@@ -3766,7 +3767,7 @@
     <div class="modules-content">
       <div class="modules-header">
         <h2 class="modules-title">20+ Audit Actions</h2>
-        <button class="modules-close" onclick="closeModal('auditActionsModal')"><i data-lucide="x"></i></button>
+        <button type="button" class="modules-close" data-close-modal="auditActionsModal" aria-label="Close audit actions dialog"><i data-lucide="x"></i></button>
       </div>
       <div class="modules-list">
         <div class="module-item">
@@ -4018,6 +4019,10 @@
       document.getElementById(modalId).classList.remove('active');
     }
 
+    document.querySelectorAll('[data-close-modal]').forEach((button) => {
+      button.addEventListener('click', () => closeModal(button.dataset.closeModal));
+    });
+
     // Open modals on stat click
     document.getElementById('rolesStatBtn').addEventListener('click', () => openModal('rolesModal'));
     document.getElementById('modulesStatBtn').addEventListener('click', () => openModal('modulesModal'));
@@ -4051,7 +4056,9 @@
     function switchTab(t) {
       tab = t;
       ['plate', 'ticket'].forEach(k => {
-        document.getElementById('tab-' + k).classList.toggle('active', k === t);
+        const tabButton = document.getElementById('tab-' + k);
+        tabButton.classList.toggle('active', k === t);
+        tabButton.setAttribute('aria-selected', String(k === t));
       });
       const input = document.getElementById('searchInput');
       input.value = '';
@@ -4059,6 +4066,21 @@
       document.getElementById('scResult').classList.remove('show');
       document.getElementById('scErr').classList.remove('show');
     }
+
+    document.querySelectorAll('[data-lookup-tab]').forEach((button) => {
+      button.addEventListener('click', () => switchTab(button.dataset.lookupTab));
+    });
+    const quickLookupInput = document.getElementById('searchInput');
+    quickLookupInput.addEventListener('input', () => {
+      quickLookupInput.value = quickLookupInput.value.toUpperCase();
+    });
+    quickLookupInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        doSearch();
+      }
+    });
+    document.getElementById('quickLookupButton').addEventListener('click', doSearch);
 
     function showErr(msg) {
       document.getElementById('scErrText').textContent = msg;

@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Issue Ticket - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
-    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -94,7 +94,7 @@
             <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle">
+                    <button type="button" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
                         <i class="fas fa-bars"></i>
                     </button>
                     <h2>Issue Violation Ticket</h2>
@@ -108,7 +108,7 @@
                         <h3 class="card-title">New Violation Ticket</h3>
                     </div>
                     <div class="card-body">
-                        <form id="issueTicketForm">
+                        <form id="issueTicketForm" novalidate>
                             <!-- Vehicle Information -->
                             <h4 style="margin-bottom: 20px; color: var(--primary-color);">
                                 <i class="fas fa-motorcycle"></i> Vehicle Information
@@ -120,6 +120,7 @@
                                         <label for="plateNumber" class="required">Plate Number</label>
                                         <input type="text" id="plateNumber" name="plateNumber" required
                                             placeholder="e.g., ABC1234" style="text-transform: uppercase;">
+                                        <small class="field-hint">Use 6–8 letters and numbers; spaces and hyphens are accepted.</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -151,7 +152,7 @@
                                             placeholder="e.g., N01-23-456789"
                                             style="text-transform: uppercase;"
                                             oninput="this.value = this.value.toUpperCase()">
-                                        <small style="color:#888;font-size:11px;">Required for repeat offender tracking</small>
+                                        <small class="field-hint">Example: N01-23-456789. Used for repeat-offender tracking.</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -256,11 +257,11 @@
                             </div>
 
                             <!-- Action Buttons -->
-                            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                            <div class="ticket-form-actions" style="display: flex; gap: 10px; margin-top: 30px;">
                                 <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="fas fa-ticket-alt"></i> Issue Ticket
                                 </button>
-                                <button type="reset" class="btn btn-secondary btn-lg">
+                                <button type="button" id="resetTicketButton" class="btn btn-secondary btn-lg">
                                     <i class="fas fa-redo"></i> Reset Form
                                 </button>
                                 <a href="view-tickets.html" class="btn btn-outline btn-lg">
@@ -298,8 +299,8 @@
 
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260427c"></script>
-    <script src="../assets/js/main.js?v=20260427c"></script>
-    <script src="../assets/js/tickets.js?v=20260415"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
+    <script src="../assets/js/tickets.js?v=20260806"></script>
     <script>
         if (!requireAuth()) {
             // Redirect handled by requireAuth

@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Users - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260412">
-    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
-    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -121,13 +121,13 @@
             <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle">
+                    <button type="button" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
                         <i class="fas fa-bars"></i>
                     </button>
                     <h2>Manage Users</h2>
                 </div>
                 <div class="topbar-right">
-                    <button class="btn btn-primary" onclick="showAddUserModal()">
+                    <button type="button" class="btn btn-primary" onclick="showAddUserModal()">
                         <i class="fas fa-plus"></i> Add New User
                     </button>
                 </div>
@@ -139,8 +139,8 @@
                     <div class="card-header">
                         <h3>User Accounts</h3>
                         <div class="search-bar" style="max-width: 300px;">
-                            <input type="text" placeholder="Search users..." id="searchInput">
-                            <button onclick="searchUsers()"><i class="fas fa-search"></i></button>
+                            <input type="text" placeholder="Search users..." id="searchInput" aria-label="Search user accounts">
+                            <button type="button" onclick="searchUsers()" aria-label="Search user accounts"><i class="fas fa-search" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -160,7 +160,7 @@
                                 </thead>
                                 <tbody id="usersTableBody">
                                     <tr>
-                                        <td colspan="8" style="text-align: center;">Loading...</td>
+                                        <td colspan="8" style="text-align: center;"><div class="spinner" aria-label="Loading user accounts"></div></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -176,7 +176,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Add New User</h3>
-                <span class="close" onclick="closeUserModal()">&times;</span>
+                <button type="button" class="modal-close-button" onclick="closeUserModal()" aria-label="Close user form"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <form id="userForm">
                 <input type="hidden" id="userId">
@@ -228,7 +228,7 @@
 
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260427c"></script>
-    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
     <script src="../assets/js/dashboard.js?v=20260427c"></script>
     <script>
         // Require authentication
@@ -310,18 +310,18 @@
                     <td>${getAccountStateBadge(user)}</td>
                     <td>${escapeHtmlText(user.last_login ? formatDate(user.last_login) : 'Never')}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})" title="Edit">
-                            <i class="fas fa-edit"></i>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="editUser(${user.id})" title="Edit account">
+                            <i class="fas fa-edit" aria-hidden="true"></i><span>Edit</span>
                         </button>
                         ${isLocked ? `
-                        <button class="btn btn-sm btn-warning" onclick="unlockUserAccount(${user.id})" title="Unlock account">
-                            <i class="fas fa-unlock"></i>
+                        <button type="button" class="btn btn-sm btn-warning" onclick="unlockUserAccount(${user.id})" title="Unlock account">
+                            <i class="fas fa-unlock" aria-hidden="true"></i><span>Unlock</span>
                         </button>` : ''}
-                        <button class="btn btn-sm btn-secondary" onclick="toggleUserStatus(${user.id})" title="${user.status === 'active' ? 'Deactivate' : 'Activate'}" ${user.id === getUser().id ? 'disabled' : ''}>
-                            <i class="fas fa-power-off"></i>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleUserStatus(${user.id})" title="${user.status === 'active' ? 'Deactivate' : 'Activate'} account" ${user.id === getUser().id ? 'disabled' : ''}>
+                            <i class="fas fa-power-off" aria-hidden="true"></i><span>${user.status === 'active' ? 'Deactivate' : 'Activate'}</span>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})" title="Delete permanently" ${user.id === getUser().id ? 'disabled' : ''}>
-                            <i class="fas fa-trash"></i>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})" title="Delete account permanently" ${user.id === getUser().id ? 'disabled' : ''}>
+                            <i class="fas fa-trash" aria-hidden="true"></i><span>Delete</span>
                         </button>
                     </td>
                 </tr>
@@ -334,7 +334,10 @@
             const user = users.find(u => u.id === id);
             if (!user) return;
 
-            if (!confirmAction(`Unlock the account for "${user.name}"?`)) return;
+            if (!await confirmAction(`Unlock the account for "${user.name}"?`, {
+                title: 'Unlock Account',
+                confirmLabel: 'Unlock Account'
+            })) return;
 
             try {
                 const response = await API.unlockUser(id);
@@ -359,7 +362,11 @@
 
             const newStatus = user.status === 'active' ? 'inactive' : 'active';
             const verb = newStatus === 'active' ? 'reactivate' : 'deactivate';
-            if (!confirmAction(`Are you sure you want to ${verb} "${user.name}"?`)) return;
+            if (!await confirmAction(`${verb === 'deactivate' ? 'Deactivate' : 'Reactivate'} the account for "${user.name}"?`, {
+                title: `${verb === 'deactivate' ? 'Deactivate' : 'Reactivate'} Account`,
+                confirmLabel: `${verb === 'deactivate' ? 'Deactivate' : 'Reactivate'} Account`,
+                destructive: verb === 'deactivate'
+            })) return;
 
             try {
                 const response = await API.updateUser(id, {
@@ -485,7 +492,11 @@
             const user = users.find(u => u.id === id);
             if (!user) return;
 
-            if (!confirmAction(`Are you sure you want to delete user "${user.name}"?`)) {
+            if (!await confirmAction(`Permanently delete the account for "${user.name}"? Historical records may depend on this account; deactivation is normally safer.`, {
+                title: 'Delete Account',
+                confirmLabel: 'Delete Account',
+                destructive: true
+            })) {
                 return;
             }
 

@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .notification-header,
@@ -46,6 +47,7 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
+            min-height: 44px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 500;
@@ -53,9 +55,18 @@
         }
 
         .notification-checkbox {
-            width: 17px;
-            height: 17px;
+            width: 20px;
+            height: 20px;
             accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .notification-checkbox-target {
+            display: inline-flex;
+            width: 44px;
+            height: 44px;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
         }
 
@@ -230,7 +241,7 @@
         <main class="main-content">
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <button type="button" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
                     <h2>Notifications</h2>
                 </div>
                 <div class="topbar-right">
@@ -319,7 +330,7 @@
     </div>
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260806a"></script>
-    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
     <script>
         if (!requireAuth()) {
             window.location.href = 'login.html';
@@ -381,7 +392,9 @@
                 return `
                     <tr data-notification-id="${id}">
                         <td>
-                            <input class="notification-checkbox row-notification-checkbox" type="checkbox" data-notification-id="${id}" aria-label="Select notification ${id}" ${selectedNotificationIds.has(id) ? 'checked' : ''}>
+                            <label class="notification-checkbox-target">
+                                <input class="notification-checkbox row-notification-checkbox" type="checkbox" data-notification-id="${id}" aria-label="Select notification ${id}" ${selectedNotificationIds.has(id) ? 'checked' : ''}>
+                            </label>
                         </td>
                         <td>${id}</td>
                         <td>${escapeHtmlText(item.type || 'general')}</td>

@@ -19,3 +19,9 @@ uploads/
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Local audit, backup, and screenshot artifacts
+.final-audit-backup/
+.deployment-audit-backups/
+.ui-ux-backups/
+ui-ux-artifacts/

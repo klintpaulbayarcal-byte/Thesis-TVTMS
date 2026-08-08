@@ -163,7 +163,7 @@ const loadRecentTickets = async (limit = 10) => {
                     <td>${formatCurrency(ticket.penalty_amount)}</td>
                     <td>${getStatusBadge(ticket.status)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="viewTicketDetails(${ticket.id || ticket.ticket_id})">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="viewTicketDetails(${ticket.id || ticket.ticket_id})">
                             View
                         </button>
                     </td>

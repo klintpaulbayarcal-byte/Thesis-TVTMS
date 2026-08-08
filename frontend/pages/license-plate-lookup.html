@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>License Plate Lookup - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@500;600;700&display=swap');
 
@@ -13,10 +16,10 @@
             --lookup-ink: #1f2937;
             --lookup-muted: #64748b;
             --lookup-line: #d8e2ef;
-            --lookup-primary: #0f766e;
-            --lookup-primary-dark: #115e59;
+            --lookup-primary: #1f5fae;
+            --lookup-primary-dark: #16467f;
             --lookup-accent: #f59e0b;
-            --lookup-card: #ffffff;
+            --lookup-card: #fcfdff;
             --lookup-danger-bg: #fef2f2;
             --lookup-danger-ink: #991b1b;
             --lookup-success-bg: #ecfdf5;
@@ -26,10 +29,7 @@
         body {
             font-family: 'Manrope', 'Segoe UI', Tahoma, sans-serif;
             color: var(--lookup-ink);
-            background:
-                radial-gradient(circle at 10% 10%, #c9f8f2 0%, rgba(201, 248, 242, 0) 38%),
-                radial-gradient(circle at 95% 15%, #ffe6c4 0%, rgba(255, 230, 196, 0) 35%),
-                linear-gradient(180deg, #f8fbff 0%, var(--lookup-bg) 70%);
+            background: var(--lookup-bg);
             min-height: 100vh;
         }
 
@@ -85,8 +85,8 @@
 
         .lookup-container {
             max-width: 1100px;
-            margin: 34px auto 48px;
-            padding: 0 20px;
+            margin: 0 auto 32px;
+            padding: 0;
         }
 
         .lookup-section {
@@ -489,17 +489,40 @@
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <div class="nav-brand">Municipal Traffic Violation Ticketing and Management System</div>
-        <div class="nav-links">
-            <a href="../index.html">Dashboard</a>
-            <a href="manage-violations.html">Violations</a>
-            <a href="license-plate-lookup.html" class="active">Plate Lookup</a>
-            <a href="#" id="logoutBtn">Logout</a>
-        </div>
-    </div>
-
-    <div class="lookup-container">
+    <div id="alertContainer"></div>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header"><div class="sidebar-logo"><img src="images/calape-logo.webp" alt="Municipality of Calape logo"><div class="sidebar-logo-text"><h3>Municipal Traffic Violation</h3><p>Ticketing &amp; Management System</p></div></div></div>
+            <nav class="sidebar-nav" aria-label="System navigation">
+                <div class="nav-section-title">MAIN</div>
+                <a href="admin-dashboard.html" class="nav-item"><i class="fas fa-chart-line" aria-hidden="true"></i><span>Dashboard</span></a>
+                <a href="admin-overview.html" class="nav-item"><i class="fas fa-tachometer-alt" aria-hidden="true"></i><span>Overview</span></a>
+                <div class="nav-section-title">ENFORCEMENT</div>
+                <a href="issue-ticket.html" class="nav-item"><i class="fas fa-plus-circle" aria-hidden="true"></i><span>Issue Ticket</span></a>
+                <a href="view-tickets.html" class="nav-item"><i class="fas fa-ticket-alt" aria-hidden="true"></i><span>All Tickets</span></a>
+                <a href="license-plate-lookup.html" class="nav-item active"><i class="fas fa-search" aria-hidden="true"></i><span>Search Violator</span></a>
+                <div class="nav-section-title">MANAGEMENT</div>
+                <a href="manage-violations.html" class="nav-item"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>Violations</span></a>
+                <a href="manage-users.html" class="nav-item"><i class="fas fa-users" aria-hidden="true"></i><span>Users</span></a>
+                <a href="payments.html" class="nav-item"><i class="fas fa-money-bill-wave" aria-hidden="true"></i><span>Payments</span></a>
+                <a href="disputes.html" class="nav-item"><i class="fas fa-balance-scale" aria-hidden="true"></i><span>Disputes</span></a>
+                <div class="nav-section-title">ANALYTICS</div>
+                <a href="reports.html" class="nav-item"><i class="fas fa-file-alt" aria-hidden="true"></i><span>Reports</span></a>
+                <a href="analytics-dashboard.html" class="nav-item"><i class="fas fa-chart-bar" aria-hidden="true"></i><span>Analytics</span></a>
+                <div class="nav-section-title">ADMIN TOOLS</div>
+                <a href="audit-logs.html" class="nav-item"><i class="fas fa-history" aria-hidden="true"></i><span>Audit Trail</span></a>
+                <a href="notifications.html" class="nav-item"><i class="fas fa-bell" aria-hidden="true"></i><span>Notifications</span></a>
+                <a href="admin-settings.html" class="nav-item"><i class="fas fa-cog" aria-hidden="true"></i><span>Settings</span></a>
+                <div class="nav-section-title">ACCOUNT</div>
+                <a href="profile.html" class="nav-item"><i class="fas fa-id-card" aria-hidden="true"></i><span>Profile</span></a>
+                <a href="#" onclick="logout()" class="nav-item"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Logout</span></a>
+            </nav>
+            <div class="sidebar-footer"><div class="user-info"><div class="user-avatar"></div><div class="user-details"><h4 class="user-name">User</h4><p class="user-role">Role</p></div></div></div>
+        </aside>
+        <main class="main-content">
+            <div class="topbar"><div class="topbar-left"><button class="menu-toggle" type="button" aria-label="Open navigation menu"><i class="fas fa-bars" aria-hidden="true"></i></button><h2>Search Violator</h2></div></div>
+            <div class="dashboard-content">
+                <div class="lookup-container">
         <div class="lookup-section">
             <div class="section-title"><i class="fas fa-magnifying-glass" aria-hidden="true"></i> License Plate Lookup</div>
 
@@ -525,27 +548,30 @@
 
             <!-- Search Type Tabs (Panel Requirement: search by plate, name, license number) -->
             <div class="search-tabs">
-                <button class="search-tab active" onclick="switchTab('plate')" id="tab-plate"><i class="fas fa-car" aria-hidden="true"></i> By Plate Number</button>
-                <button class="search-tab" onclick="switchTab('name')"  id="tab-name"><i class="fas fa-user" aria-hidden="true"></i> By Owner Name</button>
-                <button class="search-tab" onclick="switchTab('license')" id="tab-license"><i class="fas fa-id-card" aria-hidden="true"></i> By License Number</button>
+                <button type="button" class="search-tab active" onclick="switchTab('plate')" id="tab-plate"><i class="fas fa-car" aria-hidden="true"></i> By Plate Number</button>
+                <button type="button" class="search-tab" onclick="switchTab('name')" id="tab-name"><i class="fas fa-user" aria-hidden="true"></i> By Owner Name</button>
+                <button type="button" class="search-tab" onclick="switchTab('license')" id="tab-license"><i class="fas fa-id-card" aria-hidden="true"></i> By License Number</button>
             </div>
 
             <form id="lookupForm" class="search-form">
                 <!-- Plate Number Search -->
                 <div id="input-plate" class="search-input-group">
+                    <label for="plateInput">Plate Number</label>
                     <input type="text" id="plateInput" placeholder="Enter license plate (e.g., XYZ 1234)"
                         autocomplete="off" style="text-transform: uppercase;">
                 </div>
                 <!-- Owner Name Search -->
                 <div id="input-name" class="search-input-group" style="display:none;">
+                    <label for="nameInput">Vehicle Owner's Full Name</label>
                     <input type="text" id="nameInput" placeholder="Enter vehicle owner's full name">
                 </div>
                 <!-- License Number Search -->
                 <div id="input-license" class="search-input-group" style="display:none;">
+                    <label for="licenseInput">Driver's License Number</label>
                     <input type="text" id="licenseInput" placeholder="Enter driver's license number (e.g., N01-23-456789)"
                         autocomplete="off" style="text-transform: uppercase;">
                 </div>
-                <button type="submit" id="searchBtn">Search</button>
+                <button type="submit" id="searchBtn"><i class="fas fa-magnifying-glass" aria-hidden="true"></i> Search Records</button>
             </form>
 
             <div class="error-message" id="errorMessage"></div>
@@ -617,7 +643,7 @@
             <!-- Violation Tickets History -->
             <div class="lookup-section">
                 <div class="section-title"><i class="fas fa-calendar-days" aria-hidden="true"></i> Violation Tickets</div>
-                <table class="tickets-table" id="violationsTable">
+                <div class="table-container"><table class="tickets-table" id="violationsTable">
                     <thead>
                         <tr>
                             <th>Ticket #</th>
@@ -633,13 +659,18 @@
                             <td colspan="6">No tickets found for this vehicle.</td>
                         </tr>
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
+                </div>
+            </div>
+        </main>
     </div>
+    <div class="sidebar-overlay"></div>
 
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
     <script>
         // ─── Tab switching ───────────────────────────────────────────
         let currentSearchType = 'plate';
@@ -940,10 +971,6 @@
             errorMsg.style.display = 'block';
         }
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('token');
-            window.location.href = 'login.html';
-        });
     </script>
     <script src="../assets/js/toast.js"></script>
 <div id="demeritSection" style="display:none;padding:0 20px"></div>
@@ -1013,4 +1040,3 @@
 
 </body>
 </html>
-

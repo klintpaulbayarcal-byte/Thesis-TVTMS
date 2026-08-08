@@ -207,7 +207,11 @@ const exportAuditLogsCSV = () => {
 };
 
 const clearTestLogs = async () => {
-    if (!confirm('Delete development test audit entries? Production audit records cannot be deleted from this screen.')) {
+    if (!await confirmAction('Delete development test audit entries? Production audit records cannot be deleted from this screen.', {
+        title: 'Delete Test Audit Entries',
+        confirmLabel: 'Delete Test Entries',
+        destructive: true
+    })) {
         return;
     }
 

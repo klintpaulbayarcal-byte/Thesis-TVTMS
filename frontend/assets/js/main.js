@@ -14,7 +14,28 @@ const showLoading = (container) => {
         container = document.querySelector(container);
     }
     if (container) {
-        container.innerHTML = '<div class="spinner"></div>';
+        if (container.tagName === 'TBODY') {
+            const table = container.closest('table');
+            const columnCount = Math.max(table?.querySelectorAll('thead th').length || 1, 1);
+            container.innerHTML = Array.from({ length: 4 }, () => `
+                <tr class="skeleton-row" aria-hidden="true">
+                    ${Array.from({ length: columnCount }, () => '<td><span class="skeleton-line"></span></td>').join('')}
+                </tr>
+            `).join('');
+            container.setAttribute('aria-busy', 'true');
+        } else {
+            container.innerHTML = `
+                <div class="skeleton-block" style="height:72px;margin-bottom:12px" aria-hidden="true"></div>
+                <div class="skeleton-line" style="width:78%;margin-bottom:10px" aria-hidden="true"></div>
+                <div class="skeleton-line" style="width:56%" aria-hidden="true"></div>`;
+            container.setAttribute('aria-busy', 'true');
+        }
+
+        const loadingObserver = new MutationObserver(() => {
+            container.removeAttribute('aria-busy');
+            loadingObserver.disconnect();
+        });
+        loadingObserver.observe(container, { childList: true });
     }
 };
 
@@ -51,10 +72,122 @@ const showAlert = (message, type = 'info', duration = 3000) => {
     return alert;
 };
 
-// Confirm dialog
-const confirmAction = (message) => {
-    return confirm(message);
+// Reusable accessible confirmation dialog. This intentionally replaces browser confirm().
+const ensureConfirmationDialog = () => {
+    let modal = document.getElementById('appConfirmationModal');
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'appConfirmationModal';
+    modal.className = 'modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.setAttribute('aria-labelledby', 'appConfirmationTitle');
+    modal.setAttribute('aria-describedby', 'appConfirmationMessage');
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="appConfirmationTitle"><i class="fas fa-circle-exclamation" aria-hidden="true"></i> Confirm Action</h3>
+                <button type="button" class="modal-close-button" data-confirm-result="false" aria-label="Close confirmation">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="appConfirmationMessage"></p>
+                <div id="appConfirmationInputGroup" class="form-group" hidden style="margin-top:16px">
+                    <label id="appConfirmationInputLabel" for="appConfirmationInput">Reason</label>
+                    <textarea id="appConfirmationInput" rows="3" maxlength="500"></textarea>
+                    <div id="appConfirmationInputError" class="field-error" role="alert" hidden></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-confirm-result="false"><i class="fas fa-times" aria-hidden="true"></i> Cancel</button>
+                <button type="button" class="btn btn-primary" id="appConfirmationAccept" data-confirm-result="true"><i class="fas fa-check" aria-hidden="true"></i> Continue</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+    return modal;
 };
+
+const requestConfirmation = (message, options = {}) => new Promise((resolve) => {
+    const modal = ensureConfirmationDialog();
+    const title = modal.querySelector('#appConfirmationTitle');
+    const messageElement = modal.querySelector('#appConfirmationMessage');
+    const acceptButton = modal.querySelector('#appConfirmationAccept');
+    const inputGroup = modal.querySelector('#appConfirmationInputGroup');
+    const inputLabel = modal.querySelector('#appConfirmationInputLabel');
+    const input = modal.querySelector('#appConfirmationInput');
+    const inputError = modal.querySelector('#appConfirmationInputError');
+    const destructive = Boolean(options.destructive);
+
+    title.innerHTML = `<i class="fas ${destructive ? 'fa-triangle-exclamation' : 'fa-circle-question'}" aria-hidden="true"></i> ${escapeHtmlText(options.title || 'Confirm Action')}`;
+    messageElement.textContent = message;
+    acceptButton.className = `btn ${destructive ? 'btn-danger' : 'btn-primary'}`;
+    acceptButton.innerHTML = `<i class="fas ${destructive ? 'fa-trash-alt' : 'fa-check'}" aria-hidden="true"></i> ${escapeHtmlText(options.confirmLabel || 'Continue')}`;
+    inputGroup.hidden = !options.input;
+    inputLabel.textContent = options.input?.label || 'Reason';
+    input.placeholder = options.input?.placeholder || '';
+    input.value = options.input?.value || '';
+    input.maxLength = options.input?.maxLength || 500;
+    inputError.hidden = true;
+    input.removeAttribute('aria-invalid');
+
+    let settled = false;
+    const finish = (result) => {
+        if (settled) return;
+
+        if (result && options.input) {
+            const value = input.value.trim();
+            const minimum = options.input.minLength || 0;
+            if (value.length < minimum) {
+                inputError.textContent = options.input.errorMessage || `Please enter at least ${minimum} characters.`;
+                inputError.hidden = false;
+                input.setAttribute('aria-invalid', 'true');
+                input.focus();
+                return;
+            }
+            settled = true;
+            close();
+            resolve(value);
+            return;
+        }
+
+        settled = true;
+        close();
+        resolve(result ? true : (options.input ? null : false));
+    };
+
+    const onClick = (event) => {
+        const button = event.target.closest('[data-confirm-result]');
+        if (button) finish(button.dataset.confirmResult === 'true');
+        else if (event.target === modal) finish(false);
+    };
+    const onKeyDown = (event) => {
+        if (event.key === 'Escape') finish(false);
+    };
+    const close = () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.removeEventListener('click', onClick);
+        document.removeEventListener('keydown', onKeyDown);
+    };
+
+    modal.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKeyDown);
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    if (options.input) input.focus();
+    else acceptButton.focus();
+});
+
+const confirmAction = (message, options = {}) => requestConfirmation(message, options);
+const requestTextConfirmation = (message, inputOptions, options = {}) => requestConfirmation(message, {
+    ...options,
+    input: inputOptions
+});
+window.confirmAction = confirmAction;
+window.requestTextConfirmation = requestTextConfirmation;
 
 // Format date
 const formatDate = (dateString) => {
@@ -73,6 +206,21 @@ const formatTime = (timeString) => {
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
 };
+
+// Shared date-time formatter for pages that display audit or activity timestamps.
+// Assigned on window so page-specific modules may still use their own local helper.
+window.formatDateTime = window.formatDateTime || ((value) => {
+    if (!value) return 'N/A';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleString('en-PH', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+});
 
 // Format currency
 const formatCurrency = (amount) => {
@@ -138,6 +286,9 @@ const toggleSidebar = () => {
     if (overlay) {
         overlay.classList.toggle('active');
     }
+
+    const menuToggle = document.querySelector('.menu-toggle');
+    if (menuToggle) menuToggle.setAttribute('aria-expanded', String(Boolean(sidebar?.classList.contains('active'))));
 };
 
 // Normalize sidebar links/labels per role to keep tabs consistent across pages.
@@ -148,70 +299,122 @@ const normalizeSidebarForRole = () => {
     const nav = document.querySelector('.sidebar-nav');
     if (!nav) return;
 
-    const findLink = (href) => nav.querySelector(`a.nav-item[href="${href}"]`);
-    const setLinkLabel = (link, label) => {
-        const span = link?.querySelector('span');
-        if (span) span.textContent = label;
-    };
-
-    const adminOnlyHrefs = [
-        'manage-violations.html',
-        'manage-users.html',
-        'reports.html',
-        'audit-logs.html',
-        'admin-overview.html',
-        'admin-settings.html'
+    const adminSections = [
+        ['MAIN', [
+            ['admin-dashboard.html', 'fa-chart-line', 'Dashboard'],
+            ['admin-overview.html', 'fa-gauge-high', 'Overview']
+        ]],
+        ['ENFORCEMENT', [
+            ['issue-ticket.html', 'fa-circle-plus', 'Issue Ticket'],
+            ['view-tickets.html', 'fa-ticket', 'View Tickets'],
+            ['license-plate-lookup.html', 'fa-magnifying-glass', 'Search Violator']
+        ]],
+        ['MANAGEMENT', [
+            ['manage-violations.html', 'fa-triangle-exclamation', 'Violations'],
+            ['manage-users.html', 'fa-users', 'Users'],
+            ['payments.html', 'fa-money-bill-wave', 'Payments'],
+            ['disputes.html', 'fa-scale-balanced', 'Disputes']
+        ]],
+        ['ANALYTICS', [
+            ['reports.html', 'fa-file-lines', 'Reports'],
+            ['analytics-dashboard.html', 'fa-chart-column', 'Analytics']
+        ]],
+        ['ADMIN TOOLS', [
+            ['audit-logs.html', 'fa-clock-rotate-left', 'Audit Trail'],
+            ['notifications.html', 'fa-bell', 'Notifications'],
+            ['admin-settings.html', 'fa-gear', 'Settings']
+        ]],
+        ['ACCOUNT', [
+            ['profile.html', 'fa-id-card', 'Profile']
+        ]]
     ];
+    const officerSections = [
+        ['MAIN', [
+            ['officer-dashboard.html', 'fa-chart-line', 'Dashboard']
+        ]],
+        ['ENFORCEMENT', [
+            ['issue-ticket.html', 'fa-circle-plus', 'Issue Ticket'],
+            ['view-tickets.html', 'fa-ticket', 'My Tickets'],
+            ['license-plate-lookup.html', 'fa-magnifying-glass', 'Search Violator']
+        ]],
+        ['WORKFLOW', [
+            ['disputes.html', 'fa-scale-balanced', 'Disputes'],
+            ['notifications.html', 'fa-bell', 'Notifications']
+        ]],
+        ['ACCOUNT', [
+            ['profile.html', 'fa-id-card', 'Profile']
+        ]]
+    ];
+    const sections = user.role === 'admin' ? adminSections : officerSections;
+    const currentPage = window.location.pathname.split('/').pop();
 
-    const dashboardLink =
-        findLink('admin-dashboard.html') ||
-        findLink('officer-dashboard.html') ||
-        nav.querySelector('a.nav-item[href*="dashboard.html"]');
-    const ticketsLink = findLink('view-tickets.html');
+    nav.innerHTML = sections.map(([title, links]) => `
+        <div class="nav-section-title">${title}</div>
+        ${links.map(([href, icon, label]) => `
+            <a href="${href}" class="nav-item${currentPage === href ? ' active' : ''}"${currentPage === href ? ' aria-current="page"' : ''}>
+                <i class="fas ${icon}" aria-hidden="true"></i><span>${label}</span>
+            </a>`).join('')}
+    `).join('') + `
+        <a href="#" class="nav-item" data-action="logout">
+            <i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Logout</span>
+        </a>`;
 
-    if (user.role === 'apprehending_officer') {
-        adminOnlyHrefs.forEach((href) => {
-            const link = findLink(href);
-            if (link) link.style.display = 'none';
-        });
-
-        // Hide sidebar section titles that are admin-oriented for Apprehending Officers
-        document.querySelectorAll('.nav-section-title').forEach(el => {
-            const txt = (el.textContent || '').trim().toUpperCase();
-            if (txt === 'MANAGEMENT' || txt === 'ADMIN TOOLS') {
-                el.classList.add('nav-section-hidden');
-            } else {
-                el.classList.remove('nav-section-hidden');
-            }
-        });
-
-        if (dashboardLink) {
-            dashboardLink.setAttribute('href', 'officer-dashboard.html');
-            setLinkLabel(dashboardLink, 'Dashboard');
-        }
-
-        if (ticketsLink) {
-            setLinkLabel(ticketsLink, 'My Tickets');
-        }
-    } else if (user.role === 'admin') {
-        adminOnlyHrefs.forEach((href) => {
-            const link = findLink(href);
-            if (link) link.style.display = '';
-        });
-
-        if (dashboardLink) {
-            dashboardLink.setAttribute('href', 'admin-dashboard.html');
-            setLinkLabel(dashboardLink, 'Dashboard');
-        }
-
-        if (ticketsLink) {
-            setLinkLabel(ticketsLink, 'View Tickets');
-        }
-
-        // Ensure admin sees section titles
-        document.querySelectorAll('.nav-section-title').forEach(el => el.classList.remove('nav-section-hidden'));
-    }
+    nav.querySelector('[data-action="logout"]')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        logout();
+    });
 };
+
+// Enforce page access before page-specific API work begins.
+const enforcePageRoleGuard = () => {
+    const page = (window.location.pathname.split('/').pop() || '').toLowerCase();
+    const adminOnlyPages = new Set([
+        'admin-dashboard.html', 'admin-overview.html', 'admin-settings.html',
+        'analytics-dashboard.html', 'audit-logs.html', 'manage-users.html',
+        'manage-violations.html', 'payments.html', 'reports.html'
+    ]);
+    const officerOnlyPages = new Set(['officer-dashboard.html']);
+    const sharedProtectedPages = new Set([
+        'issue-ticket.html', 'view-tickets.html', 'license-plate-lookup.html',
+        'ticket-details.html', 'notifications.html', 'profile.html', 'disputes.html'
+    ]);
+
+    if (!adminOnlyPages.has(page) && !officerOnlyPages.has(page) && !sharedProtectedPages.has(page)) {
+        return true;
+    }
+
+    const user = getUser();
+    if (!isAuthenticated() || !user) {
+        window.__pageAccessDenied = true;
+        window.location.replace('login.html');
+        return false;
+    }
+
+    if (!['admin', 'apprehending_officer'].includes(user.role)) {
+        window.__pageAccessDenied = true;
+        clearAuth();
+        try { sessionStorage.setItem('auth_notice', 'Your account is not authorized for this system area.'); } catch (error) { /* Storage may be unavailable. */ }
+        window.location.replace('login.html');
+        return false;
+    }
+
+    if (adminOnlyPages.has(page) && user.role !== 'admin') {
+        window.__pageAccessDenied = true;
+        window.location.replace('officer-dashboard.html');
+        return false;
+    }
+
+    if (officerOnlyPages.has(page) && user.role !== 'apprehending_officer') {
+        window.__pageAccessDenied = true;
+        window.location.replace('admin-dashboard.html');
+        return false;
+    }
+
+    document.documentElement.dataset.authorizedRole = user.role;
+    return true;
+};
+window.enforcePageRoleGuard = enforcePageRoleGuard;
+enforcePageRoleGuard();
 
 // Close sidebar when clicking overlay
 document.addEventListener('DOMContentLoaded', () => {
@@ -223,8 +426,39 @@ document.addEventListener('DOMContentLoaded', () => {
     // Menu toggle button
     const menuToggle = document.querySelector('.menu-toggle');
     if (menuToggle) {
+        menuToggle.type = 'button';
+        if (!menuToggle.hasAttribute('aria-label')) menuToggle.setAttribute('aria-label', 'Open navigation menu');
+        menuToggle.setAttribute('aria-expanded', 'false');
         menuToggle.addEventListener('click', toggleSidebar);
     }
+
+    document.querySelectorAll('.search-bar input, input[type="search"]').forEach((input) => {
+        if (!input.hasAttribute('aria-label')) input.setAttribute('aria-label', input.placeholder || 'Search');
+    });
+
+    document.querySelectorAll('input[type="tel"], input[id*="contact" i], input[id*="phone" i]').forEach((input) => {
+        input.setAttribute('inputmode', 'tel');
+        if (!input.placeholder) input.placeholder = 'e.g., 0912 345 6789';
+    });
+
+    document.querySelectorAll('input[id*="plate" i]').forEach((input) => {
+        input.setAttribute('autocapitalize', 'characters');
+        input.addEventListener('input', () => {
+            const start = input.selectionStart;
+            input.value = input.value.toUpperCase().replace(/[^A-Z0-9 -]/g, '');
+            if (start !== null) input.setSelectionRange(start, start);
+        });
+    });
+
+    document.querySelectorAll('input[id*="license" i]').forEach((input) => {
+        input.setAttribute('autocapitalize', 'characters');
+        if (!input.placeholder) input.placeholder = 'e.g., N01-23-456789';
+    });
+
+    document.querySelectorAll('input[type="number"][id*="amount" i], input[type="number"][id*="penalty" i]').forEach((input) => {
+        input.setAttribute('inputmode', 'decimal');
+        if (!input.placeholder) input.placeholder = 'e.g., 500.00';
+    });
 
     // Populate user info
     if (isAuthenticated()) {
@@ -243,8 +477,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Logout function
-const logout = () => {
-    if (confirmAction('Are you sure you want to logout?')) {
+const logout = async () => {
+    if (await confirmAction('End your current session and return to the login page?', {
+        title: 'Log Out',
+        confirmLabel: 'Log Out'
+    })) {
         API.logout();
     }
 };
@@ -329,20 +566,29 @@ const validateForm = (formId) => {
     const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
     let isValid = true;
 
+    let firstInvalid = null;
     inputs.forEach(input => {
         input.classList.remove('input-error');
+        input.removeAttribute('aria-invalid');
         const errorMsg = input.parentElement.querySelector('.error-message');
         if (errorMsg) errorMsg.remove();
 
         if (!input.value.trim()) {
             isValid = false;
+            if (!firstInvalid) firstInvalid = input;
             input.classList.add('input-error');
+            input.setAttribute('aria-invalid', 'true');
             const error = document.createElement('div');
             error.className = 'error-message';
-            error.textContent = 'This field is required';
+            error.setAttribute('role', 'alert');
+            const label = form.querySelector(`label[for="${CSS.escape(input.id)}"]`);
+            const fieldName = (label?.textContent || input.name || 'This field').replace('*', '').trim();
+            error.textContent = `${fieldName} is required.`;
             input.parentElement.appendChild(error);
         }
     });
+
+    if (firstInvalid) firstInvalid.focus();
 
     return isValid;
 };

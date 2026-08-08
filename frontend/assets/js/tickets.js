@@ -211,19 +211,19 @@ const loadAllTickets = async (filters = {}) => {
                     <td><strong>${formatCurrency(ticket.penalty_amount)}</strong></td>
                     <td>${getStatusBadge(ticket.status)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="viewTicketDetails(${ticketId})" ${ticketId ? '' : 'disabled'}>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="viewTicketDetails(${ticketId})" ${ticketId ? '' : 'disabled'}>
                             View
                         </button>
                         ${ticketId && isAdmin() ? `
-                        <button class="btn btn-sm btn-warning" onclick="editTicket(${ticketId})">
+                        <button type="button" class="btn btn-sm btn-warning" onclick="editTicket(${ticketId})">
                             Edit
                         </button>` : ''}
                         ${ticketId && isAdmin() ? `
-                        <button class="btn btn-sm btn-danger" onclick="deleteTicketRecord(${ticketId})">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteTicketRecord(${ticketId})">
                             Cancel
                         </button>` : ''}
                         ${ticket.status === 'unpaid' && isAdmin() && ticketId ?
-                        `<button class="btn btn-sm btn-success" onclick="viewTicketDetails(${ticketId})" title="Open ticket to record an official payment">
+                        `<button type="button" class="btn btn-sm btn-success" onclick="viewTicketDetails(${ticketId})" title="Open ticket to record an official payment">
                                 Payment
                             </button>` : ''
                     }
@@ -244,6 +244,68 @@ const loadAllTickets = async (filters = {}) => {
     }
 };
 
+// Edit the limited ticket fields supported by the backend.
+const editTicket = async (ticketId) => {
+    if (!ticketId) {
+        showAlert('Unable to edit ticket: missing ticket ID.', 'warning');
+        return;
+    }
+
+    try {
+        const response = await API.getTicketById(ticketId);
+        const ticket = response.ticket || response.data;
+        if (!response.success || !ticket) {
+            throw new Error(response.message || 'Ticket details could not be loaded.');
+        }
+        if (['paid', 'cancelled'].includes(String(ticket.status || '').toLowerCase())) {
+            showAlert('Paid or cancelled tickets cannot be edited.', 'warning');
+            return;
+        }
+
+        const location = await requestTextConfirmation(
+            'Update the enforcement location for this ticket.',
+            {
+                label: 'Location',
+                placeholder: 'e.g., Poblacion, Calape',
+                value: String(ticket.location || ''),
+                minLength: 1,
+                maxLength: 200,
+                errorMessage: 'Enter a location between 1 and 200 characters.'
+            },
+            { title: 'Edit Ticket', confirmLabel: 'Next' }
+        );
+        if (location === null) return;
+
+        const remarks = await requestTextConfirmation(
+            'Update the optional remarks. Leave this blank when no remarks are needed.',
+            {
+                label: 'Remarks',
+                placeholder: 'Optional remarks',
+                value: String(ticket.remarks || ''),
+                minLength: 0,
+                maxLength: 4000
+            },
+            { title: 'Edit Ticket', confirmLabel: 'Save Changes' }
+        );
+        if (remarks === null) return;
+
+        const update = await API.updateTicketDetails(ticketId, {
+            location: location.trim(),
+            remarks: remarks.trim()
+        });
+        if (!update.success) {
+            throw new Error(update.message || 'Ticket update failed.');
+        }
+
+        showAlert('Ticket details updated successfully.', 'success');
+        await loadAllTickets();
+    } catch (error) {
+        console.error('Error editing ticket:', error);
+        showAlert(error.message || 'Failed to update ticket details.', 'danger');
+    }
+};
+window.editTicket = editTicket;
+
 // Open the official payment workflow. Ticket status is never changed directly.
 const markAsPaid = (ticketId) => {
     if (!ticketId) return;
@@ -252,14 +314,22 @@ const markAsPaid = (ticketId) => {
 
 // Cancel ticket while retaining the record
 const deleteTicketRecord = async (ticketId) => {
-    const reason = window.prompt('Enter the reason for cancelling this ticket (5–500 characters):');
-    if (reason === null) return;
-    const normalizedReason = reason.trim();
-    if (normalizedReason.length < 5 || normalizedReason.length > 500) {
-        showAlert('A cancellation reason between 5 and 500 characters is required.', 'warning');
-        return;
-    }
-    if (!confirmAction('Cancel this ticket? The record will be retained in the audit trail.')) return;
+    const normalizedReason = await requestTextConfirmation(
+        'Cancel this ticket while retaining it in the audit trail?',
+        {
+            label: 'Cancellation Reason',
+            placeholder: 'Explain why this ticket is being cancelled (5–500 characters).',
+            minLength: 5,
+            maxLength: 500,
+            errorMessage: 'Enter a cancellation reason between 5 and 500 characters.'
+        },
+        {
+            title: 'Cancel Ticket',
+            confirmLabel: 'Cancel Ticket',
+            destructive: true
+        }
+    );
+    if (normalizedReason === null) return;
 
     try {
         const response = await API.deleteTicket(ticketId, normalizedReason);
@@ -307,6 +377,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle ticket form submission
     const issueTicketForm = document.getElementById('issueTicketForm');
     if (issueTicketForm) {
+        document.getElementById('resetTicketButton')?.addEventListener('click', async () => {
+            if (!await confirmAction('Clear every field in this ticket form? Unsaved information will be lost.', {
+                title: 'Reset Ticket Form',
+                confirmLabel: 'Reset Form',
+                destructive: true
+            })) return;
+            issueTicketForm.reset();
+            updatePenaltyAmount();
+            issueTicketForm.querySelector('input, select, textarea')?.focus();
+        });
+
         issueTicketForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -347,7 +428,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (ticket) {
                     // Ask if user wants to print
-                    if (confirmAction('Ticket issued successfully! Do you want to print it?')) {
+                    if (await confirmAction('The ticket was issued successfully. Would you like to open the printable ticket now?', {
+                        title: 'Ticket Issued',
+                        confirmLabel: 'Open Printable Ticket'
+                    })) {
                         printTicketById(ticket.id);
                     }
 

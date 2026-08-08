@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reports - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260412">
-    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
     <link rel="stylesheet" href="../assets/css/print.css?v=20260412">
-    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -139,7 +139,7 @@
             <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle">
+                    <button type="button" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
                         <i class="fas fa-bars"></i>
                     </button>
                     <h2>Reports</h2>
@@ -209,7 +209,7 @@
 
                             <div class="form-group">
                                 <label>&nbsp;</label>
-                                <button class="btn btn-primary" onclick="generateReport()">
+                                <button type="button" class="btn btn-primary" onclick="generateReport()">
                                     <i class="fas fa-chart-bar"></i> Generate Report
                                 </button>
                             </div>
@@ -222,10 +222,10 @@
                     <div class="card-header no-print">
                         <h3 id="reportTitle">Report Results</h3>
                         <div style="display: flex; gap: 8px;">
-                            <button class="btn btn-primary" onclick="downloadReportPdf()">
+                            <button type="button" class="btn btn-primary" onclick="downloadReportPdf()">
                                 <i class="fas fa-file-pdf"></i> Download PDF
                             </button>
-                            <button class="btn btn-primary" onclick="window.print()">
+                            <button type="button" class="btn btn-primary" onclick="window.print()">
                                 <i class="fas fa-print"></i> Print Report
                             </button>
                         </div>
@@ -245,7 +245,7 @@
                                 Disputes</a>
                             <a class="btn btn-secondary" href="notifications.html"><i class="fas fa-bell"></i>
                                 Notifications</a>
-                            <button class="btn btn-secondary" onclick="loadOperationalInsights()">
+                            <button type="button" class="btn btn-secondary" onclick="loadOperationalInsights()">
                                 <i class="fas fa-sync"></i> Refresh Insights
                             </button>
                         </div>
@@ -272,15 +272,15 @@
                     </div>
                     <div class="card-body">
                         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-                            <button class="btn btn-secondary nav-item" data-lgu="apprehending_officer"
+                            <button type="button" class="btn btn-secondary nav-item" data-lgu="apprehending_officer"
                                 onclick="showLguSection('officerPerfSection')">
                                 <i class="fas fa-user-shield"></i> Apprehending Officer Performance
                             </button>
-                            <button class="btn btn-secondary nav-item" data-lgu="aging"
+                            <button type="button" class="btn btn-secondary nav-item" data-lgu="aging"
                                 onclick="showLguSection('agingSection')">
                                 <i class="fas fa-calendar-times"></i> Delinquent Aging
                             </button>
-                            <button class="btn btn-secondary nav-item" data-lgu="barangay"
+                            <button type="button" class="btn btn-secondary nav-item" data-lgu="barangay"
                                 onclick="showLguSection('barangaySection')">
                                 <i class="fas fa-map-marker-alt"></i> Barangay Breakdown
                             </button>
@@ -324,7 +324,7 @@
 
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260427c"></script>
-    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
     <script src="../assets/js/dashboard.js?v=20260427c"></script>
     <script>
         // LGU section toggle helper

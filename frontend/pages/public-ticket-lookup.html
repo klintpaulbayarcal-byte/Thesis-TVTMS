@@ -788,10 +788,10 @@
             </div>
 
             <div class="search-tabs" role="tablist" aria-label="Ticket lookup mode">
-                <button class="tab-btn active" onclick="switchTab('plate')" role="tab" aria-selected="true">
+                <button type="button" class="tab-btn active" data-tab="plate" role="tab" aria-selected="true">
                     <i class="fas fa-car"></i> By Plate Number
                 </button>
-                <button class="tab-btn" onclick="switchTab('ticket')" role="tab" aria-selected="false">
+                <button type="button" class="tab-btn" data-tab="ticket" role="tab" aria-selected="false">
                     <i class="fas fa-ticket-alt"></i> By Ticket Number
                 </button>
             </div>
@@ -800,11 +800,10 @@
             <div id="panel-plate" class="search-panel active">
                 <div class="form-group">
                     <label for="plateInput">Plate Number</label>
-                    <input type="text" id="plateInput" class="form-control" placeholder="e.g. ABC1234" maxlength="20"
-                        oninput="this.value = this.value.toUpperCase()">
+                    <input type="text" id="plateInput" class="form-control" placeholder="e.g. ABC1234" maxlength="20">
                     <div class="hint">Enter the plate number printed on your vehicle registration.</div>
                 </div>
-                <button class="btn-search" onclick="searchByPlate()" type="button">
+                <button class="btn-search" id="searchByPlateButton" type="button">
                     <i class="fas fa-search"></i> Search Tickets
                 </button>
             </div>
@@ -814,16 +813,16 @@
                 <div class="form-group">
                     <label for="ticketInput">Ticket Number</label>
                     <input type="text" id="ticketInput" class="form-control" placeholder="e.g. TVT-2026-0001"
-                        maxlength="30" oninput="this.value = this.value.toUpperCase()">
+                        maxlength="30">
                     <div class="hint">The ticket number is printed at the top of your violation ticket slip.</div>
                 </div>
-                <button class="btn-search" onclick="searchByTicket()" type="button">
+                <button class="btn-search" id="searchByTicketButton" type="button">
                     <i class="fas fa-search"></i> Find My Ticket
                 </button>
             </div>
         </div>
 
-        <div id="resultsSection" class="results-section" style="display:none"></div>
+        <div id="resultsSection" class="results-section" style="display:none" role="status" aria-live="polite"></div>
 
         <!-- PUBLIC DISPUTE FORM -->
         <div id="disputeSection" class="dispute-wrap">
@@ -878,18 +877,49 @@
         const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
         const API = `${API_ORIGIN}/api/public`;
 
+        document.querySelectorAll('[data-tab]').forEach((button) => {
+            button.addEventListener('click', () => switchTab(button.dataset.tab));
+        });
+        ['plateInput', 'ticketInput'].forEach((id) => {
+            const input = document.getElementById(id);
+            input.addEventListener('input', () => {
+                input.value = input.value.toUpperCase();
+            });
+            input.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                if (id === 'plateInput') searchByPlate();
+                else searchByTicket();
+            });
+        });
+        document.getElementById('searchByPlateButton').addEventListener('click', searchByPlate);
+        document.getElementById('searchByTicketButton').addEventListener('click', searchByTicket);
+        document.getElementById('resultsSection').addEventListener('click', (event) => {
+            const button = event.target.closest('[data-dispute-ticket]');
+            if (button) openDispute(button.dataset.disputeTicket);
+        });
+
         function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach((b, i) =>
-                b.classList.toggle('active', (i === 0 && tab === 'plate') || (i === 1 && tab === 'ticket'))
-            );
+            document.querySelectorAll('.tab-btn').forEach((button) => {
+                const active = button.dataset.tab === tab;
+                button.classList.toggle('active', active);
+                button.setAttribute('aria-selected', String(active));
+            });
             document.getElementById('panel-plate').classList.toggle('active', tab === 'plate');
             document.getElementById('panel-ticket').classList.toggle('active', tab === 'ticket');
+        }
+
+        function showLookupError(message, inputId) {
+            const section = document.getElementById('resultsSection');
+            section.style.display = 'block';
+            section.innerHTML = `<div class="error-msg"><i class="fas fa-exclamation-circle" aria-hidden="true"></i> ${escapeHtml(message)}</div>`;
+            document.getElementById(inputId)?.focus();
         }
 
         async function searchByPlate() {
             const plate = document.getElementById('plateInput').value.trim();
             if (!plate) {
-                alert('Please enter a plate number.');
+                showLookupError('Please enter a plate number.', 'plateInput');
                 return;
             }
             await doSearch({ plate });
@@ -898,7 +928,7 @@
         async function searchByTicket() {
             const ticket = document.getElementById('ticketInput').value.trim();
             if (!ticket) {
-                alert('Please enter a ticket number.');
+                showLookupError('Please enter a ticket number.', 'ticketInput');
                 return;
             }
             await doSearch({ ticket });
@@ -1006,7 +1036,7 @@
 
                         ${safeStatus === 'unpaid' ? `
                         <div class="ticket-detail full" style="margin-top:4px;">
-                            <button type="button" class="btn-search" style="padding:0.85rem 1rem;border-radius:14px;box-shadow:none;display:flex;gap:10px;justify-content:center;align-items:center;background:linear-gradient(135deg,#ef4444,#dc2626)" onclick="openDispute('${encodedTicketNo}')">
+                            <button type="button" class="btn-search" style="padding:0.85rem 1rem;border-radius:14px;box-shadow:none;display:flex;gap:10px;justify-content:center;align-items:center;background:linear-gradient(135deg,#ef4444,#dc2626)" data-dispute-ticket="${encodedTicketNo}">
                                 <i class="fa-solid fa-scale-balanced"></i> File a Dispute
                             </button>
                         </div>` : ''}

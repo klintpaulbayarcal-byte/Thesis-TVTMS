@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Disputes - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
-    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
@@ -109,7 +110,7 @@
         <main class="main-content">
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle"><i class="fas fa-bars"></i></button>
+                    <button type="button" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false"><i class="fas fa-bars"></i></button>
                     <h2>Disputes</h2>
                 </div>
             </div>
@@ -218,7 +219,7 @@
                     </div>
 
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label style="display: inline-flex; align-items: center; gap: 8px;">
+                        <label for="resolveConfirm" style="display: inline-flex; align-items: center; gap: 8px;">
                             <input type="checkbox" id="resolveConfirm" required>
                             I confirm this dispute status update.
                         </label>
@@ -252,7 +253,7 @@
     <div class="sidebar-overlay"></div>
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260427c"></script>
-    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
     <script>
         if (!requireAuth()) {
             window.location.href = 'login.html';
@@ -366,7 +367,7 @@
                         <td>${escapeHtml(item.submitted_by_name || item.contact_name || item.submitted_by || 'N/A')}</td>
                         <td>${escapeHtml(formatDate(item.created_at))}</td>
                         <td>
-                            <button class="btn btn-sm btn-light" onclick="viewDisputeDetails(${Number(item.id) || 0})" title="View full details"><i class="fas fa-eye"></i> View</button>
+                            <button type="button" class="btn btn-sm btn-light" onclick="viewDisputeDetails(${Number(item.id) || 0})" title="View full details"><i class="fas fa-eye"></i> View</button>
                             ${canResolve ? renderResolveAction(canResolve, item) : ''}
                         </td>
                     </tr>
@@ -383,10 +384,10 @@
 
             const status = (item.status || '').toLowerCase();
             if (terminalDisputeStatuses.includes(status)) {
-                return '<button class="btn btn-sm btn-light" disabled title="Final dispute status">Finalized</button>';
+                return '<button type="button" class="btn btn-sm btn-light" disabled title="Final dispute status">Finalized</button>';
             }
 
-            return `<button class="btn btn-sm btn-success" onclick='resolveDispute(${Number(item.id) || 0}, ${JSON.stringify(item.status || 'under_review')})'>Resolve</button>`;
+            return `<button type="button" class="btn btn-sm btn-success" onclick='resolveDispute(${Number(item.id) || 0}, ${JSON.stringify(item.status || 'under_review')})'>Resolve</button>`;
         }
 
         function formatResolutionSummary(item) {

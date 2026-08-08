@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Violations - Municipal Traffic Violation Ticketing and Management System</title>
-    <link rel="stylesheet" href="../assets/css/style.css?v=20260412">
-    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260418e">
-    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260415">
+    <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -121,13 +121,13 @@
             <!-- Topbar -->
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="menu-toggle">
+                    <button type="button" class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
                         <i class="fas fa-bars"></i>
                     </button>
                     <h2>Manage Violations</h2>
                 </div>
                 <div class="topbar-right">
-                    <button class="btn btn-primary" onclick="showAddViolationModal()">
+                    <button type="button" class="btn btn-primary" onclick="showAddViolationModal()">
                         <i class="fas fa-plus"></i> Add New Violation
                     </button>
                 </div>
@@ -139,8 +139,8 @@
                     <div class="card-header">
                         <h3>Violation Types</h3>
                         <div class="search-bar" style="max-width: 300px;">
-                            <input type="text" placeholder="Search violations..." id="searchInput">
-                            <button onclick="searchViolations()"><i class="fas fa-search"></i></button>
+                            <input type="text" placeholder="Search violations..." id="searchInput" aria-label="Search violation types">
+                            <button type="button" onclick="searchViolations()" aria-label="Search violation types"><i class="fas fa-search" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     <div class="card-body">
@@ -159,7 +159,7 @@
                                 </thead>
                                 <tbody id="violationsTableBody">
                                     <tr>
-                                        <td colspan="7" style="text-align: center;">Loading...</td>
+                                        <td colspan="7" style="text-align: center;"><div class="spinner" aria-label="Loading violations"></div></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -175,7 +175,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Add New Violation</h3>
-                <span class="close" onclick="closeViolationModal()">&times;</span>
+                <button type="button" class="modal-close-button" onclick="closeViolationModal()" aria-label="Close violation form"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <form id="violationForm">
                 <input type="hidden" id="violationId">
@@ -225,7 +225,7 @@
 
     <script src="../app-config.js"></script>
     <script src="../assets/js/api.js?v=20260427c"></script>
-    <script src="../assets/js/main.js?v=20260427c"></script>
+    <script src="../assets/js/main.js?v=20260806c"></script>
     <script>
         // Require authentication
         requireAuth();
@@ -294,11 +294,11 @@
                     <td>${violation.demerit_points || 0}</td>
                     <td>${getStatusBadge(violation.status)}</td>
                     <td>
-                        <button class="btn btn-sm btn-primary" onclick="editViolation(${Number(violation.id) || 0})" title="Edit">
-                            <i class="fas fa-edit"></i>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="editViolation(${Number(violation.id) || 0})" title="Edit violation">
+                            <i class="fas fa-edit" aria-hidden="true"></i><span>Edit</span>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteViolation(${Number(violation.id) || 0})" title="Delete">
-                            <i class="fas fa-trash"></i>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteViolation(${Number(violation.id) || 0})" title="Delete violation">
+                            <i class="fas fa-trash" aria-hidden="true"></i><span>Delete</span>
                         </button>
                     </td>
                 </tr>
@@ -395,7 +395,11 @@
             const violation = violations.find(v => v.id === id);
             if (!violation) return;
 
-            if (!confirmAction(`Are you sure you want to delete violation "${escapeHtmlText(violation.violation_name)}"?`)) {
+            if (!await confirmAction(`Delete the violation "${violation.violation_name}"? Existing tickets will not be removed.`, {
+                title: 'Delete Violation',
+                confirmLabel: 'Delete Violation',
+                destructive: true
+            })) {
                 return;
             }
 
