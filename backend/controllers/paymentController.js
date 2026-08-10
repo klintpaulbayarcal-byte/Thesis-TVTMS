@@ -6,6 +6,14 @@ const emailService = require('../utils/emailService');
 let paymentSchemaPromise;
 const getPaymentSchema = () => {
     if (!paymentSchemaPromise) {
+        if (db.client === 'postgres') {
+            paymentSchemaPromise = Promise.resolve({
+                receiptColumn: 'official_receipt_number',
+                recorderColumn: 'recorded_by',
+                paymentMethods: ['cash', 'gcash', 'maya', 'bank_transfer', 'other']
+            });
+            return paymentSchemaPromise;
+        }
         paymentSchemaPromise = db.query('SHOW COLUMNS FROM payments').then(([columns]) => {
             const names = new Set(columns.map(column => column.Field));
             const receiptColumn = names.has('official_receipt_number') ? 'official_receipt_number' :

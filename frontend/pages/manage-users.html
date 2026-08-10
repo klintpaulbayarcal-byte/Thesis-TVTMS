@@ -7,7 +7,7 @@
     <title>Manage Users - Municipal Traffic Violation Ticketing and Management System</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
-    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260809a">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -148,7 +148,7 @@
                             <table id="usersTable">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
+                                        <th scope="col">No.</th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Role</th>
@@ -298,11 +298,13 @@
                 return;
             }
 
-            tbody.innerHTML = usersToDisplay.map(user => {
+            const currentUserId = Number(getUser()?.id);
+            tbody.innerHTML = usersToDisplay.map((user, index) => {
+                const userId = Number(user.id);
                 const isLocked = user.locked_until && new Date(user.locked_until) > new Date();
                 return `
                 <tr>
-                    <td>${Number(user.id) || 0}</td>
+                    <td>${index + 1}</td>
                     <td>${escapeHtmlText(user.name)}</td>
                     <td>${escapeHtmlText(user.email)}</td>
                     <td><span class="badge ${user.role === 'admin' ? 'badge-danger' : 'badge-info'}">${escapeHtmlText(String(user.role || '').replace('_', ' ').toUpperCase())}</span></td>
@@ -317,10 +319,10 @@
                         <button type="button" class="btn btn-sm btn-warning" onclick="unlockUserAccount(${user.id})" title="Unlock account">
                             <i class="fas fa-unlock" aria-hidden="true"></i><span>Unlock</span>
                         </button>` : ''}
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleUserStatus(${user.id})" title="${user.status === 'active' ? 'Deactivate' : 'Activate'} account" ${user.id === getUser().id ? 'disabled' : ''}>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleUserStatus(${userId})" title="${user.status === 'active' ? 'Deactivate' : 'Activate'} account" ${userId === currentUserId ? 'disabled' : ''}>
                             <i class="fas fa-power-off" aria-hidden="true"></i><span>${user.status === 'active' ? 'Deactivate' : 'Activate'}</span>
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})" title="Delete account permanently" ${user.id === getUser().id ? 'disabled' : ''}>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteUser(${userId}, this)" title="Delete account permanently" ${userId === currentUserId ? 'disabled' : ''}>
                             <i class="fas fa-trash" aria-hidden="true"></i><span>Delete</span>
                         </button>
                     </td>
@@ -488,11 +490,11 @@
         });
 
         // Delete user
-        async function deleteUser(id) {
-            const user = users.find(u => u.id === id);
+        async function deleteUser(id, button) {
+            const user = users.find(u => Number(u.id) === Number(id));
             if (!user) return;
 
-            if (!await confirmAction(`Permanently delete the account for "${user.name}"? Historical records may depend on this account; deactivation is normally safer.`, {
+            if (!await confirmAction(`Permanently delete the account for "${user.name}"? This cannot be undone. Accounts linked to historical enforcement or payment records must be deactivated instead.`, {
                 title: 'Delete Account',
                 confirmLabel: 'Delete Account',
                 destructive: true
@@ -500,17 +502,28 @@
                 return;
             }
 
+            const originalButtonHtml = button?.innerHTML;
+            if (button) {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Deleting...</span>';
+            }
+
             try {
                 const response = await API.deleteUser(id);
                 if (response.success) {
-                    showAlert('User deleted successfully', 'success');
-                    loadUsers();
+                    showAlert(response.message || 'User deleted successfully', 'success');
+                    await loadUsers();
                 } else {
                     showAlert(response.message || 'Failed to delete user', 'danger');
                 }
             } catch (error) {
                 console.error('Error deleting user:', error);
                 showAlert(error.message || 'Error deleting user', 'danger');
+            } finally {
+                if (button?.isConnected) {
+                    button.disabled = false;
+                    button.innerHTML = originalButtonHtml;
+                }
             }
         }
 

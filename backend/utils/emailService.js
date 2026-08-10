@@ -17,6 +17,19 @@ const db = require('../config/database');
 
 let transporter = null;
 
+const getSmtpConfig = () => {
+    const resendKey = String(process.env.RESEND_API_KEY || '').trim();
+    const host = process.env.SMTP_HOST || (resendKey ? 'smtp.resend.com' : '');
+    const port = parseInt(process.env.SMTP_PORT || (resendKey ? '465' : '587'), 10);
+    return {
+        host,
+        port,
+        user: process.env.SMTP_USER || (resendKey ? 'resend' : ''),
+        pass: process.env.SMTP_PASS || resendKey,
+        from: process.env.SMTP_FROM || ''
+    };
+};
+
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
 const readSettings = async (keys) => {
@@ -51,25 +64,46 @@ const getSystemIdentity = async () => {
 const getTransporter = () => {
     if (transporter) return transporter;
 
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const config = getSmtpConfig();
+    if (!config.host || !config.user || !config.pass) {
         return null;
     }
 
     try {
         const nodemailer = require('nodemailer');
+        const port = config.port;
+        const secure = process.env.SMTP_SECURE === '1' || (process.env.SMTP_SECURE !== '0' && port === 465);
         transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: parseInt(process.env.SMTP_PORT || '587', 10),
-            secure: parseInt(process.env.SMTP_PORT || '587', 10) === 465,
+            host: config.host,
+            port,
+            secure,
             auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
+                user: config.user,
+                pass: config.pass
+            },
+            connectionTimeout: 10000,
+            greetingTimeout: 10000,
+            socketTimeout: 15000,
+            tls: { minVersion: 'TLSv1.2', rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== '0' }
         });
         return transporter;
     } catch {
         return null;
     }
+};
+
+exports.getSmtpStatus = () => ({
+    ...(() => {
+        const config = getSmtpConfig();
+        return { configured: Boolean(config.host && config.user && config.pass && config.from), host: config.host || null, port: config.port };
+    })()
+});
+
+exports.verifySmtpConnection = async () => {
+    const transport = getTransporter();
+    if (!transport) throw new Error('SMTP_HOST, SMTP_USER, and SMTP_PASS must be configured.');
+    await transport.verify();
+    return true;
 };
 
 /**

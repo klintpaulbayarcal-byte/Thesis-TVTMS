@@ -1,5 +1,5 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableExtensions EnableDelayedExpansion
 title Municipal Traffic Violation Ticketing and Management System
 
 :: -------------------------------------------------------
@@ -15,6 +15,7 @@ set "RELDIR=%SCRIPT_DIR%"
 call set "RELDIR=%%RELDIR:%HTDOCS%=%%"
 set "RELURL=%RELDIR:\=/%"
 set "URL=http://localhost/%RELURL%/frontend/pages/landing.html"
+set "WAIT_SECONDS=120"
 
 echo.
 echo  ============================================================
@@ -43,13 +44,27 @@ echo.
 :: -------------------------------------------------------
 :: STEP 2: Wait for Apache + MySQL using netstat (fast)
 :: -------------------------------------------------------
+set /a "WAITED=0"
 :wait_services
-timeout /t 1 /nobreak >nul
 set "A=0" & set "M=0"
-netstat -an 2>nul | findstr /C:":80 " | findstr /C:"LISTENING" >nul 2>&1 && set "A=1"
-netstat -an 2>nul | findstr /C:":3306 " | findstr /C:"LISTENING" >nul 2>&1 && set "M=1"
-if "!A!"=="0" goto wait_services
-if "!M!"=="0" goto wait_services
+powershell.exe -NoProfile -Command "if (Test-NetConnection -ComputerName 127.0.0.1 -Port 80 -InformationLevel Quiet -WarningAction SilentlyContinue) { exit 0 } else { exit 1 }" >nul 2>&1 && set "A=1"
+powershell.exe -NoProfile -Command "if (Test-NetConnection -ComputerName 127.0.0.1 -Port 3306 -InformationLevel Quiet -WarningAction SilentlyContinue) { exit 0 } else { exit 1 }" >nul 2>&1 && set "M=1"
+if "!A!!M!"=="11" goto services_ready
+if !WAITED! geq %WAIT_SECONDS% goto services_timeout
+if "!A!"=="0" echo  [WAIT] Apache is not reachable on port 80.
+if "!M!"=="0" echo  [WAIT] MySQL is not reachable on port 3306.
+timeout /t 2 /nobreak >nul
+set /a "WAITED+=2"
+goto wait_services
+
+:services_timeout
+echo.
+echo  [ERROR] Apache and MySQL were not both ready after %WAIT_SECONDS% seconds.
+echo          In XAMPP, confirm Apache uses port 80 and MySQL uses port 3306.
+echo          The browser was not opened because the local site is not ready.
+pause & exit /b 1
+
+:services_ready
 
 echo  [OK] Apache  - Running!
 echo  [OK] MySQL   - Running!
@@ -60,6 +75,7 @@ echo.
 :: -------------------------------------------------------
 echo  [2/4] Checking Node.js...
 set "NODE="
+set "NPM="
 for /f "delims=" %%N in ('where node 2^>nul') do (
     if not defined NODE set "NODE=%%N"
 )
@@ -82,10 +98,23 @@ if not defined NODE (
 )
 echo  [OK] Node.js found.
 
+:: npm.cmd lives beside node.exe in the standard Windows installation.
+for %%N in ("%NODE%") do if exist "%%~dpNnpm.cmd" set "NPM=%%~dpNnpm.cmd"
+if not defined NPM (
+    for /f "delims=" %%N in ('where npm.cmd 2^>nul') do (
+        if not defined NPM set "NPM=%%N"
+    )
+)
+
 if not exist "%BACKEND%\node_modules" (
+    if not defined NPM (
+        echo  [ERROR] npm.cmd was not found beside Node.js or in PATH.
+        echo          Repair or reinstall Node.js, then run this launcher again.
+        pause & exit /b 1
+    )
     echo  [INFO] First time setup - installing packages...
     pushd "%BACKEND%"
-    call npm ci --no-audit --no-fund
+    call "%NPM%" ci --no-audit --no-fund
     if errorlevel 1 (
         popd
         echo  [ERROR] Package installation failed. Review the npm error above.
@@ -118,10 +147,15 @@ if not errorlevel 1 (
     goto :open_browser
 )
 
-start "MTVTMS Backend - DO NOT CLOSE" /min cmd /k "cd /d ""%BACKEND%"" && ""%NODE%"" server.js"
+if not exist "%BACKEND%\logs" mkdir "%BACKEND%\logs"
+set "STARTUP_LOG=%BACKEND%\logs\launcher-startup.log"
+>"%STARTUP_LOG%" echo Backend startup log - %DATE% %TIME%
+:: START handles the working directory, avoiding a fragile nested "cd && node"
+:: command. The extra opening quote is required by cmd.exe when NODE is quoted.
+start "MTVTMS Backend - DO NOT CLOSE" /min /D "%BACKEND%" "%ComSpec%" /d /c ""%NODE%" server.js 1>>"%STARTUP_LOG%" 2>&1"
 
 set "B=0"
-for /l %%i in (1,1,15) do (
+for /l %%i in (1,1,120) do (
     if "!B!"=="0" (
         timeout /t 1 /nobreak >nul
         netstat -an 2>nul | findstr /C:":5000 " | findstr /C:"LISTENING" >nul 2>&1
@@ -133,7 +167,12 @@ if "!B!"=="1" (
     echo  [OK] Backend  - Running on port 5000!
 ) else (
     echo  [ERROR] Backend did not start on port 5000.
-    echo          Open the backend command window and review the error message.
+    echo.
+    echo  ---------------- BACKEND STARTUP LOG ----------------
+    type "%STARTUP_LOG%"
+    echo  -----------------------------------------------------
+    echo.
+    echo          Send a screenshot of the log above if you need help.
     pause & exit /b 1
 )
 echo.
@@ -143,7 +182,18 @@ echo.
 :: -------------------------------------------------------
 :open_browser
 echo  [4/4] Opening browser...
-start "" "%URL%"
+powershell.exe -NoProfile -Command "try { Start-Process -FilePath '%URL%' -ErrorAction Stop; exit 0 } catch { exit 1 }" >nul 2>&1
+if errorlevel 1 (
+    start "" "%URL%"
+)
+if errorlevel 1 (
+    echo  [WARNING] Windows could not open the default browser automatically.
+    echo            Copy and open this address manually:
+    echo            %URL%
+    pause
+) else (
+    echo  [OK] Browser launch requested: %URL%
+)
 
 echo.
 echo  ============================================================

@@ -7,7 +7,7 @@
     <title>Notifications - Municipal Traffic Violation Ticketing and Management System</title>
     <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260806">
-    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260806d">
+    <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260809a">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .notification-header,
@@ -282,7 +282,7 @@
                             <thead>
                                 <tr>
                                     <th scope="col">Select</th>
-                                    <th>ID</th>
+                                    <th scope="col">No.</th>
                                     <th>Type</th>
                                     <th>Title</th>
                                     <th>Message</th>
@@ -387,7 +387,7 @@
                 return;
             }
 
-            notificationsTableBody.innerHTML = notifications.map((item) => {
+            notificationsTableBody.innerHTML = notifications.map((item, index) => {
                 const id = Number(item.id) || 0;
                 return `
                     <tr data-notification-id="${id}">
@@ -396,7 +396,7 @@
                                 <input class="notification-checkbox row-notification-checkbox" type="checkbox" data-notification-id="${id}" aria-label="Select notification ${id}" ${selectedNotificationIds.has(id) ? 'checked' : ''}>
                             </label>
                         </td>
-                        <td>${id}</td>
+                        <td>${index + 1}</td>
                         <td>${escapeHtmlText(item.type || 'general')}</td>
                         <td>${escapeHtmlText(item.title || 'Notification')}</td>
                         <td class="notification-message">${escapeHtmlText(item.message || '')}</td>

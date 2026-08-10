@@ -23,9 +23,13 @@ if (!fs.existsSync(envPath)) {
     env[line.slice(0, index).trim()] = line.slice(index + 1).trim().replace(/^['"]|['"]$/g, '');
   }
 
-  for (const key of ['DB_HOST', 'DB_USER', 'DB_NAME', 'JWT_SECRET']) {
-    if (!env[key]) issues.push(`${key} is missing in backend/.env.`);
+  const usesDatabaseUrl = Boolean(env.DATABASE_URL || env.POSTGRES_URL);
+  if (!usesDatabaseUrl) {
+    for (const key of ['DB_HOST', 'DB_USER', 'DB_NAME']) {
+      if (!env[key]) issues.push(`${key} is missing in backend/.env.`);
+    }
   }
+  if (!env.JWT_SECRET) issues.push('JWT_SECRET is missing in backend/.env.');
   const secret = String(env.JWT_SECRET || '');
   if (secret.length < 32 || /change-this|your-secret|secret-key/i.test(secret)) {
     issues.push('JWT_SECRET must be replaced with a unique random value of at least 32 characters.');
@@ -33,11 +37,15 @@ if (!fs.existsSync(envPath)) {
   if (String(env.NODE_ENV || '').toLowerCase() === 'production') {
     if (!env.ALLOWED_ORIGINS) issues.push('ALLOWED_ORIGINS is required in production.');
     if (!env.APP_PUBLIC_URL) issues.push('APP_PUBLIC_URL is required in production.');
-    if (!env.DB_PASSWORD) warnings.push('DB_PASSWORD is empty. Use a dedicated database account with a strong password in production.');
-    if (!/^https:\/\//i.test(env.APP_PUBLIC_URL || '')) warnings.push('APP_PUBLIC_URL should use HTTPS in production.');
+    if (!usesDatabaseUrl && !env.DB_PASSWORD) issues.push('DB_PASSWORD cannot be empty in production.');
+    if (!usesDatabaseUrl && String(env.DB_USER || '').toLowerCase() === 'root') issues.push('Do not use the MySQL root account in production.');
+    if (!/^https:\/\//i.test(env.APP_PUBLIC_URL || '')) issues.push('APP_PUBLIC_URL must use HTTPS in production.');
     if (String(env.TRUST_PROXY || '0') !== '1') warnings.push('Set TRUST_PROXY=1 when the API runs behind a reverse proxy.');
+    const hasSmtpLogin = Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
+    if (!hasSmtpLogin && !env.RESEND_API_KEY) issues.push('Configure SMTP credentials or RESEND_API_KEY in production.');
+    if (!env.SMTP_FROM) issues.push('SMTP_FROM is required in production.');
   }
-  if (!env.SMTP_USER || !env.SMTP_PASS) warnings.push('SMTP is not configured; password-reset and email notifications will not be delivered.');
+  if (String(env.NODE_ENV || '').toLowerCase() !== 'production' && ((!env.SMTP_USER || !env.SMTP_PASS) && !env.RESEND_API_KEY)) warnings.push('SMTP is not configured; password-reset and email notifications will not be delivered.');
   if (env.INITIAL_ADMIN_PASSWORD) warnings.push('Clear INITIAL_ADMIN_PASSWORD after the first administrator account is created.');
 }
 
@@ -48,8 +56,12 @@ const required = [
   'frontend/pages/officer-dashboard.html',
   'frontend/pages/public-ticket-lookup.html',
   'frontend/pages/reset-password.html',
+  'FIRST_TIME_SETUP.bat',
+  'FIRST_TIME_SETUP.ps1',
+  'OPEN_VVS.bat',
   'backend/server.js',
   'backend/models/database.sql',
+  'backend/models/database.postgres.sql',
   'backend/package-lock.json'
 ];
 for (const relative of required) {

@@ -208,13 +208,27 @@ const generateTicketNumber = async connection => {
         timeZone: 'Asia/Manila', year: 'numeric'
     }).format(new Date()));
 
-    await connection.query(
-        `INSERT INTO ticket_number_sequences (sequence_year, last_number)
-         VALUES (?, LAST_INSERT_ID(1))
-         ON DUPLICATE KEY UPDATE last_number = LAST_INSERT_ID(last_number + 1)`,
-        [year]
-    );
-    const [[row]] = await connection.query('SELECT LAST_INSERT_ID() AS next_number');
+    let row;
+    if (db.client === 'postgres') {
+        const [rows] = await connection.query(
+            `INSERT INTO ticket_number_sequences (sequence_year, last_number)
+             VALUES (?, 1)
+             ON CONFLICT (sequence_year) DO UPDATE
+             SET last_number = ticket_number_sequences.last_number + 1,
+                 updated_at = CURRENT_TIMESTAMP
+             RETURNING last_number AS next_number`,
+            [year]
+        );
+        [row] = rows;
+    } else {
+        await connection.query(
+            `INSERT INTO ticket_number_sequences (sequence_year, last_number)
+             VALUES (?, LAST_INSERT_ID(1))
+             ON DUPLICATE KEY UPDATE last_number = LAST_INSERT_ID(last_number + 1)`,
+            [year]
+        );
+        [[row]] = await connection.query('SELECT LAST_INSERT_ID() AS next_number');
+    }
     const nextNumber = Number(row.next_number || 1);
     return `TVT-${year}-${String(nextNumber).padStart(6, '0')}`;
 };
