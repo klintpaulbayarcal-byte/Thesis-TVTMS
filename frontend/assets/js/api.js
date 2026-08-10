@@ -267,6 +267,10 @@ const API = {
         method: 'DELETE',
         body: JSON.stringify({ reason })
     }),
+    permanentlyDeleteTicket: (id, reason) => apiRequest(`/tickets/${id}/permanent`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reason })
+    }),
     getDashboardStats: (filters = {}) => {
         const params = new URLSearchParams(filters);
         return apiRequest(`/tickets/stats?${params}`);
