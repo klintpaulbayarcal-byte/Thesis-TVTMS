@@ -7,4 +7,7 @@
  *   window.APP_CONFIG.API_ORIGIN = 'https://api.example.gov.ph';
  */
 window.APP_CONFIG = window.APP_CONFIG || {};
-window.APP_CONFIG.API_ORIGIN = String(window.APP_CONFIG.API_ORIGIN || '').replace(/\/$/, '');
+const defaultApiOrigin = window.location.hostname.endsWith('.vercel.app')
+    ? 'https://thesis-tvtms-api.vercel.app'
+    : '';
+window.APP_CONFIG.API_ORIGIN = String(window.APP_CONFIG.API_ORIGIN || defaultApiOrigin).replace(/\/$/, '');

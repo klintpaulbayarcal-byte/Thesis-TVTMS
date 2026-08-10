@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const db = require('./config/database');
 const autoMigrate = require('./utils/autoMigrate');
+const { getSmtpStatus } = require('./utils/emailService');
 const { apiLimiter, publicLookupLimiter, publicWriteLimiter } = require('./middleware/securityMiddleware');
 
 const app = express();
@@ -18,11 +19,18 @@ const validateEnvironment = () => {
     if (jwtSecret.length < 32 || /your-secret|change-me|secret-key/i.test(jwtSecret)) {
         errors.push('JWT_SECRET must be a strong, unique value with at least 32 characters.');
     }
+    const usesDatabaseUrl = Boolean(String(process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim());
     for (const key of ['DB_HOST', 'DB_USER', 'DB_NAME']) {
-        if (isProduction && !process.env[key]) errors.push(`${key} is required in production.`);
+        if (isProduction && !usesDatabaseUrl && !process.env[key]) errors.push(`${key} is required in production when DATABASE_URL is not used.`);
     }
     if (isProduction && !String(process.env.ALLOWED_ORIGINS || '').trim()) {
         errors.push('ALLOWED_ORIGINS is required in production.');
+    }
+    if (isProduction && !/^https:\/\//i.test(String(process.env.APP_PUBLIC_URL || ''))) {
+        errors.push('APP_PUBLIC_URL must be an HTTPS URL in production.');
+    }
+    if (isProduction && !getSmtpStatus().configured) {
+        errors.push('Configure SMTP_HOST/SMTP_USER/SMTP_PASS (or RESEND_API_KEY) and SMTP_FROM in production.');
     }
     if (errors.length) throw new Error(`Environment validation failed:\n- ${errors.join('\n- ')}`);
 };
@@ -92,7 +100,8 @@ app.use('/api/public', publicRoutes);
 app.get('/api/health', async (req, res) => {
     try {
         await db.checkConnection();
-        res.json({ success: true, status: 'healthy', database: 'connected', timestamp: new Date().toISOString() });
+        const smtp = getSmtpStatus();
+        res.json({ success: true, status: 'healthy', database: 'connected', databaseClient: db.client, smtp: smtp.configured ? 'configured' : 'not_configured', timestamp: new Date().toISOString() });
     } catch (error) {
         res.status(503).json({ success: false, status: 'unhealthy', database: 'disconnected', timestamp: new Date().toISOString() });
     }
@@ -129,6 +138,9 @@ const start = async () => {
     await autoMigrate();
     app.listen(PORT, () => console.log(`API listening on port ${PORT}`));
 };
+
+// Fail fast during production cold starts as well as persistent-server starts.
+if (isProduction) validateEnvironment();
 
 if (require.main === module) {
     start().catch(error => {

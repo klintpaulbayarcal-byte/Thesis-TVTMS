@@ -273,13 +273,13 @@ exports.getVehicleStats = async (req, res) => {
         const [stats] = await db.query(
             `SELECT
                 COUNT(*) AS total_violations,
-                SUM(t.status = 'paid') AS paid_count,
-                SUM(t.status = 'unpaid') AS unpaid_count,
-                SUM(t.status = 'cancelled') AS cancelled_count,
-                SUM(EXISTS(
+                SUM(CASE WHEN t.status = 'paid' THEN 1 ELSE 0 END) AS paid_count,
+                SUM(CASE WHEN t.status = 'unpaid' THEN 1 ELSE 0 END) AS unpaid_count,
+                SUM(CASE WHEN t.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count,
+                SUM(CASE WHEN EXISTS(
                     SELECT 1 FROM disputes d
                     WHERE d.ticket_id = t.id AND d.status IN ('submitted', 'under_review')
-                )) AS disputed_count,
+                ) THEN 1 ELSE 0 END) AS disputed_count,
                 SUM(CASE WHEN t.status = 'unpaid' THEN GREATEST(
                     COALESCE(t.penalty_amount_at_issue, v.penalty_amount) -
                     COALESCE((SELECT SUM(p.amount_paid) FROM payments p

@@ -70,10 +70,10 @@ exports.plateSummary = async (req, res) => {
         const plate = normalizePlate(req.query.plate || req.query.plate_number);
         if (!plate) return res.status(400).json({ success: false, message: 'Plate number is required.' });
         const [[summary]] = await db.query(`
-            SELECT SUM(t.status <> 'cancelled') total_violations,
-                   SUM(t.status='unpaid') unpaid_count,
-                   SUM(t.status='paid') paid_count,
-                   SUM(t.status='cancelled') cancelled_count,
+            SELECT SUM(CASE WHEN t.status <> 'cancelled' THEN 1 ELSE 0 END) total_violations,
+                   SUM(CASE WHEN t.status='unpaid' THEN 1 ELSE 0 END) unpaid_count,
+                   SUM(CASE WHEN t.status='paid' THEN 1 ELSE 0 END) paid_count,
+                   SUM(CASE WHEN t.status='cancelled' THEN 1 ELSE 0 END) cancelled_count,
                    COALESCE(SUM(CASE WHEN t.status='unpaid'
                        THEN GREATEST(COALESCE(t.penalty_amount_at_issue,v.penalty_amount) - COALESCE(p.total_paid,0), 0)
                        ELSE 0 END),0) total_unpaid_amount,
@@ -142,16 +142,18 @@ exports.publicFileDispute = async (req, res) => {
 
 exports.publicStats = async (req, res) => {
     try {
-        const [[ticketStats], [vehicleStats]] = await Promise.all([
+        const [ticketResult, vehicleResult] = await Promise.all([
             db.query(`SELECT COUNT(*) total_tickets,
-                SUM(status='paid') total_paid,
-                SUM(status='unpaid') total_unpaid,
-                SUM(DATE(date_issued)=CURDATE()) today_tickets,
-                SUM(date_issued >= DATE_SUB(CURDATE(),INTERVAL 30 DAY)) this_month
+                SUM(CASE WHEN status='paid' THEN 1 ELSE 0 END) total_paid,
+                SUM(CASE WHEN status='unpaid' THEN 1 ELSE 0 END) total_unpaid,
+                SUM(CASE WHEN DATE(date_issued)=CURDATE() THEN 1 ELSE 0 END) today_tickets,
+                SUM(CASE WHEN date_issued >= DATE_SUB(CURDATE(),INTERVAL 30 DAY) THEN 1 ELSE 0 END) this_month
                 FROM tickets`),
             db.query('SELECT COUNT(*) AS total_vehicles FROM vehicles')
         ]);
-        const stats = { ...ticketStats, ...(vehicleStats || {}) };
+        const ticketStats = ticketResult[0]?.[0] || {};
+        const vehicleStats = vehicleResult[0]?.[0] || {};
+        const stats = { ...ticketStats, ...vehicleStats };
         return res.json({
             success: true,
             stats: Object.fromEntries(Object.entries(stats).map(([key, value]) => [key, Number(value || 0)]))

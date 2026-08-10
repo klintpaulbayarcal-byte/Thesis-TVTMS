@@ -1,0 +1,23 @@
+MUNICIPAL TRAFFIC VIOLATION SYSTEM - START HERE
+================================================
+
+FIRST TIME ON A WINDOWS/XAMPP LAPTOP
+1. Place this project folder under C:\xampp\htdocs\
+2. Install Node.js 20 or newer and XAMPP.
+3. Double-click FIRST_TIME_SETUP.bat.
+4. Follow the prompts to configure the database and create the first Administrator.
+
+NORMAL DAILY USE
+1. Double-click OPEN_VVS.bat.
+2. Start Apache and MySQL in XAMPP if asked.
+3. Keep the backend running while using the system.
+
+IMPORTANT
+- Do not run FIRST_TIME_SETUP.bat again after the system is configured.
+- Use OPEN_VVS.bat for later launches.
+- Keep backend\.env private. Never include it in a public ZIP or repository.
+- Before an oral defense, test both the Administrator and Apprehending Officer logins.
+- Public deployment still requires the items in DEPLOYMENT_CHECKLIST.md.
+
+Main local page:
+http://localhost/<project-folder>/frontend/pages/landing.html

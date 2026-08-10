@@ -10,6 +10,9 @@ const columnExists = async (table, column) => {
 };
 
 async function autoMigrate() {
+    // PostgreSQL changes are applied through reviewed Supabase migrations.
+    // Keep this automatic upgrader MySQL-only for local XAMPP installations.
+    if (db.client === 'postgres') return true;
     console.log('Running safe database migrations...');
 
     await db.query(`
@@ -83,9 +86,10 @@ async function autoMigrate() {
     const [[legacyDrivers]] = await db.query(`SELECT COUNT(*) AS total FROM users WHERE role='driver'`);
     if (Number(legacyDrivers.total) > 0) {
         // Preserve legacy records instead of deleting accounts or silently changing
-        // their role. Authentication rejects this unsupported role, while keeping
-        // the expanded ENUM allows the rest of the safe startup migration to run.
-        console.warn(`WARNING: ${legacyDrivers.total} legacy driver account(s) were preserved with login disabled.`);
+        // their role. Force them inactive as defense in depth while keeping the
+        // expanded ENUM so historical ticket relationships remain valid.
+        await db.query(`UPDATE users SET status='inactive' WHERE role='driver' AND status<>'inactive'`);
+        console.warn(`WARNING: ${legacyDrivers.total} legacy driver account(s) were preserved as inactive historical records.`);
     } else {
         await db.query(`ALTER TABLE users MODIFY role ENUM('admin','apprehending_officer') NOT NULL DEFAULT 'apprehending_officer'`);
     }
@@ -109,7 +113,16 @@ async function autoMigrate() {
     }
     if (!(await columnExists('tickets', 'penalty_amount_at_issue'))) {
         await db.query(`ALTER TABLE tickets ADD COLUMN penalty_amount_at_issue DECIMAL(10,2) NULL AFTER violation_id`);
-        await db.query(`UPDATE tickets t JOIN violations v ON t.violation_id = v.id SET t.penalty_amount_at_issue = v.penalty_amount WHERE t.penalty_amount_at_issue IS NULL`);
+    }
+    // Backfill even when the snapshot column came from an older partial migration.
+    // This prevents later violation-price edits from changing historical tickets.
+    const [penaltyBackfill] = await db.query(`
+        UPDATE tickets t JOIN violations v ON t.violation_id = v.id
+        SET t.penalty_amount_at_issue = v.penalty_amount
+        WHERE t.penalty_amount_at_issue IS NULL
+    `);
+    if (penaltyBackfill.affectedRows > 0) {
+        console.log(`Backfilled ${penaltyBackfill.affectedRows} historical ticket penalty snapshot(s).`);
     }
     if (!(await columnExists('payments', 'payment_status'))) {
         await db.query(`ALTER TABLE payments ADD COLUMN payment_status ENUM('partial','full','voided') NOT NULL DEFAULT 'full' AFTER payment_method`);
@@ -127,6 +140,22 @@ async function autoMigrate() {
         await db.query(`ALTER TABLE disputes ADD COLUMN submission_source ENUM('internal','public') NOT NULL DEFAULT 'internal' AFTER contact_email`);
     }
     await db.query(`ALTER TABLE disputes MODIFY submitted_by INT NULL`);
+
+    // Legacy data may predate the rule that blocks payment while a dispute is open.
+    // Close only impossible open states; finalized disputes are never rewritten.
+    const [closedLegacyDisputes] = await db.query(`
+        UPDATE disputes d
+        JOIN tickets t ON t.id = d.ticket_id
+        SET d.status = 'closed',
+            d.resolution_notes = COALESCE(NULLIF(d.resolution_notes, ''),
+                'Automatically closed during integrity migration because the ticket was already finalized.'),
+            d.resolved_at = COALESCE(d.resolved_at, NOW())
+        WHERE d.status IN ('submitted', 'under_review')
+          AND t.status <> 'unpaid'
+    `);
+    if (closedLegacyDisputes.affectedRows > 0) {
+        console.log(`Closed ${closedLegacyDisputes.affectedRows} inconsistent legacy dispute(s).`);
+    }
 
     const evidenceColumns = [
         ['file_name', `ALTER TABLE evidence ADD COLUMN file_name VARCHAR(255) NULL AFTER file_path`],

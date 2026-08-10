@@ -38,6 +38,29 @@ body {
     box-shadow: 10px 0 24px rgba(11, 37, 69, 0.25);
 }
 
+/* Present the municipal seal as a consistent, professional circular mark. */
+.sidebar-logo img {
+    width: 48px !important;
+    height: 48px !important;
+    flex: 0 0 48px;
+    box-sizing: border-box;
+    padding: 2px;
+    border: 2px solid rgba(217, 164, 65, 0.9);
+    border-radius: 50%;
+    background: #fff;
+    object-fit: cover !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1), 0 5px 14px rgba(0, 0, 0, 0.28);
+}
+
+.sidebar-logo img + div:not(.sidebar-logo-text) {
+    width: 48px !important;
+    height: 48px !important;
+    flex: 0 0 48px;
+    border: 2px solid rgba(217, 164, 65, 0.9);
+    border-radius: 50% !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1), 0 5px 14px rgba(0, 0, 0, 0.28);
+}
+
 .sidebar-logo-text h3 {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 1.2rem;

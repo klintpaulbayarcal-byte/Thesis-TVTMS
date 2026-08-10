@@ -9,7 +9,7 @@ A web-based municipal traffic citation and records-management system developed f
 
 ## Deployment status
 
-This package is a **final deployment candidate**, not a substitute for live acceptance testing. Static code checks passed, but the target server, production database, SMTP account, HTTPS configuration, and complete browser workflows must still be tested before public go-live. See `DEPLOYMENT_CHECKLIST.md` and `TEST_REPORT.md`.
+This package is a **final deployment candidate**, not a substitute for live acceptance testing. Static code checks passed, but the target server, production database, SMTP account, HTTPS configuration, and complete browser workflows must still be tested before public go-live. See `DEPLOYMENT_CHECKLIST.md` and `FINAL_DEPLOYMENT_AUDIT.md`.
 
 ## Supported roles
 

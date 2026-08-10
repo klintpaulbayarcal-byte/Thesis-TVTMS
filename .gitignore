@@ -25,3 +25,5 @@ Thumbs.db
 .deployment-audit-backups/
 .ui-ux-backups/
 ui-ux-artifacts/
+
+.vercel

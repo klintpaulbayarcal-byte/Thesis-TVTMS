@@ -15,7 +15,10 @@ const validProfileFields = ({ name, email, contactNumber }) =>
 exports.getAllUsers = async (req, res) => {
     try {
         const [users] = await db.query(
-            'SELECT id, name, email, role, contact_number, status, last_login, locked_until, created_at FROM users ORDER BY created_at DESC'
+            `SELECT id, name, email, role, contact_number, status, last_login, locked_until, created_at
+             FROM users
+             WHERE role IN ('admin', 'apprehending_officer')
+             ORDER BY created_at DESC`
         );
 
         res.json({
@@ -218,19 +221,111 @@ exports.unlockUser = async (req, res) => {
 // Delete user
 
 exports.deleteUser = async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) {
+        return res.status(400).json({ success: false, message: 'Invalid user ID' });
+    }
+    if (id === Number(req.user.id)) {
+        return res.status(400).json({ success: false, message: 'You cannot delete your own account while logged in.' });
+    }
+
+    const connection = await db.getConnection();
+    let deletedUser = null;
+
     try {
-        const id=Number(req.params.id);
-        if(id===req.user.id)return res.status(400).json({success:false,message:'You cannot deactivate your own account while logged in'});
-        const [rows]=await db.query('SELECT id,role,status,email FROM users WHERE id=?',[id]);
-        if(!rows.length)return res.status(404).json({success:false,message:'User not found'});
-        if(rows[0].role==='admin'){
-            const [[count]]=await db.query("SELECT COUNT(*) total FROM users WHERE role='admin' AND status='active' AND id<>?",[id]);
-            if(Number(count.total)<1)return res.status(409).json({success:false,message:'At least one active administrator must remain.'});
+        await connection.beginTransaction();
+
+        const [rows] = await connection.query(
+            'SELECT id, name, role, status, email FROM users WHERE id = ? FOR UPDATE',
+            [id]
+        );
+        if (!rows.length) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'User not found' });
         }
-        await db.query("UPDATE users SET status='inactive',failed_login_attempts=0,locked_until=NULL WHERE id=?",[id]);
-        await logAudit({userId:req.user.id,action:'USER_DEACTIVATED',entityType:'users',entityId:id,metadata:{email:rows[0].email},req});
-        return res.json({success:true,message:'User account deactivated successfully'});
-    } catch(error){console.error(error);return res.status(500).json({success:false,message:'Server error'});}
+        deletedUser = rows[0];
+
+        if (deletedUser.role === 'admin' && deletedUser.status === 'active') {
+            const [activeAdmins] = await connection.query(
+                "SELECT id FROM users WHERE role = 'admin' AND status = 'active' FOR UPDATE"
+            );
+            if (activeAdmins.length < 2) {
+                await connection.rollback();
+                return res.status(409).json({ success: false, message: 'At least one active administrator must remain.' });
+            }
+        }
+
+        // Enforcement and financial records must retain their original officer/admin.
+        // Accounts with those references can be deactivated, but not hard-deleted.
+        const dependencyGroups = [
+            { table: 'tickets', columns: ['user_id'], label: 'ticket' },
+            { table: 'ticket_status_history', columns: ['changed_by', 'approver_id'], label: 'ticket status change' },
+            { table: 'payments', columns: ['recorded_by', 'cashier_user_id'], label: 'payment' },
+            { table: 'disputes', columns: ['submitted_by', 'resolved_by'], label: 'dispute' },
+            { table: 'evidence', columns: ['uploaded_by'], label: 'evidence record' }
+        ];
+        const [availableColumns] = await connection.query(
+            `SELECT TABLE_NAME, COLUMN_NAME
+             FROM INFORMATION_SCHEMA.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME IN ('tickets', 'ticket_status_history', 'payments', 'disputes', 'evidence')`
+        );
+        const columnKeys = new Set(availableColumns.map(column =>
+            `${column.TABLE_NAME || column.table_name}.${column.COLUMN_NAME || column.column_name}`
+        ));
+        const referenceLabels = [];
+
+        for (const group of dependencyGroups) {
+            const columns = group.columns.filter(column => columnKeys.has(`${group.table}.${column}`));
+            if (!columns.length) continue;
+            // Identifiers come only from the fixed allowlist above; values remain parameterized.
+            const where = columns.map(column => `\`${column}\` = ?`).join(' OR ');
+            const [[referenceCount]] = await connection.query(
+                `SELECT COUNT(*) AS total FROM \`${group.table}\` WHERE ${where}`,
+                columns.map(() => id)
+            );
+            const total = Number(referenceCount.total);
+            if (total > 0) {
+                referenceLabels.push(`${total} ${group.label}${total === 1 ? '' : 's'}`);
+            }
+        }
+
+        if (referenceLabels.length) {
+            await connection.rollback();
+            return res.status(409).json({
+                success: false,
+                message: `This account cannot be permanently deleted because it is linked to ${referenceLabels.join(', ')}. Deactivate it instead to preserve historical records.`
+            });
+        }
+
+        const [result] = await connection.query('DELETE FROM users WHERE id = ?', [id]);
+        if (result.affectedRows !== 1) {
+            throw new Error('User deletion did not affect exactly one account.');
+        }
+        await connection.commit();
+
+        await logAudit({
+            userId: req.user.id,
+            action: 'USER_DELETED',
+            entityType: 'users',
+            entityId: id,
+            metadata: { email: deletedUser.email, name: deletedUser.name, role: deletedUser.role },
+            req
+        });
+        return res.json({ success: true, message: 'User account permanently deleted.' });
+    } catch (error) {
+        try { await connection.rollback(); } catch (rollbackError) { /* connection may already be closed */ }
+        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
+            return res.status(409).json({
+                success: false,
+                message: 'This account is linked to historical records and cannot be permanently deleted. Deactivate it instead.'
+            });
+        }
+        console.error('Delete user error:', error);
+        return res.status(500).json({ success: false, message: 'Server error while deleting user' });
+    } finally {
+        connection.release();
+    }
 };
 
 // Change password
