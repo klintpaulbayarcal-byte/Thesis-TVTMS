@@ -201,6 +201,7 @@ const loadAllTickets = async (filters = {}) => {
 
             tbody.innerHTML = data.tickets.map(ticket => {
                 const ticketId = ticket.id || ticket.ticket_id;
+                const ticketStatus = String(ticket.status || '').toLowerCase();
                 return `
                 <tr>
                     <td><strong>${escapeHtmlText(ticket.ticket_number)}</strong></td>
@@ -214,13 +215,17 @@ const loadAllTickets = async (filters = {}) => {
                         <button type="button" class="btn btn-sm btn-primary" onclick="viewTicketDetails(${ticketId})" ${ticketId ? '' : 'disabled'}>
                             View
                         </button>
-                        ${ticketId && isAdmin() ? `
+                        ${ticketId && isAdmin() && ticketStatus === 'unpaid' ? `
                         <button type="button" class="btn btn-sm btn-warning" onclick="editTicket(${ticketId})">
                             Edit
                         </button>` : ''}
-                        ${ticketId && isAdmin() ? `
+                        ${ticketId && isAdmin() && ticketStatus === 'unpaid' ? `
                         <button type="button" class="btn btn-sm btn-danger" onclick="deleteTicketRecord(${ticketId})">
                             Cancel
+                        </button>` : ''}
+                        ${ticketId && isAdmin() && ticketStatus === 'cancelled' ? `
+                        <button type="button" class="btn btn-sm btn-danger" onclick="permanentlyDeleteTicketRecord(${ticketId})" title="Permanently delete this cancelled ticket">
+                            <i class="fas fa-trash" aria-hidden="true"></i> Delete
                         </button>` : ''}
                         ${ticket.status === 'unpaid' && isAdmin() && ticketId ?
                         `<button type="button" class="btn btn-sm btn-success" onclick="viewTicketDetails(${ticketId})" title="Open ticket to record an official payment">
@@ -342,6 +347,38 @@ const deleteTicketRecord = async (ticketId) => {
         showAlert(error.message || 'Failed to cancel ticket.', 'danger');
     }
 };
+
+// Permanently remove only a cancelled ticket without linked official records.
+const permanentlyDeleteTicketRecord = async (ticketId) => {
+    const reason = await requestTextConfirmation(
+        'This permanently deletes the cancelled ticket. This cannot be undone.',
+        {
+            label: 'Deletion Reason',
+            placeholder: 'Explain why this cancelled ticket should be permanently deleted.',
+            minLength: 5,
+            maxLength: 500,
+            errorMessage: 'Enter a deletion reason between 5 and 500 characters.'
+        },
+        {
+            title: 'Delete Cancelled Ticket',
+            confirmLabel: 'Delete Permanently',
+            destructive: true
+        }
+    );
+    if (reason === null) return;
+
+    try {
+        const response = await API.permanentlyDeleteTicket(ticketId, reason);
+        if (response.success) {
+            showAlert('Cancelled ticket deleted successfully.', 'success');
+            await loadAllTickets();
+        }
+    } catch (error) {
+        console.error('Error deleting cancelled ticket:', error);
+        showAlert(error.message || 'Failed to delete cancelled ticket.', 'danger');
+    }
+};
+window.permanentlyDeleteTicketRecord = permanentlyDeleteTicketRecord;
 
 // Navigate to ticket details page
 const viewTicketDetails = (ticketId) => {

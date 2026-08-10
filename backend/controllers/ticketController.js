@@ -912,6 +912,92 @@ exports.deleteTicket = async (req, res) => {
     }
 };
 
+// Permanently delete a cancelled ticket with no linked official records (admin only).
+exports.permanentlyDeleteTicket = async (req, res) => {
+    const connection = await db.getConnection();
+    try {
+        const id = Number(req.params.id);
+        const reason = String(req.body?.reason || '').trim();
+        if (!Number.isInteger(id) || id <= 0) {
+            return sendError(res, 'Invalid ticket ID', { statusCode: 400, errorCode: 'VALIDATION_ERROR' });
+        }
+        if (reason.length < 5 || reason.length > 500) {
+            return sendError(res, 'A deletion reason between 5 and 500 characters is required', {
+                statusCode: 400,
+                errorCode: 'VALIDATION_ERROR'
+            });
+        }
+
+        await connection.beginTransaction();
+        const [rows] = await connection.query(
+            'SELECT id, ticket_number, status FROM tickets WHERE id = ? FOR UPDATE',
+            [id]
+        );
+        if (!rows.length) {
+            await connection.rollback();
+            return sendError(res, 'Ticket not found', { statusCode: 404, errorCode: 'TICKET_NOT_FOUND' });
+        }
+
+        const ticket = rows[0];
+        if (ticket.status !== 'cancelled') {
+            await connection.rollback();
+            return sendError(res, 'Only cancelled tickets can be permanently deleted', {
+                statusCode: 409,
+                errorCode: 'TICKET_NOT_CANCELLED'
+            });
+        }
+
+        const [[linkedRecords]] = await connection.query(
+            `SELECT
+                (SELECT COUNT(*) FROM payments WHERE ticket_id = ?) AS payments_count,
+                (SELECT COUNT(*) FROM disputes WHERE ticket_id = ?) AS disputes_count,
+                (SELECT COUNT(*) FROM evidence WHERE ticket_id = ?) AS evidence_count`,
+            [id, id, id]
+        );
+        const linkedCount = Number(linkedRecords.payments_count || 0)
+            + Number(linkedRecords.disputes_count || 0)
+            + Number(linkedRecords.evidence_count || 0);
+        if (linkedCount > 0) {
+            await connection.rollback();
+            return sendError(res, 'This ticket has linked payment, dispute, or evidence records and cannot be deleted', {
+                statusCode: 409,
+                errorCode: 'LINKED_RECORDS_EXIST'
+            });
+        }
+
+        const [result] = await connection.query('DELETE FROM tickets WHERE id = ?', [id]);
+        if (result.affectedRows !== 1) {
+            await connection.rollback();
+            return sendError(res, 'Ticket could not be deleted', { statusCode: 409, errorCode: 'DELETE_FAILED' });
+        }
+        await connection.commit();
+
+        try {
+            await logAudit({
+                userId: req.user.id,
+                action: 'TICKET_PERMANENTLY_DELETED',
+                entityType: 'tickets',
+                entityId: id,
+                metadata: { ticketNumber: ticket.ticket_number, previousStatus: ticket.status, reason },
+                req
+            });
+        } catch (auditError) {
+            console.error('Permanent ticket deletion audit error:', auditError);
+        }
+
+        return sendSuccess(res, 'Cancelled ticket permanently deleted', {
+            id,
+            ticketNumber: ticket.ticket_number
+        });
+    } catch (error) {
+        try { await connection.rollback(); } catch {}
+        console.error('Permanent ticket deletion error:', error);
+        return sendError(res, 'Server error', { statusCode: 500, errorCode: 'TICKET_DELETE_FAILED' });
+    } finally {
+        connection.release();
+    }
+};
+
 // Get dashboard statistics
 exports.getDashboardStats = async (req, res) => {
     try {
