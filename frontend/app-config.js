@@ -7,7 +7,8 @@
  *   window.APP_CONFIG.API_ORIGIN = 'https://api.example.gov.ph';
  */
 window.APP_CONFIG = window.APP_CONFIG || {};
-const defaultApiOrigin = window.location.hostname.endsWith('.vercel.app')
-    ? 'https://thesis-tvtms-api.vercel.app'
-    : '';
+// Production uses the same frontend origin and lets Vercel proxy /api to the
+// backend. This avoids mobile/VPN DNS and cross-origin failures while keeping
+// localhost development on the explicit API origin defined in api.js.
+const defaultApiOrigin = '';
 window.APP_CONFIG.API_ORIGIN = String(window.APP_CONFIG.API_ORIGIN || defaultApiOrigin).replace(/\/$/, '');
