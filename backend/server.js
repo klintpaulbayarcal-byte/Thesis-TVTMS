@@ -101,7 +101,21 @@ app.get('/api/health', async (req, res) => {
     try {
         await db.checkConnection();
         const smtp = getSmtpStatus();
-        res.json({ success: true, status: 'healthy', database: 'connected', databaseClient: db.client, smtp: smtp.configured ? 'configured' : 'not_configured', timestamp: new Date().toISOString() });
+        res.json({
+            success: true,
+            status: 'healthy',
+            database: 'connected',
+            databaseClient: db.client,
+            smtp: smtp.configured ? 'configured' : 'not_configured',
+            gitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA || null,
+            gitCommitRef: process.env.VERCEL_GIT_COMMIT_REF || null,
+            capabilities: [
+                'ticket-permanent-delete',
+                'ticket-mark-unpaid',
+                'payment-state-audit'
+            ],
+            timestamp: new Date().toISOString()
+        });
     } catch (error) {
         res.status(503).json({ success: false, status: 'unhealthy', database: 'disconnected', timestamp: new Date().toISOString() });
     }
