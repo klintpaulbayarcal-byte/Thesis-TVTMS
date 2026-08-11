@@ -293,6 +293,18 @@
     gap: 10px;
 }
 
+.panel-system .system-summary {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.panel-system .system-summary p {
+    margin: 0;
+}
+
 .hotspot-item {
     display: flex;
     flex-direction: column;
@@ -416,6 +428,10 @@
 @media (max-width: 768px) {
     .admin-map-dashboard .dashboard-content {
         padding: 16px 12px 22px;
+    }
+
+    .panel-system .system-summary .btn {
+        width: 100%;
     }
 
     .map-head {
