@@ -526,16 +526,79 @@ body.login-modern::before {
 
 @media (max-width: 560px) {
     body.login-modern {
-        padding: 8px;
+        padding: 0;
+        align-items: flex-start;
     }
 
-    .login-visual-panel,
+    .login-shell {
+        width: 100%;
+        min-height: 100vh;
+        min-height: 100svh;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .login-visual-panel {
+        min-height: 0;
+        padding: 18px 18px 16px;
+    }
+
     .login-form-panel {
-        padding: 22px 16px;
+        padding: 20px 18px calc(26px + env(safe-area-inset-bottom));
+        justify-content: flex-start;
+    }
+
+    .feature-list,
+    .route-preview,
+    .visual-meta {
+        display: none;
+    }
+
+    .panel-chip {
+        padding: 6px 10px;
+        font-size: 0.68rem;
     }
 
     .login-title {
-        font-size: 2.25rem;
+        margin-top: 12px;
+        font-size: 1.9rem;
+        line-height: 1;
+    }
+
+    .login-subtitle {
+        margin-top: 8px;
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .access-badge {
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        font-size: 0.68rem;
+    }
+
+    .login-header {
+        margin-bottom: 16px;
+    }
+
+    .login-logo {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 10px;
+    }
+
+    .login-header h2 {
+        font-size: 1.8rem;
+    }
+
+    .login-header p,
+    .register-line {
+        font-size: 0.86rem;
+    }
+
+    .login-form {
+        gap: 10px;
     }
 
     .login-form input[type="email"],
@@ -544,13 +607,52 @@ body.login-modern::before {
     }
 
     .form-row {
-        align-items: flex-start;
-        flex-direction: column;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .remember-me,
+    .forgot-link {
+        font-size: 0.85rem;
+    }
+
+    .form-footer {
+        margin-top: 16px;
     }
 
     #alertContainer {
         left: 8px;
         right: 8px;
         max-width: none;
+    }
+}
+
+@media (max-width: 380px), (max-height: 820px) and (max-width: 560px) {
+    .login-visual-panel {
+        padding-block: 14px;
+    }
+
+    .login-title {
+        font-size: 1.65rem;
+    }
+
+    .login-subtitle {
+        display: none;
+    }
+
+    .login-form-panel {
+        padding-top: 14px;
+    }
+
+    .login-logo {
+        width: 62px;
+        height: 62px;
+        margin-bottom: 6px;
+    }
+
+    .login-header {
+        margin-bottom: 12px;
     }
 }
