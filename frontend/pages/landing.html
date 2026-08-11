@@ -2748,7 +2748,7 @@
       max-width: 1200px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-columns: 2fr 1fr 1fr 1.35fr;
       gap: 40px;
       padding-bottom: 40px;
     }
@@ -2784,6 +2784,28 @@
       line-height: 1.7;
       margin-top: 14px;
       max-width: 340px;
+    }
+
+    .footer-credit {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .footer-credit strong {
+      display: block;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .footer-disclaimer {
+      flex: 1 0 100%;
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
     }
 
     .footer-bottom {
@@ -3795,10 +3817,16 @@
         <a href="tel:09262026150">Station: 0926-202-6150</a>
         <a href="tel:4117797">Landline: 411-7797</a>
       </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Project Credit</div>
+        <p class="footer-credit">Developed by <strong>Klint Paul R. Bayarcal</strong></p>
+        <p class="footer-credit">BS Computer Science Thesis Project<br>BISU Calape Campus · AY 2025–2026</p>
+      </div>
     </div>
     <div class="footer-bottom">
       <div class="footer-brand">Municipal Traffic Violation Ticketing &amp; Management System</div>
       <div class="footer-meta">BISU Calape Campus · BS Computer Science Thesis Project · AY 2025–2026</div>
+      <p class="footer-disclaimer">Developed as an academic capstone project for the Municipality of Calape. Official system records remain under the authority of the designated municipal office.</p>
     </div>
   </footer>
 
