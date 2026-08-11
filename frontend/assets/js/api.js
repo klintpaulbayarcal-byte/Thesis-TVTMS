@@ -271,6 +271,10 @@ const API = {
         method: 'DELETE',
         body: JSON.stringify({ reason })
     }),
+    markTicketUnpaid: (id, reason) => apiRequest(`/tickets/${id}/mark-unpaid`, {
+        method: 'PUT',
+        body: JSON.stringify({ reason })
+    }),
     getDashboardStats: (filters = {}) => {
         const params = new URLSearchParams(filters);
         return apiRequest(`/tickets/stats?${params}`);

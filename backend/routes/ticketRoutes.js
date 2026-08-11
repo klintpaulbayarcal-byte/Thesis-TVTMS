@@ -12,6 +12,7 @@ router.get('/search', authorizeRoles('admin', 'apprehending_officer'), ticketCon
 router.get('/:id', authorizeRoles('admin', 'apprehending_officer'), ticketController.getTicketById);
 router.post('/', isOfficerOrAdmin, ticketController.createTicket);
 router.put('/:id/details', authorizeRoles('admin', 'apprehending_officer'), ticketController.updateTicketDetails);
+router.put('/:id/mark-unpaid', isAdmin, ticketController.markTicketUnpaid);
 router.put('/:id', authorizeRoles('admin', 'apprehending_officer'), ticketController.updateTicketStatus);
 router.delete('/:id/permanent', isAdmin, ticketController.permanentlyDeleteTicket);
 router.delete('/:id', isAdmin, ticketController.deleteTicket);
