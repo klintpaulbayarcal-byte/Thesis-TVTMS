@@ -33,7 +33,13 @@
         .setting-status { min-width:58px; font-size:12px; font-weight:800; }
         .settings-actions { display:flex; align-items:center; gap:12px; margin-top:20px; }
         .settings-note { margin-top:10px; color:#64748b; font-size:12px; }
-        @media (max-width:760px) { .settings-grid{grid-template-columns:1fr}.setting-row{align-items:flex-start;flex-direction:column}.toggle-wrap{width:100%;justify-content:flex-end} }
+        .about-system-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+        .about-system-item { min-width:0; padding:14px 16px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; }
+        .about-system-item dt { margin:0 0 5px; color:#64748b; font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+        .about-system-item dd { margin:0; color:#0f172a; font-size:14px; font-weight:700; overflow-wrap:anywhere; }
+        .about-system-note { margin:16px 0 0; padding:12px 14px; border-left:3px solid #2563eb; border-radius:6px; background:#eff6ff; color:#475569; font-size:12px; line-height:1.6; }
+        #about-system { scroll-margin-top:90px; }
+        @media (max-width:760px) { .settings-grid,.about-system-grid{grid-template-columns:1fr}.setting-row{align-items:flex-start;flex-direction:column}.toggle-wrap{width:100%;justify-content:flex-end} }
     </style>
 </head>
 <body class="professional-shell">
@@ -197,6 +203,25 @@
                             <p class="settings-note">Automatic unpaid-ticket reminder scheduling is not shown because that background service is not implemented in this build.</p>
                             <div class="settings-actions"><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Email Preferences</button></div>
                         </form>
+                    </div>
+                </section>
+
+                <section class="card" id="about-system">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-circle-info"></i> About System</h3>
+                    </div>
+                    <div class="card-body">
+                        <dl class="about-system-grid">
+                            <div class="about-system-item"><dt>System Version</dt><dd>1.0.0</dd></div>
+                            <div class="about-system-item"><dt>Institution</dt><dd>Bohol Island State University</dd></div>
+                            <div class="about-system-item"><dt>Campus</dt><dd>Calape Campus</dd></div>
+                            <div class="about-system-item"><dt>Program / Section</dt><dd>BSCS 3A</dd></div>
+                            <div class="about-system-item"><dt>Lead System Developer</dt><dd>Klint Paul R. Bayarcal</dd></div>
+                            <div class="about-system-item"><dt>Thesis Co-Proponent</dt><dd>Edcel F. Clarin</dd></div>
+                            <div class="about-system-item"><dt>Project Type</dt><dd>Academic Thesis / Capstone</dd></div>
+                            <div class="about-system-item"><dt>Academic Year</dt><dd>2025–2026</dd></div>
+                        </dl>
+                        <p class="about-system-note">This system was developed as an academic thesis project for the Municipality of Calape. Official production records remain under the authority of the designated municipal office.</p>
                     </div>
                 </section>
             </div>

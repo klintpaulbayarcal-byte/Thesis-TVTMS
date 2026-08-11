@@ -10,6 +10,8 @@ A web-based municipal traffic citation and records-management system developed f
 ## Project Attribution
 
 - **Academic Developer:** Klint Paul R. Bayarcal
+- **Role:** Lead System Developer
+- **Thesis Co-Proponent:** Edcel F. Clarin
 - **Program:** BS Computer Science
 - **Institution:** BISU Calape Campus
 - **Project:** Academic thesis/capstone, AY 2025–2026
