@@ -7,6 +7,14 @@ For a Windows laptop with XAMPP, extract the project under `C:\xampp\htdocs\` an
 
 A web-based municipal traffic citation and records-management system developed for the Municipality of Calape, Bohol. The project includes a public portal, role-based internal dashboards, ticket issuance, repeat-offender lookup, payments, disputes, evidence, reports, notifications, settings, and audit trails.
 
+## Project Attribution
+
+- **Academic Developer:** Klint Paul R. Bayarcal
+- **Program:** BS Computer Science
+- **Institution:** BISU Calape Campus
+- **Project:** Academic thesis/capstone, AY 2025–2026
+- **Operational Authority:** The designated municipal office retains authority over official system records and production use.
+
 ## Deployment status
 
 This package is a **final deployment candidate**, not a substitute for live acceptance testing. Static code checks passed, but the target server, production database, SMTP account, HTTPS configuration, and complete browser workflows must still be tested before public go-live. See `DEPLOYMENT_CHECKLIST.md` and `FINAL_DEPLOYMENT_AUDIT.md`.
