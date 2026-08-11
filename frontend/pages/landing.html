@@ -98,6 +98,164 @@
       }
     }
 
+    /* Mobile readability and touch refinements from the field-use review. */
+    @media (max-width: 600px) {
+      .section {
+        padding: 52px 16px;
+      }
+
+      .hero {
+        padding: 88px 16px 46px;
+        gap: 34px;
+      }
+
+      .hero-title {
+        font-size: clamp(2.55rem, 14vw, 3.7rem);
+      }
+
+      .hero-sub {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 24px;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+
+      .hero-actions a {
+        min-width: 0;
+        padding: 12px 10px;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .hero-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .hero-stats .stat-item {
+        min-width: 0;
+        padding: 15px 10px;
+      }
+
+      .hero-stats .stat-item:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .search-card {
+        padding: 26px 18px;
+        border-radius: 20px;
+      }
+
+      .sec-title {
+        font-size: clamp(1.8rem, 9vw, 2.45rem);
+        line-height: 1.05;
+      }
+
+      .sec-sub {
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      #liveStatsBar {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 22px 12px !important;
+        padding: 24px 14px !important;
+      }
+
+      #liveStatsBar > div:last-child {
+        grid-column: 1 / -1;
+      }
+
+      #liveStatsBar [id^="ls-"] {
+        font-size: 34px !important;
+      }
+
+      .process-comparison-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+      }
+
+      .benefit-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      .process-comparison-grid > div {
+        padding: 22px 18px !important;
+      }
+
+      .stats-strip {
+        padding: 24px 14px;
+        gap: 18px 10px;
+      }
+
+      .modules-modal {
+        padding: 8px;
+        align-items: flex-end;
+      }
+
+      .modules-content {
+        max-height: calc(100dvh - 16px);
+        padding: 20px 14px calc(20px + env(safe-area-inset-bottom));
+        border-radius: 18px 18px 12px 12px;
+      }
+
+      .modules-header {
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .modules-title {
+        min-width: 0;
+        font-size: 22px;
+        overflow-wrap: anywhere;
+      }
+
+      .modules-list {
+        gap: 10px;
+      }
+
+      .module-item {
+        min-width: 0;
+        padding: 12px;
+        gap: 10px;
+      }
+
+      .module-text {
+        min-width: 0;
+      }
+
+      .module-name,
+      .module-desc {
+        overflow-wrap: anywhere;
+      }
+
+      .activity-table-scroll {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .activity-table {
+        min-width: 560px;
+      }
+
+      .faq-q {
+        padding: 18px;
+        font-size: 14px;
+      }
+
+      .faq-a p {
+        padding: 0 18px 20px;
+      }
+    }
+
     /* ── ACCESSIBILITY: FOCUS & SKIP LINK ── */
     :focus-visible {
       outline: 2px solid #60a5fa;
@@ -3112,7 +3270,7 @@
         <h2 class="sec-title">Manual Process vs Digital Enforcement</h2>
         <p class="sec-sub">Compare the old way with the new standard for Calape traffic enforcement. The difference is speed, transparency, and accountability.</p>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="process-comparison-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <!-- Manual (red) -->
         <div
           style="background:rgba(127,29,29,0.12);border:1px solid rgba(239,68,68,0.18);border-radius:20px;padding:28px 28px">

@@ -274,21 +274,64 @@ const populateUserInfo = () => {
     });
 };
 
+// Keep the mobile navigation, overlay, accessibility state, and page scroll in
+// sync. A single state setter prevents the sidebar and overlay from drifting
+// apart after orientation changes or rapid taps.
+const setSidebarState = (open) => {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const isMobile = window.matchMedia('(max-width: 992px)').matches;
+    const shouldOpen = Boolean(open && isMobile);
+
+    sidebar?.classList.toggle('active', shouldOpen);
+    overlay?.classList.toggle('active', shouldOpen);
+    document.documentElement.classList.toggle('sidebar-open', shouldOpen);
+    document.body.classList.toggle('sidebar-open', shouldOpen);
+
+    if (sidebar) sidebar.setAttribute('aria-hidden', String(isMobile && !shouldOpen));
+    if (overlay) overlay.setAttribute('aria-hidden', String(!shouldOpen));
+
+    const menuToggle = document.querySelector('.menu-toggle');
+    if (menuToggle) {
+        menuToggle.setAttribute('aria-expanded', String(shouldOpen));
+        menuToggle.setAttribute('aria-label', shouldOpen ? 'Close navigation menu' : 'Open navigation menu');
+    }
+};
+
 // Toggle sidebar (for mobile)
 const toggleSidebar = () => {
     const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
+    setSidebarState(!sidebar?.classList.contains('active'));
+};
 
-    if (sidebar) {
-        sidebar.classList.toggle('active');
-    }
+const applyResponsiveTableLabels = (table) => {
+    const labels = Array.from(table.querySelectorAll('thead th')).map((header) =>
+        String(header.textContent || '').replace(/\s+/g, ' ').trim()
+    );
 
-    if (overlay) {
-        overlay.classList.toggle('active');
-    }
+    table.querySelectorAll('tbody tr').forEach((row) => {
+        const cells = Array.from(row.children).filter((cell) => cell.tagName === 'TD');
+        cells.forEach((cell, index) => {
+            if (cell.colSpan > 1) {
+                cell.classList.add('mobile-table-message');
+                cell.removeAttribute('data-label');
+                return;
+            }
+            cell.classList.remove('mobile-table-message');
+            cell.dataset.label = labels[index] || `Field ${index + 1}`;
+        });
+    });
+};
 
-    const menuToggle = document.querySelector('.menu-toggle');
-    if (menuToggle) menuToggle.setAttribute('aria-expanded', String(Boolean(sidebar?.classList.contains('active'))));
+const enhanceResponsiveTables = (root = document) => {
+    const tables = [];
+    if (root instanceof Element && root.matches('table')) tables.push(root);
+    if (root.querySelectorAll) tables.push(...root.querySelectorAll('table'));
+
+    tables.forEach((table) => {
+        table.classList.add('mobile-card-table');
+        applyResponsiveTableLabels(table);
+    });
 };
 
 // Normalize sidebar links/labels per role to keep tabs consistent across pages.
@@ -354,12 +397,25 @@ const normalizeSidebarForRole = () => {
             <a href="${href}" class="nav-item${currentPage === href ? ' active' : ''}"${currentPage === href ? ' aria-current="page"' : ''}>
                 <i class="fas ${icon}" aria-hidden="true"></i><span>${label}</span>
             </a>`).join('')}
-    `).join('') + `
+    `).join('');
+
+    // Keep logout outside the long navigation list. This makes it reachable on
+    // short phones while the menu items continue to scroll independently.
+    const sidebar = nav.closest('.sidebar');
+    let logoutArea = sidebar?.querySelector('.sidebar-logout');
+    if (sidebar && !logoutArea) {
+        logoutArea = document.createElement('div');
+        logoutArea.className = 'sidebar-logout';
+        sidebar.appendChild(logoutArea);
+    }
+
+    if (!logoutArea) return;
+    logoutArea.innerHTML = `
         <a href="#" class="nav-item" data-action="logout">
             <i class="fas fa-right-from-bracket" aria-hidden="true"></i><span>Logout</span>
         </a>`;
 
-    nav.querySelector('[data-action="logout"]')?.addEventListener('click', (event) => {
+    logoutArea.querySelector('[data-action="logout"]')?.addEventListener('click', (event) => {
         event.preventDefault();
         logout();
     });
@@ -418,9 +474,11 @@ enforcePageRoleGuard();
 
 // Close sidebar when clicking overlay
 document.addEventListener('DOMContentLoaded', () => {
+    const sidebar = document.querySelector('.sidebar');
     const overlay = document.querySelector('.sidebar-overlay');
     if (overlay) {
-        overlay.addEventListener('click', toggleSidebar);
+        overlay.setAttribute('aria-hidden', 'true');
+        overlay.addEventListener('click', () => setSidebarState(false));
     }
 
     // Menu toggle button
@@ -431,6 +489,35 @@ document.addEventListener('DOMContentLoaded', () => {
         menuToggle.setAttribute('aria-expanded', 'false');
         menuToggle.addEventListener('click', toggleSidebar);
     }
+
+    if (sidebar) {
+        sidebar.setAttribute('aria-label', 'System navigation');
+
+        const sidebarHeader = sidebar.querySelector('.sidebar-header');
+        if (sidebarHeader && !sidebarHeader.querySelector('.sidebar-close')) {
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.className = 'sidebar-close';
+            closeButton.setAttribute('aria-label', 'Close navigation menu');
+            closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
+            closeButton.addEventListener('click', () => setSidebarState(false));
+            sidebarHeader.appendChild(closeButton);
+        }
+
+        sidebar.addEventListener('click', (event) => {
+            if (event.target.closest('.sidebar a') && window.matchMedia('(max-width: 992px)').matches) {
+                setSidebarState(false);
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') setSidebarState(false);
+    });
+
+    const sidebarBreakpoint = window.matchMedia('(max-width: 992px)');
+    sidebarBreakpoint.addEventListener?.('change', () => setSidebarState(false));
+    setSidebarState(false);
 
     document.querySelectorAll('.search-bar input, input[type="search"]').forEach((input) => {
         if (!input.hasAttribute('aria-label')) input.setAttribute('aria-label', input.placeholder || 'Search');
@@ -466,6 +553,18 @@ document.addEventListener('DOMContentLoaded', () => {
         populateUserInfo();
     }
 
+    enhanceResponsiveTables();
+    const responsiveTableObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            const owningTable = mutation.target instanceof Element ? mutation.target.closest('table') : null;
+            if (owningTable) applyResponsiveTableLabels(owningTable);
+            mutation.addedNodes.forEach((node) => {
+                if (node instanceof Element) enhanceResponsiveTables(node);
+            });
+        });
+    });
+    responsiveTableObserver.observe(document.body, { childList: true, subtree: true });
+
     // Highlight active nav item
     const currentPage = window.location.pathname.split('/').pop();
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -478,11 +577,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Logout function
 const logout = async () => {
+    setSidebarState(false);
     if (await confirmAction('End your current session and return to the login page?', {
         title: 'Log Out',
         confirmLabel: 'Log Out'
     })) {
-        API.logout();
+        await API.logout();
     }
 };
 
