@@ -223,9 +223,13 @@ const loadAllTickets = async (filters = {}) => {
                         <button type="button" class="btn btn-sm btn-danger" onclick="deleteTicketRecord(${ticketId})">
                             Cancel
                         </button>` : ''}
-                        ${ticketId && isAdmin() && ticketStatus === 'cancelled' ? `
-                        <button type="button" class="btn btn-sm btn-danger" onclick="permanentlyDeleteTicketRecord(${ticketId})" title="Permanently delete this cancelled ticket">
+                        ${ticketId && isAdmin() && ['unpaid', 'cancelled'].includes(ticketStatus) ? `
+                        <button type="button" class="btn btn-sm btn-danger" onclick="permanentlyDeleteTicketRecord(${ticketId})" title="Permanently delete when no official linked records exist">
                             <i class="fas fa-trash" aria-hidden="true"></i> Delete
+                        </button>` : ''}
+                        ${ticketId && isAdmin() && ticketStatus === 'paid' ? `
+                        <button type="button" class="btn btn-sm btn-warning" onclick="markTicketUnpaid(${ticketId})" title="Correct an accidental payment status">
+                            Mark Unpaid
                         </button>` : ''}
                         ${ticket.status === 'unpaid' && isAdmin() && ticketId ?
                         `<button type="button" class="btn btn-sm btn-success" onclick="viewTicketDetails(${ticketId})" title="Open ticket to record an official payment">
@@ -351,16 +355,16 @@ const deleteTicketRecord = async (ticketId) => {
 // Permanently remove only a cancelled ticket without linked official records.
 const permanentlyDeleteTicketRecord = async (ticketId) => {
     const reason = await requestTextConfirmation(
-        'This permanently deletes the cancelled ticket. This cannot be undone.',
+        'This permanently deletes the ticket when it has no linked payment, dispute, or evidence records. This cannot be undone.',
         {
             label: 'Deletion Reason',
-            placeholder: 'Explain why this cancelled ticket should be permanently deleted.',
+            placeholder: 'Explain why this ticket should be permanently deleted.',
             minLength: 5,
             maxLength: 500,
             errorMessage: 'Enter a deletion reason between 5 and 500 characters.'
         },
         {
-            title: 'Delete Cancelled Ticket',
+            title: 'Delete Ticket',
             confirmLabel: 'Delete Permanently',
             destructive: true
         }
@@ -370,15 +374,49 @@ const permanentlyDeleteTicketRecord = async (ticketId) => {
     try {
         const response = await API.permanentlyDeleteTicket(ticketId, reason);
         if (response.success) {
-            showAlert('Cancelled ticket deleted successfully.', 'success');
+            showAlert('Ticket deleted successfully.', 'success');
             await loadAllTickets();
         }
     } catch (error) {
         console.error('Error deleting cancelled ticket:', error);
-        showAlert(error.message || 'Failed to delete cancelled ticket.', 'danger');
+        showAlert(error.message || 'Failed to delete ticket.', 'danger');
     }
 };
 window.permanentlyDeleteTicketRecord = permanentlyDeleteTicketRecord;
+
+const markTicketUnpaid = async (ticketId) => {
+    const reason = await requestTextConfirmation(
+        'This will mark the ticket unpaid. Any active payment record will be retained but marked voided.',
+        {
+            label: 'Correction Reason',
+            placeholder: 'Explain why the paid status is being corrected.',
+            minLength: 5,
+            maxLength: 500,
+            errorMessage: 'Enter a correction reason between 5 and 500 characters.'
+        },
+        {
+            title: 'Mark Ticket Unpaid',
+            confirmLabel: 'Mark Unpaid',
+            destructive: true
+        }
+    );
+    if (reason === null) return;
+
+    try {
+        const response = await API.markTicketUnpaid(ticketId, reason);
+        if (response.success) {
+            const voided = Number(response.voidedPayments || 0);
+            showAlert(voided > 0
+                ? `Ticket marked unpaid; ${voided} payment record(s) were voided.`
+                : 'Ticket marked unpaid successfully.', 'success');
+            await loadAllTickets();
+        }
+    } catch (error) {
+        console.error('Error marking ticket unpaid:', error);
+        showAlert(error.message || 'Failed to mark ticket unpaid.', 'danger');
+    }
+};
+window.markTicketUnpaid = markTicketUnpaid;
 
 // Navigate to ticket details page
 const viewTicketDetails = (ticketId) => {
