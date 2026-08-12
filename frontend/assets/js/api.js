@@ -7,6 +7,16 @@ const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) ||
         ? 'http://localhost:5000'
         : window.location.origin);
 const API_BASE_URL = `${API_ORIGIN}/api`;
+// Production normally uses the same-origin Vercel rewrite. If that rewrite is
+// temporarily unreachable on a mobile/VPN network, login may safely retry the
+// dedicated API origin. The fallback is intentionally limited to login so
+// mutating requests are never duplicated.
+const LOGIN_FALLBACK_API_BASE_URL = window.location.hostname === 'thesis-tvtms.vercel.app'
+    ? 'https://thesis-tvtms-api.vercel.app/api'
+    : '';
+
+const isNetworkFetchError = (error) =>
+    error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(String(error?.message || ''));
 
 // Get authentication token from localStorage
 const getToken = () => {
@@ -88,13 +98,14 @@ const redirectToDashboard = () => {
 const apiRequest = async (endpoint, options = {}) => {
     const token = getToken();
     const hasToken = Boolean(token);
-    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+    const { fallbackOnNetworkError = false, ...requestOptions } = options;
+    const isFormData = typeof FormData !== 'undefined' && requestOptions.body instanceof FormData;
 
     const config = {
         headers: {
             ...(token && { 'Authorization': `Bearer ${token}` })
         },
-        ...options
+        ...requestOptions
     };
 
     if (!isFormData) {
@@ -102,7 +113,20 @@ const apiRequest = async (endpoint, options = {}) => {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+        let response;
+
+        try {
+            response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+        } catch (primaryError) {
+            const canUseLoginFallback = fallbackOnNetworkError
+                && LOGIN_FALLBACK_API_BASE_URL
+                && LOGIN_FALLBACK_API_BASE_URL !== API_BASE_URL
+                && isNetworkFetchError(primaryError);
+
+            if (!canUseLoginFallback) throw primaryError;
+            response = await fetch(`${LOGIN_FALLBACK_API_BASE_URL}${endpoint}`, config);
+        }
+
         let data = {};
 
         try {
@@ -113,11 +137,12 @@ const apiRequest = async (endpoint, options = {}) => {
 
         if (!response.ok) {
             const responseMessage = String(data.message || '').toLowerCase();
-            const isInvalidSession =
+            const isInvalidSession = hasToken && (
                 response.status === 401 ||
                 responseMessage.includes('user not found') ||
                 responseMessage.includes('invalid session') ||
-                responseMessage.includes('account is inactive');
+                responseMessage.includes('account is inactive')
+            );
 
             const isMissingToken =
                 responseMessage.includes('no token provided') ||
@@ -140,6 +165,9 @@ const apiRequest = async (endpoint, options = {}) => {
         return data;
     } catch (error) {
         console.error('API Error:', error);
+        if (isNetworkFetchError(error)) {
+            throw new Error('Unable to connect to the system service. Check your internet connection, turn off VPN if enabled, refresh the page, and try again.');
+        }
         throw error;
     }
 };
@@ -164,7 +192,9 @@ const API = {
     // Auth
     login: (credentials) => apiRequest('/auth/login', {
         method: 'POST',
-        body: JSON.stringify(credentials)
+        body: JSON.stringify(credentials),
+        cache: 'no-store',
+        fallbackOnNetworkError: true
     }),
 
     requestPasswordReset: (email) => apiRequest('/auth/request-password-reset', {
