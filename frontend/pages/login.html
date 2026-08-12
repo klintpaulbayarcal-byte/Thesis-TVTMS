@@ -309,9 +309,9 @@
     </main>
 
     <script src="../app-config.js"></script>
-    <script src="../assets/js/api.js?v=20260427c"></script>
+    <script src="../assets/js/api.js?v=20260812a"></script>
     <script src="../assets/js/main.js?v=20260811m1"></script>
-    <script src="../assets/js/login.js?v=20260413"></script>
+    <script src="../assets/js/login.js?v=20260812a"></script>
     <script src="../assets/js/toast.js"></script>
 
     <!-- Forgot Password Modal -->
@@ -360,7 +360,7 @@
     </div>
 
     <script>
-        const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
+        const PASSWORD_RESET_API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
         
         function openForgotModal() {
             const m = document.getElementById('forgotModal');
@@ -390,7 +390,7 @@
 
             btn.disabled = true; btn.textContent = 'Sending...';
             try {
-                const res = await fetch(`${API_ORIGIN}/api/auth/request-password-reset`, {
+                const res = await fetch(`${PASSWORD_RESET_API_ORIGIN}/api/auth/request-password-reset`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
                 });
