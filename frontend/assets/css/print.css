@@ -3,116 +3,158 @@
    ============================================== */
 
 @media print {
-    /* Hide everything except the ticket */
-    body * {
-        visibility: hidden;
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
     }
-    
-    .ticket-print, .ticket-print * {
-        visibility: visible;
+
+    html,
+    body {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
     }
-    
-    .ticket-print {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+
+    body::before {
+        content: none !important;
+        display: none !important;
     }
-    
-    /* Hide buttons and navigation when printing */
+
+    /* Hide application chrome and internal record-management sections. */
+    #alertContainer,
     .btn,
     .sidebar,
     .topbar,
-    .no-print {
+    .no-print,
+    .action-buttons,
+    #ticketQRSection,
+    .print-history-section {
         display: none !important;
     }
-    
-    /* Page settings */
-    @page {
-        size: A4;
-        margin: 20mm;
+
+    /* Remove the dashboard's viewport-height layout from print pagination. */
+    .dashboard-layout,
+    .main-content,
+    .dashboard-content,
+    #ticketContent {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
     }
-    
-    /* Ticket styling for print */
-    .ticket-container {
-        background: white;
-        padding: 40px;
-        border: 2px solid #000;
+
+    .ticket-detail-card {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 1.5px solid #111 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
     }
-    
+
     .ticket-header {
         text-align: center;
-        border-bottom: 2px solid #000;
-        padding-bottom: 20px;
-        margin-bottom: 20px;
+        padding: 7mm 7mm 5mm !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        border-bottom: 1.5px solid #111 !important;
+        background: #fff !important;
+        color: #111 !important;
     }
-    
-    .ticket-logo {
-        width: 80px;
-        height: auto;
+
+    .ticket-header h1 {
+        margin: 0 0 2mm !important;
+        font-size: 18pt !important;
+        line-height: 1.1 !important;
+        color: #111 !important;
     }
-    
-    .ticket-title {
-        font-size: 24px;
-        font-weight: bold;
-        margin: 10px 0;
-        color: #000;
+
+    .ticket-number {
+        margin: 1mm 0 2mm !important;
+        font-size: 15pt !important;
+        line-height: 1.1 !important;
+        color: #111 !important;
     }
-    
-    .ticket-subtitle {
-        font-size: 14px;
-        color: #333;
+
+    .ticket-header .badge {
+        padding: 1mm 3mm !important;
+        font-size: 9pt !important;
     }
-    
-    .ticket-body {
-        margin: 20px 0;
+
+    .ticket-header > div:last-child {
+        margin-top: 2mm !important;
     }
-    
-    .ticket-row {
-        display: flex;
-        margin-bottom: 15px;
+
+    .detail-section {
+        padding: 3.5mm 6mm !important;
+        border-bottom: 0.3mm solid #bbb !important;
+        break-inside: avoid-page;
         page-break-inside: avoid;
     }
-    
-    .ticket-label {
-        font-weight: bold;
-        width: 180px;
-        color: #000;
+
+    .detail-section:last-of-type {
+        border-bottom: 0 !important;
     }
-    
-    .ticket-value {
-        flex: 1;
-        color: #333;
+
+    .detail-section h3 {
+        margin: 0 0 2.5mm !important;
+        padding: 0 !important;
+        font-size: 11pt !important;
+        line-height: 1.15 !important;
+        color: #111 !important;
     }
-    
-    .ticket-footer {
-        margin-top: 40px;
-        border-top: 2px solid #000;
-        padding-top: 20px;
+
+    .detail-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 2mm 8mm !important;
     }
-    
-    .signature-section {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 60px;
+
+    .detail-item {
+        margin: 0 !important;
+        min-width: 0 !important;
+        break-inside: avoid;
     }
-    
-    .signature-box {
-        text-align: center;
+
+    .detail-label {
+        margin: 0 0 0.7mm !important;
+        font-size: 8.5pt !important;
+        line-height: 1.15 !important;
+        color: #444 !important;
     }
-    
-    .signature-line {
-        border-top: 1px solid #000;
-        width: 200px;
-        margin-bottom: 5px;
+
+    .detail-value {
+        font-size: 10pt !important;
+        line-height: 1.25 !important;
+        color: #111 !important;
+        overflow-wrap: anywhere;
     }
-    
-    .ticket-qr {
-        text-align: center;
-        margin-top: 20px;
+
+    .penalty-highlight {
+        margin: 0 !important;
+        padding: 3mm !important;
+        border: 0.3mm solid #555 !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        font-size: 18pt !important;
+        line-height: 1.1 !important;
     }
-    
-    /* Force colors for print */
+
     .badge {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
