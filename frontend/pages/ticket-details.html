@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../assets/css/style.css?v=20260806">
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=20260811m1">
     <link rel="stylesheet" href="../assets/css/professional-theme.css?v=20260809a">
-    <link rel="stylesheet" href="../assets/css/print.css">
+    <link rel="stylesheet" href="../assets/css/print.css?v=20260812a">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .ticket-detail-card {
@@ -107,27 +107,6 @@
             font-size: 14px;
         }
 
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-
-            .sidebar,
-            .topbar,
-            .action-buttons {
-                display: none !important;
-            }
-
-            .main-content {
-                margin: 0 !important;
-                padding: 20px !important;
-            }
-
-            .ticket-detail-card {
-                box-shadow: none !important;
-                border: 2px solid #000;
-            }
-        }
     </style>
 </head>
 
@@ -563,14 +542,14 @@
                     </div>
                 </div>
 
-                <div class="detail-section">
+                <div class="detail-section print-history-section">
                     <h3><i class="fas fa-stream"></i> Ticket Timeline</h3>
                     <div class="ticket-timeline">
                         ${timelineHtml}
                     </div>
                 </div>
 
-                <div class="detail-section">
+                <div class="detail-section print-history-section">
                     <h3><i class="fas fa-receipt"></i> Payment History</h3>
                     <table class="history-table">
                         <thead>
@@ -587,7 +566,7 @@
                     </table>
                 </div>
 
-                <div class="detail-section">
+                <div class="detail-section print-history-section">
                     <h3><i class="fas fa-balance-scale"></i> Disputes</h3>
                     <table class="history-table">
                         <thead>
@@ -604,7 +583,7 @@
                     </table>
                 </div>
 
-                <div class="detail-section">
+                <div class="detail-section print-history-section">
                     <h3><i class="fas fa-camera"></i> Evidence</h3>
                     <div class="inline-row" style="margin-bottom: 14px;">
                         <label for="evidenceFile" class="sr-only">Choose evidence file</label>
