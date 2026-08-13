@@ -8,6 +8,7 @@
     "check": "node scripts/check-js.js",
     "create-admin": "node scripts/create-initial-admin.js",
     "verify:smtp": "node scripts/verify-smtp.js",
+    "test:public-dispute": "node scripts/public-dispute-flow-test.js",
     "preflight": "node scripts/preflight.js",
     "verify": "node scripts/check-js.js && node scripts/preflight.js"
   },

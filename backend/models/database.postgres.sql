@@ -257,7 +257,10 @@ create trigger settings_updated_at before update on public.system_settings for e
 create or replace view public.ticket_details with (security_invoker = true) as
 select t.id,t.ticket_number,t.date_issued,t.time_issued,t.location,t.status,t.payment_date,t.user_id,
        coalesce(t.penalty_amount_at_issue,viol.penalty_amount) as penalty_amount,t.penalty_amount_at_issue,
-       u.name as officer_name,v.plate_number,v.vehicle_type,v.owner_name,v.owner_email,v.owner_address,
+       u.name as officer_name,v.plate_number,v.vehicle_type,
+       coalesce(t.owner_name_at_issue,v.owner_name) as owner_name,
+       coalesce(t.owner_email_at_issue,v.owner_email) as owner_email,
+       coalesce(t.owner_address_at_issue,v.owner_address) as owner_address,
        v.driver_license_number,viol.violation_code,viol.violation_name,viol.demerit_points
 from public.tickets t
 join public.users u on t.user_id=u.id

@@ -114,6 +114,15 @@ async function autoMigrate() {
     if (!(await columnExists('tickets', 'penalty_amount_at_issue'))) {
         await db.query(`ALTER TABLE tickets ADD COLUMN penalty_amount_at_issue DECIMAL(10,2) NULL AFTER violation_id`);
     }
+    if (!(await columnExists('tickets', 'owner_name_at_issue'))) {
+        await db.query(`ALTER TABLE tickets ADD COLUMN owner_name_at_issue VARCHAR(100) NULL AFTER violation_id`);
+    }
+    if (!(await columnExists('tickets', 'owner_email_at_issue'))) {
+        await db.query(`ALTER TABLE tickets ADD COLUMN owner_email_at_issue VARCHAR(100) NULL AFTER owner_name_at_issue`);
+    }
+    if (!(await columnExists('tickets', 'owner_address_at_issue'))) {
+        await db.query(`ALTER TABLE tickets ADD COLUMN owner_address_at_issue TEXT NULL AFTER owner_email_at_issue`);
+    }
     // Backfill even when the snapshot column came from an older partial migration.
     // This prevents later violation-price edits from changing historical tickets.
     const [penaltyBackfill] = await db.query(`
@@ -185,8 +194,11 @@ async function autoMigrate() {
                t.status, t.payment_date, t.user_id,
                COALESCE(t.penalty_amount_at_issue, viol.penalty_amount) AS penalty_amount,
                t.penalty_amount_at_issue, u.name AS officer_name,
-               v.plate_number, v.vehicle_type, v.owner_name, v.owner_email,
-               v.owner_address, v.driver_license_number,
+               v.plate_number, v.vehicle_type,
+               COALESCE(t.owner_name_at_issue, v.owner_name) AS owner_name,
+               COALESCE(t.owner_email_at_issue, v.owner_email) AS owner_email,
+               COALESCE(t.owner_address_at_issue, v.owner_address) AS owner_address,
+               v.driver_license_number,
                viol.violation_code, viol.violation_name, viol.demerit_points,
                t.created_at, t.updated_at
         FROM tickets t
