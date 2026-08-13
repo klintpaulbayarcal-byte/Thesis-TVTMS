@@ -621,6 +621,56 @@
             line-height: 1.5;
         }
 
+        .selected-ticket-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 14px;
+            margin-bottom: 1.2rem;
+            padding: 14px;
+            border: 1px solid rgba(30, 64, 175, 0.18);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .selected-ticket-summary .summary-item {
+            min-width: 0;
+        }
+
+        .selected-ticket-summary .summary-item.full {
+            grid-column: 1 / -1;
+        }
+
+        .selected-ticket-summary .summary-label {
+            color: #64748b;
+            font-size: 0.69rem;
+            font-weight: 900;
+            letter-spacing: 0.35px;
+            text-transform: uppercase;
+        }
+
+        .selected-ticket-summary .summary-value {
+            color: #0f172a;
+            font-size: 0.88rem;
+            font-weight: 850;
+            margin-top: 3px;
+            overflow-wrap: anywhere;
+        }
+
+        .dispute-ineligible {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 4px;
+            padding: 10px 12px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 12px;
+            background: rgba(248, 250, 252, 0.88);
+            color: #475569;
+            font-size: 0.8rem;
+            font-weight: 750;
+            line-height: 1.4;
+        }
+
         .dispute-form .field {
             margin-bottom: 14px;
         }
@@ -753,6 +803,14 @@
                 grid-template-columns: 1fr;
             }
 
+            .selected-ticket-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .selected-ticket-summary .summary-item.full {
+                grid-column: auto;
+            }
+
             .page-header .lgu-logo {
                 width: 108px;
                 height: 108px;
@@ -829,21 +887,12 @@
             <div class="dispute-card">
                 <div class="dispute-title"><i class="fa-solid fa-scale-balanced"></i> File a Dispute</div>
                 <div class="dispute-desc">
-                    Believe this ticket was issued in error? Submit a dispute below. No login required.
+                    The ticket record supplies the contact details securely. Select an eligible ticket above, then enter only your reason.
                 </div>
 
                 <form id="publicDisputeForm" class="dispute-form">
                     <input type="hidden" id="disputeTicketNum" name="ticket_number">
-
-                    <div class="field">
-                        <label for="disputeContactName">Your Name</label>
-                        <input type="text" id="disputeContactName" placeholder="e.g., Juan Dela Cruz" maxlength="120" required>
-                    </div>
-
-                    <div class="field">
-                        <label for="disputeContactEmail">Contact Email</label>
-                        <input type="email" id="disputeContactEmail" placeholder="your@email.com" maxlength="190" required>
-                    </div>
+                    <div id="selectedDisputeTicket" class="selected-ticket-summary" aria-live="polite"></div>
 
                     <div class="field">
                         <label for="disputeReason">Reason for Dispute <span style="color:#ef4444">*</span></label>
@@ -876,6 +925,7 @@
     <script>
         const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
         const API = `${API_ORIGIN}/api/public`;
+        let currentLookupTickets = [];
 
         document.querySelectorAll('[data-tab]').forEach((button) => {
             button.addEventListener('click', () => switchTab(button.dataset.tab));
@@ -936,6 +986,8 @@
 
         async function doSearch(params) {
             const section = document.getElementById('resultsSection');
+            currentLookupTickets = [];
+            resetDisputeSelection();
             section.style.display = 'block';
             section.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
 
@@ -959,6 +1011,7 @@
                     return;
                 }
 
+                currentLookupTickets = data.tickets;
                 renderResults(data.tickets);
             } catch (e) {
                 section.innerHTML = `<div class="error-msg"><i class="fas fa-wifi"></i> Cannot connect to server. Make sure the system is running.</div>`;
@@ -985,6 +1038,8 @@
                 const ticketNo = escapeHtml(rawTicketNo || '—');
                 const encodedTicketNo = encodeURIComponent(rawTicketNo).replace(/'/g, '%27');
                 const safeStatus = ['unpaid', 'paid', 'cancelled'].includes(t.status) ? t.status : 'unpaid';
+                const disputeEligible = t.dispute_eligible === true;
+                const disputeMessage = t.dispute_message || 'Dispute filing is not available for this ticket.';
 
                 html += `
                 <div class="ticket-card status-${safeStatus}">
@@ -1034,12 +1089,16 @@
                             <div class="value">${escapeHtml(new Date(t.payment_date).toLocaleDateString('en-PH'))}</div>
                         </div>` : ''}
 
-                        ${safeStatus === 'unpaid' ? `
+                        ${disputeEligible ? `
                         <div class="ticket-detail full" style="margin-top:4px;">
                             <button type="button" class="btn-search" style="padding:0.85rem 1rem;border-radius:14px;box-shadow:none;display:flex;gap:10px;justify-content:center;align-items:center;background:linear-gradient(135deg,#ef4444,#dc2626)" data-dispute-ticket="${encodedTicketNo}">
-                                <i class="fa-solid fa-scale-balanced"></i> File a Dispute
+                                <i class="fa-solid fa-scale-balanced"></i> Select for Dispute
                             </button>
-                        </div>` : ''}
+                        </div>` : `
+                        <div class="ticket-detail full dispute-ineligible">
+                            <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                            <span>${escapeHtml(disputeMessage)}</span>
+                        </div>`}
                     </div>
                 </div>`;
             }
@@ -1049,11 +1108,48 @@
 
         function openDispute(ticketNumberEncoded) {
             const ticketNumber = decodeURIComponent(ticketNumberEncoded);
+            const ticket = currentLookupTickets.find(item => String(item.ticket_number) === ticketNumber);
+            if (!ticket || ticket.dispute_eligible !== true) return;
+
             document.getElementById('disputeTicketNum').value = ticketNumber;
+            const issuedDate = ticket.date_issued
+                ? new Date(ticket.date_issued).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' })
+                : '—';
+            document.getElementById('selectedDisputeTicket').innerHTML = `
+                <div class="summary-item">
+                    <div class="summary-label">Selected Ticket</div>
+                    <div class="summary-value">${escapeHtml(ticketNumber)}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Plate Number</div>
+                    <div class="summary-value">${escapeHtml(ticket.plate_number || '—')}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Date Issued</div>
+                    <div class="summary-value">${escapeHtml(issuedDate)}</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">Status</div>
+                    <div class="summary-value">Unpaid</div>
+                </div>
+                <div class="summary-item full">
+                    <div class="summary-label">Violation</div>
+                    <div class="summary-value">${escapeHtml(ticket.violation_name || '—')}</div>
+                </div>`;
+            document.getElementById('disputeSuccess').style.display = 'none';
+            document.getElementById('disputeError').style.display = 'none';
             document.getElementById('disputeSection').style.display = 'block';
             document.getElementById('disputeReason').focus();
             // keep user context by scrolling nicely
             document.getElementById('disputeSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function resetDisputeSelection() {
+            document.getElementById('publicDisputeForm').reset();
+            document.getElementById('selectedDisputeTicket').innerHTML = '';
+            document.getElementById('disputeSuccess').style.display = 'none';
+            document.getElementById('disputeError').style.display = 'none';
+            document.getElementById('disputeSection').style.display = 'none';
         }
 
         function capitalize(str) {
@@ -1084,11 +1180,23 @@
         document.getElementById('publicDisputeForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const btn = document.getElementById('submitDisputeBtn');
+            if (btn.dataset.submitting === 'true') return;
+
+            const ticketNumber = document.getElementById('disputeTicketNum').value;
+            const reason = document.getElementById('disputeReason').value.trim();
+            const error = document.getElementById('disputeError');
+            if (!ticketNumber || reason.length < 10 || reason.length > 4000) {
+                error.textContent = 'Select an eligible ticket and enter a reason of 10–4000 characters.';
+                error.style.display = 'block';
+                return;
+            }
+
+            btn.dataset.submitting = 'true';
             btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
             const success = document.getElementById('disputeSuccess');
-            const error = document.getElementById('disputeError');
             success.style.display = 'none';
             error.style.display = 'none';
 
@@ -1097,10 +1205,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        ticket_number: document.getElementById('disputeTicketNum').value,
-                        reason: document.getElementById('disputeReason').value.trim(),
-                        contact_name: document.getElementById('disputeContactName').value.trim(),
-                        contact_email: document.getElementById('disputeContactEmail').value.trim()
+                        ticket_number: ticketNumber,
+                        reason
                     })
                 });
 
@@ -1109,7 +1215,14 @@
                 if (data.success) {
                     success.style.display = 'block';
                     error.style.display = 'none';
-                    document.getElementById('publicDisputeForm').reset();
+                    document.getElementById('disputeReason').value = '';
+                    document.getElementById('disputeTicketNum').value = '';
+                    const submittedTicket = currentLookupTickets.find(item => String(item.ticket_number) === ticketNumber);
+                    if (submittedTicket) {
+                        submittedTicket.dispute_eligible = false;
+                        submittedTicket.dispute_message = 'A dispute is already open for this ticket.';
+                        renderResults(currentLookupTickets);
+                    }
                 } else {
                     error.textContent = data.message || 'Failed to submit dispute.';
                     error.style.display = 'block';
@@ -1118,7 +1231,9 @@
                 error.textContent = 'Connection error. Please try again.';
                 error.style.display = 'block';
             } finally {
+                btn.dataset.submitting = 'false';
                 btn.disabled = false;
+                btn.removeAttribute('aria-busy');
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Dispute';
             }
         });

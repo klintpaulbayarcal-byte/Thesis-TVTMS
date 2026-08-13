@@ -500,12 +500,22 @@ exports.createTicket = async (req, res) => {
 
         let vehicleId;
         const [vehicles] = await connection.query(
-            "SELECT id FROM vehicles WHERE REPLACE(REPLACE(UPPER(plate_number), '-', ''), ' ', '') = ? LIMIT 1 FOR UPDATE",
+            `SELECT id, owner_name, owner_email, owner_address
+             FROM vehicles
+             WHERE REPLACE(REPLACE(UPPER(plate_number), '-', ''), ' ', '') = ?
+             LIMIT 1 FOR UPDATE`,
             [normalizedPlateNumber]
         );
 
+        let ownerNameSnapshot = normalizedOwnerName || null;
+        let ownerEmailSnapshot = normalizedOwnerEmail || null;
+        let ownerAddressSnapshot = normalizedOwnerAddress || null;
+
         if (vehicles.length) {
             vehicleId = vehicles[0].id;
+            ownerNameSnapshot ||= vehicles[0].owner_name || null;
+            ownerEmailSnapshot ||= vehicles[0].owner_email || null;
+            ownerAddressSnapshot ||= vehicles[0].owner_address || null;
             await connection.query(
                 `UPDATE vehicles SET
                     vehicle_type = ?,
@@ -537,11 +547,13 @@ exports.createTicket = async (req, res) => {
 
         const [ticketResult] = await connection.query(
             `INSERT INTO tickets
-             (ticket_number, user_id, vehicle_id, violation_id, penalty_amount_at_issue,
-              date_issued, time_issued, location, remarks)
-             VALUES (?, ?, ?, ?, ?, CURDATE(), CURTIME(), ?, ?)`,
-            [ticketNumber, req.user.id, vehicleId, violationId, penaltyInfo.effectivePenalty,
-                normalizedLocation || null, normalizedRemarks || null]
+             (ticket_number, user_id, vehicle_id, violation_id,
+              owner_name_at_issue, owner_email_at_issue, owner_address_at_issue,
+              penalty_amount_at_issue, date_issued, time_issued, location, remarks)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURTIME(), ?, ?)`,
+            [ticketNumber, req.user.id, vehicleId, violationId,
+                ownerNameSnapshot, ownerEmailSnapshot, ownerAddressSnapshot,
+                penaltyInfo.effectivePenalty, normalizedLocation || null, normalizedRemarks || null]
         );
 
         await insertStatusHistorySafe({

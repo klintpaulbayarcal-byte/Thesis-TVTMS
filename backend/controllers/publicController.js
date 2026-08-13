@@ -21,6 +21,15 @@ exports.publicTicketLookup = async (req, res) => {
                    td.violation_code, td.violation_name, td.date_issued, td.time_issued,
                    td.location, td.status, td.payment_date, td.demerit_points,
                    td.penalty_amount,
+                   COALESCE((SELECT CAST(setting_value AS UNSIGNED)
+                             FROM system_settings
+                             WHERE setting_key = 'dispute_deadline_days' LIMIT 1), 15) AS dispute_deadline_days,
+                   DATEDIFF(CURDATE(), td.date_issued) AS dispute_age_days,
+                   CASE WHEN EXISTS (
+                       SELECT 1 FROM disputes d
+                       WHERE d.ticket_id = td.id
+                         AND d.status IN ('submitted', 'under_review')
+                   ) THEN 1 ELSE 0 END AS has_open_dispute,
                    COALESCE((SELECT SUM(p.amount_paid) FROM payments p
                              WHERE p.ticket_id = td.id AND p.payment_status <> 'voided'), 0) AS total_paid,
                    GREATEST(td.penalty_amount - COALESCE((SELECT SUM(p.amount_paid) FROM payments p
@@ -30,7 +39,27 @@ exports.publicTicketLookup = async (req, res) => {
             ORDER BY td.date_issued DESC, td.time_issued DESC
             LIMIT 20`, params);
 
-        return res.json({ success: true, count: rows.length, tickets: rows });
+        const tickets = rows.map(row => {
+            const ticket = { ...row };
+            const ageDays = Number(ticket.dispute_age_days || 0);
+            const deadlineDays = Number(ticket.dispute_deadline_days || 15);
+            const hasOpenDispute = Number(ticket.has_open_dispute || 0) === 1;
+
+            let disputeMessage = '';
+            if (ticket.status !== 'unpaid') disputeMessage = 'Only unpaid tickets can be disputed.';
+            else if (hasOpenDispute) disputeMessage = 'A dispute is already open for this ticket.';
+            else if (ageDays > deadlineDays) disputeMessage = `The ${deadlineDays}-day dispute period has ended.`;
+
+            ticket.dispute_eligible = !disputeMessage;
+            ticket.dispute_message = disputeMessage;
+            delete ticket.id;
+            delete ticket.dispute_age_days;
+            delete ticket.dispute_deadline_days;
+            delete ticket.has_open_dispute;
+            return ticket;
+        });
+
+        return res.json({ success: true, count: tickets.length, tickets });
     } catch (error) {
         console.error('Public ticket lookup error:', error);
         return res.status(500).json({ success: false, message: 'Server error during lookup. Please try again.' });
@@ -100,22 +129,24 @@ exports.plateSummary = async (req, res) => {
 };
 
 exports.publicFileDispute = async (req, res) => {
+    const body = req.body || {};
+    const ticketNumber = normalizeTicket(body.ticket_number);
+    const reason = String(body.reason || '').trim();
+    if (!ticketNumber || ticketNumber.length > 30 || reason.length < 10 || reason.length > 4000) {
+        return res.status(400).json({ success: false, message: 'A valid ticket number and a reason of 10–4000 characters are required.' });
+    }
+
     const connection = await db.getConnection();
     try {
-        const ticketNumber = normalizeTicket(req.body.ticket_number);
-        const reason = String(req.body.reason || '').trim();
-        const contactName = String(req.body.contact_name || '').trim();
-        const contactEmail = String(req.body.contact_email || '').trim().toLowerCase();
-        if (!ticketNumber || ticketNumber.length > 30 || reason.length < 10 || reason.length > 4000 ||
-            !contactName || contactName.length > 120 || !contactEmail || contactEmail.length > 190 || !validEmail(contactEmail)) {
-            return res.status(400).json({ success: false, message: 'Ticket number, name, valid email, and a reason of 10–4000 characters are required.' });
-        }
-
         await connection.beginTransaction();
         const [tickets] = await connection.query(`
             SELECT t.id, t.status, t.date_issued,
+                   COALESCE(NULLIF(t.owner_name_at_issue, ''), NULLIF(v.owner_name, '')) AS contact_name,
+                   COALESCE(NULLIF(t.owner_email_at_issue, ''), NULLIF(v.owner_email, '')) AS contact_email,
                    COALESCE((SELECT CAST(setting_value AS UNSIGNED) FROM system_settings WHERE setting_key='dispute_deadline_days' LIMIT 1),15) AS deadline_days
-            FROM tickets t WHERE t.ticket_number=? FOR UPDATE`, [ticketNumber]);
+            FROM tickets t
+            JOIN vehicles v ON v.id = t.vehicle_id
+            WHERE t.ticket_number=? FOR UPDATE`, [ticketNumber]);
         if (!tickets.length) { await connection.rollback(); return res.status(404).json({ success:false, message:'Ticket not found.' }); }
         const ticket=tickets[0];
         if (ticket.status !== 'unpaid') { await connection.rollback(); return res.status(403).json({ success:false, message:'Only unpaid tickets can be disputed.' }); }
@@ -126,7 +157,7 @@ exports.publicFileDispute = async (req, res) => {
 
         const [result] = await connection.query(`
             INSERT INTO disputes (ticket_id, submitted_by, contact_name, contact_email, submission_source, reason, status)
-            VALUES (?, NULL, ?, ?, 'public', ?, 'submitted')`, [ticket.id, contactName, contactEmail, reason]);
+            VALUES (?, NULL, ?, ?, 'public', ?, 'submitted')`, [ticket.id, ticket.contact_name, ticket.contact_email || null, reason]);
         await connection.query(`
             INSERT INTO notifications (user_id,type,title,message,reference_type,reference_id)
             SELECT id,'dispute','Public Dispute Filed',CONCAT('Public dispute filed for ticket ',?),'dispute',?
