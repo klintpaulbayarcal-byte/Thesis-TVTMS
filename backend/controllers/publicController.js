@@ -150,8 +150,16 @@ exports.publicFileDispute = async (req, res) => {
         if (!tickets.length) { await connection.rollback(); return res.status(404).json({ success:false, message:'Ticket not found.' }); }
         const ticket=tickets[0];
         if (ticket.status !== 'unpaid') { await connection.rollback(); return res.status(403).json({ success:false, message:'Only unpaid tickets can be disputed.' }); }
-        const [deadline] = await connection.query(`SELECT DATEDIFF(CURDATE(), ?) AS age_days`, [ticket.date_issued]);
-        if (Number(deadline[0].age_days) > Number(ticket.deadline_days)) { await connection.rollback(); return res.status(403).json({ success:false, message:`The ${ticket.deadline_days}-day dispute period has ended.` }); }
+
+        // Calculate dispute age in JavaScript so the same logic works reliably
+        // on both MySQL (local) and PostgreSQL/Supabase (production).
+        const issuedDate = new Date(ticket.date_issued);
+        const today = new Date();
+        const issuedUtc = Date.UTC(issuedDate.getUTCFullYear(), issuedDate.getUTCMonth(), issuedDate.getUTCDate());
+        const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+        const ageDays = Number.isNaN(issuedDate.getTime()) ? 0 : Math.floor((todayUtc - issuedUtc) / 86400000);
+        if (ageDays > Number(ticket.deadline_days)) { await connection.rollback(); return res.status(403).json({ success:false, message:`The ${ticket.deadline_days}-day dispute period has ended.` }); }
+
         const [existing] = await connection.query(`SELECT id FROM disputes WHERE ticket_id=? AND status IN ('submitted','under_review') LIMIT 1`, [ticket.id]);
         if (existing.length) { await connection.rollback(); return res.status(409).json({ success:false, message:'A dispute is already open for this ticket.' }); }
 
