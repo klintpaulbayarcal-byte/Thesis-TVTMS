@@ -28,7 +28,9 @@ exports.uploadEvidence=async(req,res)=>{
         if(!a.ok)return sendError(res,a.code===404?'Ticket not found':'Access denied',{statusCode:a.code,errorCode:'EVIDENCE_ACCESS_DENIED'});
         if(!req.file)return sendError(res,'No evidence file uploaded',{statusCode:400,errorCode:'VALIDATION_ERROR'});
         if(!signatureOk(req.file))return sendError(res,'File content does not match the declared file type',{statusCode:400,errorCode:'INVALID_FILE_SIGNATURE'});
-        const lat=req.body.gps_lat===''?null:Number(req.body.gps_lat),lng=req.body.gps_lng===''?null:Number(req.body.gps_lng);
+        const parseOptionalCoordinate = value => (value === undefined || value === null || value === '') ? null : Number(value);
+        const lat = parseOptionalCoordinate(req.body.gps_lat);
+        const lng = parseOptionalCoordinate(req.body.gps_lng);
         if((lat!==null&&(!Number.isFinite(lat)||lat<-90||lat>90))||(lng!==null&&(!Number.isFinite(lng)||lng<-180||lng>180))){
             return sendError(res,'GPS coordinates are invalid',{statusCode:400,errorCode:'INVALID_GPS_COORDINATES'});
         }
