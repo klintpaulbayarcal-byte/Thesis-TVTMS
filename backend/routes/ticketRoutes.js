@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ticketController = require('../controllers/ticketController');
 const { verifyToken, isOfficerOrAdmin, authorizeRoles, isAdmin } = require('../middleware/authMiddleware');
+const { validateTicketInput } = require('../middleware/ticketValidationMiddleware');
 
 // All routes require authentication
 router.use(verifyToken);
@@ -10,7 +11,7 @@ router.get('/', authorizeRoles('admin', 'apprehending_officer'), ticketControlle
 router.get('/stats', authorizeRoles('admin', 'apprehending_officer'), ticketController.getDashboardStats);
 router.get('/search', authorizeRoles('admin', 'apprehending_officer'), ticketController.searchTickets);
 router.get('/:id', authorizeRoles('admin', 'apprehending_officer'), ticketController.getTicketById);
-router.post('/', isOfficerOrAdmin, ticketController.createTicket);
+router.post('/', isOfficerOrAdmin, validateTicketInput, ticketController.createTicket);
 router.put('/:id/details', authorizeRoles('admin', 'apprehending_officer'), ticketController.updateTicketDetails);
 router.put('/:id/mark-unpaid', isAdmin, ticketController.markTicketUnpaid);
 router.put('/:id', authorizeRoles('admin', 'apprehending_officer'), ticketController.updateTicketStatus);
