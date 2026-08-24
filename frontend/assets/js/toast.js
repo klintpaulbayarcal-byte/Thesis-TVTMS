@@ -119,6 +119,8 @@ window.Toast = Toast;
 (() => {
     const page = String(window.location.pathname || '').split('/').pop().toLowerCase();
     if (!['payments.html', 'ticket-details.html', 'issue-ticket.html'].includes(page)) return;
+    // api.js defines API with a global lexical binding; expose it to the enhancement module intentionally.
+    if (typeof API !== 'undefined' && !window.API) window.API = API;
     const script = document.createElement('script');
     script.src = `../assets/js/workflow-enhancements.js?v=20260824a`;
     script.defer = true;
