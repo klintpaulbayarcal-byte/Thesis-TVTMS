@@ -237,15 +237,19 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="location" class="required">Location</label>
+                                <label for="location" class="required">Place of Apprehension / Violation Location</label>
                                 <div style="display:flex;gap:8px;align-items:flex-start">
                                     <input type="text" id="location" name="location" required
-                                        placeholder="e.g., National Highway, Calape" style="flex:1">
+                                        placeholder="e.g., National Highway near Municipal Hall, Calape" style="flex:1"
+                                        aria-describedby="locationHelp gpsStatus">
                                     <button type="button" id="gpsBtn" onclick="fillGPS()"
                                         title="Use my current GPS location"
                                         style="padding:10px 12px;background:#1a237e;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap;font-size:0.8rem">
                                         <i class="fas fa-map-marker-alt"></i> GPS
                                     </button>
+                                </div>
+                                <div id="locationHelp" style="font-size:0.75rem;color:#666;margin-top:4px">
+                                    Enter the exact place where the violation occurred and the ticket was issued. This is different from the owner's address.
                                 </div>
                                 <div id="gpsStatus" style="font-size:0.75rem;color:#666;margin-top:4px"></div>
                             </div>
