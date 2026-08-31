@@ -315,31 +315,64 @@
         }
 
         // GPS auto-fill for location field
-        function fillGPS() {
+        async function fillGPS() {
             const btn = document.getElementById('gpsBtn');
             const status = document.getElementById('gpsStatus');
-            if (!navigator.geolocation) {
-                status.textContent = 'GPS not supported on this browser.';
+            const locationInput = document.getElementById('location');
+            const resetButton = () => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+            };
+            const showUnavailable = (message) => {
+                status.textContent = message;
+                resetButton();
+                locationInput.focus();
+            };
+
+            if (!window.isSecureContext) {
+                showUnavailable('GPS requires a secure HTTPS connection. Enter the location manually.');
                 return;
             }
+            if (!navigator.geolocation) {
+                showUnavailable('This browser cannot provide GPS. Open the site in Chrome, Edge, or a mobile browser, or enter the location manually.');
+                return;
+            }
+
+            if (navigator.permissions?.query) {
+                try {
+                    const permission = await navigator.permissions.query({ name: 'geolocation' });
+                    if (permission.state === 'denied') {
+                        showUnavailable('Location permission is blocked. Allow Location in this site\'s browser settings, then tap GPS again.');
+                        return;
+                    }
+                    if (permission.state === 'prompt') {
+                        status.textContent = 'Allow Location when your browser asks, or enter the location manually.';
+                    }
+                } catch (_) {
+                    // Some browsers expose GPS without supporting Permissions API queries.
+                }
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting...';
-            status.textContent = 'Acquiring GPS location...';
+            if (!status.textContent) status.textContent = 'Acquiring GPS location...';
             navigator.geolocation.getCurrentPosition(
                 async (pos) => {
                     const { latitude, longitude } = pos.coords;
                     // Keep coordinates local to the system instead of sending them to a third-party geocoding service.
-                    document.getElementById('location').value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                    locationInput.value = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
                     status.innerHTML = `<span style="color:#2e7d32"><i class="fas fa-location-crosshairs" aria-hidden="true"></i> GPS coordinates filled (${latitude.toFixed(4)}, ${longitude.toFixed(4)})</span>`;
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+                    resetButton();
                 },
                 (err) => {
-                    status.textContent = 'GPS error: ' + err.message;
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+                    const messages = {
+                        1: 'Location permission was denied. Allow Location in this site\'s browser settings, then tap GPS again.',
+                        2: 'Device location is unavailable. Turn on Location Services or GPS, then tap GPS again.',
+                        3: 'GPS could not get a location within 15 seconds. Move near a window, turn on Location Services, retry, or enter the location manually.'
+                    };
+                    showUnavailable(messages[err.code] || 'GPS is currently unavailable. Retry or enter the location manually.');
                 },
-                { timeout: 10000, maximumAge: 60000 }
+                { timeout: 15000, maximumAge: 300000, enableHighAccuracy: false }
             );
         }
 
