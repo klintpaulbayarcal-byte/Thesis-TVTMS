@@ -122,7 +122,7 @@ window.Toast = Toast;
     // api.js defines API with a global lexical binding; expose it to the enhancement module intentionally.
     if (typeof API !== 'undefined' && !window.API) window.API = API;
     const script = document.createElement('script');
-    script.src = `../assets/js/workflow-enhancements.js?v=20260824a`;
+    script.src = `../assets/js/workflow-enhancements.js?v=20260831b`;
     script.defer = true;
     document.body.appendChild(script);
 })();

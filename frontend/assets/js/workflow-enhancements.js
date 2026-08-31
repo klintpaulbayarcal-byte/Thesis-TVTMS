@@ -52,35 +52,64 @@
             }
         }, true);
 
-        // Override the older GPS helper with a quicker, non-blocking manual fallback.
-        window.fillGPS = function fillGPS() {
+        const resetGpsButton = () => {
+            if (!gpsButton) return;
+            gpsButton.disabled = false;
+            gpsButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+        };
+
+        const showGpsUnavailable = (message) => {
+            gpsStatus.textContent = message;
+            resetGpsButton();
+            locationInput.focus();
+        };
+
+        // Override the older GPS helper with permission-aware diagnostics and a manual fallback.
+        window.fillGPS = async function fillGPS() {
             if (!gpsButton || !gpsStatus || !locationInput) return;
-            if (!navigator.geolocation) {
-                gpsStatus.textContent = 'GPS is not available. Enter the location manually.';
-                locationInput.focus();
+            if (!window.isSecureContext) {
+                showGpsUnavailable('GPS requires a secure HTTPS connection. Enter the location manually.');
                 return;
+            }
+            if (!navigator.geolocation) {
+                showGpsUnavailable('This browser cannot provide GPS. Open the site in Chrome, Edge, or a mobile browser, or enter the location manually.');
+                return;
+            }
+
+            if (navigator.permissions?.query) {
+                try {
+                    const permission = await navigator.permissions.query({ name: 'geolocation' });
+                    if (permission.state === 'denied') {
+                        showGpsUnavailable('Location permission is blocked. Allow Location in this site\'s browser settings, then tap GPS again.');
+                        return;
+                    }
+                    if (permission.state === 'prompt') {
+                        gpsStatus.textContent = 'Allow Location when your browser asks, or enter the location manually.';
+                    }
+                } catch (_) {
+                    // Some browsers support geolocation without exposing the Permissions API.
+                }
             }
 
             gpsButton.disabled = true;
             gpsButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting...';
-            gpsStatus.textContent = 'Getting your location...';
+            if (!gpsStatus.textContent) gpsStatus.textContent = 'Getting your location...';
 
             navigator.geolocation.getCurrentPosition(
                 ({ coords }) => {
                     locationInput.value = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
                     gpsStatus.innerHTML = '<span style="color:#2e7d32"><i class="fas fa-location-crosshairs" aria-hidden="true"></i> GPS location added. You can edit it manually if needed.</span>';
-                    gpsButton.disabled = false;
-                    gpsButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
+                    resetGpsButton();
                 },
                 (error) => {
-                    gpsStatus.textContent = error.code === 3
-                        ? 'GPS timed out. Enter the location manually or tap GPS to try again.'
-                        : 'GPS unavailable. Enter the location manually or tap GPS to try again.';
-                    gpsButton.disabled = false;
-                    gpsButton.innerHTML = '<i class="fas fa-map-marker-alt"></i> GPS';
-                    locationInput.focus();
+                    const messages = {
+                        1: 'Location permission was denied. Allow Location in this site\'s browser settings, then tap GPS again.',
+                        2: 'Device location is unavailable. Turn on Location Services or GPS, then tap GPS again.',
+                        3: 'GPS could not get a location within 15 seconds. Move near a window, turn on Location Services, retry, or enter the location manually.'
+                    };
+                    showGpsUnavailable(messages[error.code] || 'GPS is currently unavailable. Retry or enter the location manually.');
                 },
-                { timeout: 6000, maximumAge: 120000, enableHighAccuracy: false }
+                { timeout: 15000, maximumAge: 300000, enableHighAccuracy: false }
             );
         };
 
