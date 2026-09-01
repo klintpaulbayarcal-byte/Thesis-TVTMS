@@ -1142,6 +1142,29 @@ exports.getDashboardStats = async (req, res) => {
 
         const [unpaidResult] = await db.query(unpaidQuery, unpaidParams);
 
+        // Repeat-offender case: this vehicle had an earlier non-cancelled ticket.
+        let repeatQuery = `
+            SELECT COUNT(*) AS repeat_offenders
+            FROM tickets t
+            WHERE t.status <> 'cancelled'
+              AND EXISTS (
+                  SELECT 1
+                  FROM tickets previous
+                  WHERE previous.vehicle_id = t.vehicle_id
+                    AND previous.status <> 'cancelled'
+                    AND (
+                        previous.date_issued < t.date_issued
+                        OR (previous.date_issued = t.date_issued AND previous.id < t.id)
+                    )
+              )
+        `;
+        const repeatParams = [];
+        if (userId) {
+            repeatQuery += ' AND t.user_id = ?';
+            repeatParams.push(userId);
+        }
+        const [repeatResult] = await db.query(repeatQuery, repeatParams);
+
         // Revenue is based on actual non-voided payment records, not ticket face value.
         let revenueQuery = `
             SELECT COALESCE(SUM(p.amount_paid), 0) AS revenue
@@ -1162,6 +1185,7 @@ exports.getDashboardStats = async (req, res) => {
             total: totalResult[0].total,
             paid: paidResult[0].paid,
             unpaid: unpaidResult[0].unpaid,
+            repeatOffenders: repeatResult[0].repeat_offenders || 0,
             revenue: revenueResult[0].revenue || 0
         }, {
             legacy: {
@@ -1169,6 +1193,7 @@ exports.getDashboardStats = async (req, res) => {
                     total: totalResult[0].total,
                     paid: paidResult[0].paid,
                     unpaid: unpaidResult[0].unpaid,
+                    repeatOffenders: repeatResult[0].repeat_offenders || 0,
                     revenue: revenueResult[0].revenue || 0
                 }
             }
