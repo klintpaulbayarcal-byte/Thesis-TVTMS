@@ -93,9 +93,10 @@ const loadDashboardStats = async () => {
     const paidTicketsEl = document.getElementById('paidTickets');
     const unpaidTicketsEl = document.getElementById('unpaidTickets');
     const totalRevenueEl = document.getElementById('totalRevenue');
+    const repeatOffendersEl = document.getElementById('repeatOffenders');
 
-    // Skip when page does not have dashboard stat widgets.
-    if (!totalTicketsEl || !paidTicketsEl || !unpaidTicketsEl || !totalRevenueEl) {
+    // Admin renders revenue while the Officer dashboard renders repeat-offender cases.
+    if (!totalTicketsEl || !paidTicketsEl || !unpaidTicketsEl || (!totalRevenueEl && !repeatOffendersEl)) {
         return;
     }
 
@@ -107,7 +108,8 @@ const loadDashboardStats = async () => {
             totalTicketsEl.textContent = stats.total || 0;
             paidTicketsEl.textContent = stats.paid || 0;
             unpaidTicketsEl.textContent = stats.unpaid || 0;
-            totalRevenueEl.textContent = formatCurrency(stats.revenue);
+            if (totalRevenueEl) totalRevenueEl.textContent = formatCurrency(stats.revenue);
+            if (repeatOffendersEl) repeatOffendersEl.textContent = Number(stats.repeatOffenders || 0);
         }
     } catch (error) {
         console.error('Error loading stats:', error);
