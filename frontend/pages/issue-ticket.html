@@ -311,7 +311,7 @@
         } else {
             const user = getUser();
 
-            if (!user || !['admin', 'apprehending_officer'].includes(user.role)) {
+            if (!user || user.role !== 'apprehending_officer') {
                 redirectToDashboard();
             } else {
                 populateUserInfo();

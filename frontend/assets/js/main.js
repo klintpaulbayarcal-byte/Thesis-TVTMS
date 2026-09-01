@@ -348,7 +348,6 @@ const normalizeSidebarForRole = () => {
             ['admin-overview.html', 'fa-gauge-high', 'Overview']
         ]],
         ['ENFORCEMENT', [
-            ['issue-ticket.html', 'fa-circle-plus', 'Issue Ticket'],
             ['view-tickets.html', 'fa-ticket', 'View Tickets'],
             ['license-plate-lookup.html', 'fa-magnifying-glass', 'Search Violator']
         ]],
@@ -429,9 +428,9 @@ const enforcePageRoleGuard = () => {
         'analytics-dashboard.html', 'audit-logs.html', 'manage-users.html',
         'manage-violations.html', 'payments.html', 'reports.html'
     ]);
-    const officerOnlyPages = new Set(['officer-dashboard.html']);
+    const officerOnlyPages = new Set(['officer-dashboard.html', 'issue-ticket.html']);
     const sharedProtectedPages = new Set([
-        'issue-ticket.html', 'view-tickets.html', 'license-plate-lookup.html',
+        'view-tickets.html', 'license-plate-lookup.html',
         'ticket-details.html', 'notifications.html', 'profile.html', 'disputes.html'
     ]);
 

@@ -11,7 +11,7 @@ router.get('/', authorizeRoles('admin', 'apprehending_officer'), ticketControlle
 router.get('/stats', authorizeRoles('admin', 'apprehending_officer'), ticketController.getDashboardStats);
 router.get('/search', authorizeRoles('admin', 'apprehending_officer'), ticketController.searchTickets);
 router.get('/:id', authorizeRoles('admin', 'apprehending_officer'), ticketController.getTicketById);
-router.post('/', isOfficerOrAdmin, validateTicketInput, ticketController.createTicket);
+router.post('/', authorizeRoles('apprehending_officer'), validateTicketInput, ticketController.createTicket);
 router.put('/:id/details', authorizeRoles('admin', 'apprehending_officer'), ticketController.updateTicketDetails);
 router.put('/:id/mark-unpaid', isAdmin, ticketController.markTicketUnpaid);
 router.put('/:id', authorizeRoles('admin', 'apprehending_officer'), ticketController.updateTicketStatus);
