@@ -380,7 +380,7 @@ const normalizeSidebarForRole = () => {
             ['license-plate-lookup.html', 'fa-magnifying-glass', 'Search Violator']
         ]],
         ['WORKFLOW', [
-            ['disputes.html', 'fa-scale-balanced', 'Disputes'],
+            ['disputes.html', 'fa-scale-balanced', 'My Ticket Disputes'],
             ['notifications.html', 'fa-bell', 'Notifications']
         ]],
         ['ACCOUNT', [
