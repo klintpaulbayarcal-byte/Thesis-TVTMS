@@ -5,6 +5,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Public portal for the Municipal Traffic Violation Ticketing and Management System of Calape, Bohol. Check citation status, review configured violation references, file disputes, and access authorized staff services.">
+  <meta name="theme-color" content="#0F172A">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Municipal Traffic Violation Ticketing and Management System">
+  <meta property="og:description" content="Check traffic citation status, review violation references, and access public services for the Municipal Traffic Violation Ticketing and Management System.">
+  <link rel="icon" type="image/webp" href="images/calape-logo.webp">
   <title>Municipal Traffic Violation Ticketing and Management System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -3120,7 +3126,7 @@
         <strong>0998-598-6408</strong>
       </div>
       <a href="#search-card" class="nav-pill" style="border:1px solid var(--border2)">Ticket Lookup</a>
-      <a href="login.html" class="nav-cta">Officer Login</a>
+      <a href="login.html" class="nav-cta">Staff Login</a>
     </div>
   </nav>
   <div class="nav-mobile-menu" id="navMobileMenu" aria-hidden="true">
@@ -3133,7 +3139,7 @@
     <a href="#faq">FAQ</a>
     <a href="#search-card">Ticket Lookup</a>
     <a href="#contact">Contact</a>
-    <a href="login.html">Officer Login</a>
+    <a href="login.html">Staff Login</a>
   </div>
 
   <!-- ── HERO ── -->
@@ -3154,8 +3160,8 @@
       </div>
       <div class="hero-stats">
         <div class="stat-item clickable" id="rolesStatBtn">
-          <div class="stat-num" data-count="3">0</div>
-          <div class="stat-lbl">Official Roles</div>
+          <div class="stat-num" data-count="2">0</div>
+          <div class="stat-lbl">Staff Roles</div>
         </div>
         <div class="stat-item clickable" id="modulesStatBtn">
           <div class="stat-num" data-count="10">0</div>
@@ -3186,8 +3192,11 @@
         </div>
 
         <button type="button" class="sc-search-btn" id="quickLookupButton">
-          <i data-lucide="search"></i> Look Up Ticket
+          <i data-lucide="search"></i> Search Plate
         </button>
+        <p class="sc-desc" style="font-size:11px;line-height:1.55;margin-top:10px">
+          Public lookup displays limited citation information only. Personal owner details such as name, email, address, and license number are not shown.
+        </p>
 
         <div class="sc-err" id="scErr" role="alert" aria-live="assertive"><i data-lucide="triangle-alert"></i> <span id="scErrText">No records found.</span></div>
         <div class="sc-result" id="scResult">
@@ -3199,7 +3208,7 @@
         </div>
 
         <div class="sc-divider">or</div>
-        <a href="login.html" class="sc-portal"><i data-lucide="shield-check"></i> Apprehending Officer &amp; Admin Portal <span
+        <a href="login.html" class="sc-portal"><i data-lucide="shield-check"></i> Admin &amp; Apprehending Officer Portal <span
             class="portal-arrow">→</span></a>
       </div>
     </div>
@@ -3232,9 +3241,9 @@
   <section class="section">
     <div class="section-max">
       <div class="reveal" style="margin-bottom:40px">
-        <span class="eyebrow">Live Enforcement</span>
-        <h2 class="sec-title">Public Ticketing & Compliance Metrics</h2>
-        <p class="sec-sub">Real-time enforcement statistics from the Calape traffic database. Live counts for tickets, payments, and registered vehicles.</p>
+        <span class="eyebrow">Public Service Snapshot</span>
+        <h2 class="sec-title">Aggregate Traffic Citation Metrics</h2>
+        <p class="sec-sub">Aggregate counts from the traffic database for transparency and service monitoring. This section does not display personal owner identity.</p>
       </div>
       <div id="liveStatsBar" style="
         background:rgba(7,13,26,0.7);
@@ -3432,7 +3441,7 @@
         </div>
         <div class="role-card driver">
           <div class="role-icon-wrap driver"><i data-lucide="car-front"></i></div>
-          <div class="role-name">Citizen / Vehicle Owner</div>
+          <div class="role-name">Public User / Vehicle Owner</div>
           <div class="role-access d"><i data-lucide="globe-2"></i> No login required · Public access</div>
           <p class="role-desc">Vehicle owners can check their violation records anytime using this public portal. No
             account or registration needed.</p>
@@ -3458,8 +3467,8 @@
         </div>
         <div class="feat-header-copy">
           <span class="eyebrow">Key Features</span>
-          <h2 class="sec-title" style="text-align:left;margin:0 0 14px">Built around how officers<br>actually work.</h2>
-          <p class="feat-header-sub">Ten integrated modules, but they all trace back to one idea: nothing should be re-typed twice, and nothing should slip through unrecorded.</p>
+          <h2 class="sec-title" style="text-align:left;margin:0 0 14px">Designed for field and office<br>traffic workflows.</h2>
+          <p class="feat-header-sub">Integrated tools connect citation issuance, record retrieval, evidence, payments, disputes, notifications, and reporting in one accountable workflow.</p>
         </div>
       </div>
       <div class="bento-grid">
@@ -3467,7 +3476,7 @@
           <div class="feat-icon" style="background:rgba(37,99,235,0.12)"><i data-lucide="search"></i></div>
           <div class="feat-title">Repeat Offender Detection</div>
           <p class="feat-desc">Search by plate, name, or license number the moment a ticket is opened. New violations auto-link to the existing profile — no duplicate records, no missed history.</p>
-          <div class="feat-tag">Panel-required</div>
+          <div class="feat-tag">Repeat-offender history</div>
         </div>
         <div class="feat-card">
           <div class="feat-icon" style="background:rgba(245,158,11,0.12)"><i data-lucide="clipboard-list"></i></div>
@@ -3544,17 +3553,17 @@
       <div class="stats-strip reveal">
         <div class="stat-s">
           <div class="stat-s-num" data-count="2" style="color:#60a5fa">0</div>
-          <div class="stat-s-lbl">System Roles</div>
+          <div class="stat-s-lbl">Staff Roles</div>
           <div class="stat-s-sub">Administrator and Apprehending Officer</div>
         </div>
         <div class="stat-s">
           <div class="stat-s-num" data-count="10" style="color:#fcd34d">0+</div>
-          <div class="stat-s-lbl">System Modules</div>
+          <div class="stat-s-lbl">Integrated Services</div>
           <div class="stat-s-sub">End-to-end coverage</div>
         </div>
         <div class="stat-s">
           <div class="stat-s-num" data-count="20" style="color:#6ee7b7">0+</div>
-          <div class="stat-s-lbl">Audit Actions Tracked</div>
+          <div class="stat-s-lbl">Auditable Actions</div>
           <div class="stat-s-sub">Traceable system activity</div>
         </div>
         <div class="stat-s">
@@ -3572,10 +3581,7 @@
       <div class="gov-section" style="display:flex;gap:24px;align-items:flex-start">
         <div style="flex:1">
           <h3 id="mv-title" class="panel-title">Mission & Vision</h3>
-          <p class="panel-sub">Our mission is to provide a transparent, accountable, and efficient traffic enforcement
-            platform
-            that protects road users and supports local governance. Our vision is a safer municipality empowered
-            by data-driven enforcement and fair processes.</p>
+          <p class="panel-sub">Our mission is to provide a reliable, transparent, and efficient digital process for recording and managing municipal traffic violations. Our vision is a safer and more accountable local enforcement environment supported by accurate records, fair review, and useful reporting.</p>
           <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
             <a href="#features" class="btn-primary">View Public Services</a>
             <a href="#contact" class="btn-ghost">Contact the Station</a>
@@ -3586,7 +3592,7 @@
           <p class="panel-sub" style="margin-bottom:12px">Municipality of Calape · Calape Municipal Police Station</p>
           <div class="hotline" role="group" aria-label="Hotline numbers">
             <div style="flex:1">
-              <div style="font-size:12px;color:var(--muted)">Emergency Hotline</div>
+              <div style="font-size:12px;color:var(--muted)">Traffic / Station Hotline</div>
               <div class="num">0998-598-6408</div>
             </div>
             <div style="flex:1">
@@ -3609,8 +3615,8 @@
             onerror="this.style.display='none'">
           </div>
           <div class="about-media-caption">
-            <span><span class="dot"></span> Official PNP Calape hotline reference</span>
-            <span class="about-media-est">Est. 1902</span>
+            <span><span class="dot"></span> Calape Municipal Police Station</span>
+            <span class="about-media-est">Calape, Bohol</span>
           </div>
         </div>
         <div class="about-copy">
@@ -3620,11 +3626,11 @@
             <span class="about-quote-mark">&ldquo;</span>
             Digitizing the citation process ensures <em>transparency</em>, <em>accountability</em>, and <em>efficiency</em> in every violation handled.
           </blockquote>
-          <p class="panel-sub" style="margin-bottom:16px">Calape is a first-class municipality in the province of Bohol, comprising 33 barangays with a growing population and increasing vehicular traffic. As the community expands, so does the need for organized and efficient traffic management.</p>
-          <p class="panel-sub" style="margin-bottom:24px">The <strong style="color:var(--text)">Calape Municipal Police Station</strong>, under the leadership of the local government unit, is committed to maintaining peace and order on our roads. This system represents a significant step forward in modernizing our law enforcement capabilities.</p>
+          <p class="panel-sub" style="margin-bottom:16px">Calape is a municipality in the province of Bohol. Organized digital records can help authorized personnel retrieve citations, monitor case status, and prepare reports more efficiently as local traffic activity grows.</p>
+          <p class="panel-sub" style="margin-bottom:24px">This system supports the municipal traffic-violation workflow by centralizing citation records, evidence, payment tracking, disputes, notifications, and reports while preserving role-based accountability.</p>
           <div class="about-badges">
-            <span class="about-pill"><span class="dot" style="background:var(--accent)"></span> 33 Barangays</span>
-            <span class="about-pill"><span class="dot" style="background:var(--gold)"></span> First-Class LGU</span>
+            <span class="about-pill"><span class="dot" style="background:var(--accent)"></span> Municipality of Calape</span>
+            <span class="about-pill"><span class="dot" style="background:var(--gold)"></span> Local Traffic Enforcement</span>
             <span class="about-pill"><span class="dot" style="background:#94a3b8"></span> Bohol Province</span>
           </div>
         </div>
@@ -3634,10 +3640,9 @@
   <section class="section" aria-labelledby="why-title">
     <div class="section-max">
       <div class="reveal" style="margin-bottom:24px">
-        <span class="eyebrow">Why Digital</span>
-        <h2 id="why-title" class="sec-title">Why Use This System</h2>
-        <p class="sec-sub">Built for accountability and efficiency — designed for officers, citizens, and
-          administrators.</p>
+        <span class="eyebrow">Public Value</span>
+        <h2 id="why-title" class="sec-title">Who Benefits from the System</h2>
+        <p class="sec-sub">Each user group receives only the services and information needed for its role in the citation lifecycle.</p>
       </div>
 
       <div class="benefit-grid">
@@ -3767,6 +3772,7 @@
           <label class="cf-label" for="cfMessage">Message</label>
           <textarea class="sc-input" id="cfMessage" name="message" rows="4" placeholder="Tell us how we can help you…" minlength="10" maxlength="3000" required></textarea>
           <button type="submit" class="sc-search-btn" id="cfSubmit"><i data-lucide="send"></i> Send Message</button>
+          <p class="sc-desc" style="font-size:11px;line-height:1.55;margin-top:10px">Information submitted here is used to route and respond to your inquiry. Do not include passwords or unnecessary sensitive personal information.</p>
           <p class="cf-note" id="cfNote" role="status" aria-live="polite"></p>
         </form>
       </div>
@@ -3777,12 +3783,12 @@
   <section class="section">
     <div class="section-max">
       <div class="cta-box reveal">
-        <h2 class="cta-title">Ready to Check Your Violation?</h2>
+        <h2 class="cta-title">Ready to Check Your Citation?</h2>
         <p class="cta-sub">No login needed. Search your plate number or ticket number to view your records instantly.
         </p>
         <div class="cta-actions">
           <a href="#search-card" class="btn-primary"><i data-lucide="search"></i> Search My Plate</a>
-          <a href="login.html" class="btn-ghost"><i data-lucide="shield-check"></i> Officer Login <span aria-hidden="true">→</span></a>
+          <a href="login.html" class="btn-ghost"><i data-lucide="shield-check"></i> Staff Login <span aria-hidden="true">→</span></a>
         </div>
       </div>
     </div>
@@ -3812,8 +3818,8 @@
         <a href="#faq">FAQ</a>
       </div>
       <div class="footer-col">
-        <div class="footer-col-title">Emergency Numbers</div>
-        <a href="tel:09985986408">Emergency: 0998-598-6408</a>
+        <div class="footer-col-title">Contact Numbers</div>
+        <a href="tel:09985986408">Hotline: 0998-598-6408</a>
         <a href="tel:09262026150">Station: 0926-202-6150</a>
         <a href="tel:4117797">Landline: 411-7797</a>
       </div>
@@ -3821,12 +3827,12 @@
         <div class="footer-col-title">Thesis Project Team</div>
         <p class="footer-credit">Lead System Developer <strong>Klint Paul R. Bayarcal</strong></p>
         <p class="footer-credit">Thesis Co-Proponent <strong>Edcel F. Clarin</strong></p>
-        <p class="footer-credit">BS Computer Science · BISU Calape Campus<br>AY 2025–2026</p>
+        <p class="footer-credit">BSCS - 4A · BISU Calape Campus<br>AY 2026–2027</p>
       </div>
     </div>
     <div class="footer-bottom">
       <div class="footer-brand">Municipal Traffic Violation Ticketing &amp; Management System</div>
-      <div class="footer-meta">BISU Calape Campus · BS Computer Science Thesis Project · AY 2025–2026</div>
+      <div class="footer-meta">BISU Calape Campus · BSCS 4A Thesis Project · AY 2026–2027</div>
       <p class="footer-disclaimer">Developed as an academic capstone project for the Municipality of Calape. Official system records remain under the authority of the designated municipal office.</p>
     </div>
   </footer>
@@ -3835,7 +3841,7 @@
   <div class="modules-modal" id="rolesModal">
     <div class="modules-content">
       <div class="modules-header">
-        <h2 class="modules-title">Clear Roles and Public Access</h2>
+        <h2 class="modules-title">Two Staff Roles &amp; Public Access</h2>
         <button type="button" class="modules-close" data-close-modal="rolesModal" aria-label="Close roles dialog"><i data-lucide="x"></i></button>
       </div>
       <div class="modules-list">
@@ -3858,7 +3864,7 @@
         <div class="module-item">
           <div class="module-icon"><i data-lucide="car-front"></i></div>
           <div class="module-text">
-            <div class="module-name">Citizen / Vehicle Owner</div>
+            <div class="module-name">Public User / Vehicle Owner</div>
             <div class="module-desc">Public access. Checks violation records, views tickets, files disputes, tracks
               payments.</div>
           </div>
@@ -4250,6 +4256,11 @@
       const input = document.getElementById('searchInput');
       input.value = '';
       input.placeholder = t === 'plate' ? 'e.g., ABC 1234' : 'e.g., TVT-2026-0001';
+      const lookupButton = document.getElementById('quickLookupButton');
+      lookupButton.innerHTML = t === 'plate'
+        ? '<i data-lucide="search"></i> Search Plate'
+        : '<i data-lucide="search"></i> Search Ticket';
+      if (window.lucide) lucide.createIcons();
       document.getElementById('scResult').classList.remove('show');
       document.getElementById('scErr').classList.remove('show');
     }
@@ -4286,7 +4297,7 @@
       const val = rawValue.toUpperCase();
       if (!val) { showErr('Please enter a value to search.'); return; }
 
-      const btn = document.querySelector('.sc-search-btn');
+      const btn = document.getElementById('quickLookupButton');
       btn.innerHTML = '<i data-lucide="loader-circle" class="motion-spin"></i> Searching...';
       btn.disabled = true;
       if (window.lucide) lucide.createIcons();
@@ -4356,7 +4367,9 @@
         console.error('Public lookup failed:', error);
         showErr('Connection error. Please try again shortly.');
       } finally {
-        btn.innerHTML = '<i data-lucide="search"></i> Search Violation Records';
+        btn.innerHTML = tab === 'plate'
+          ? '<i data-lucide="search"></i> Search Plate'
+          : '<i data-lucide="search"></i> Search Ticket';
         if (window.lucide) lucide.createIcons();
         btn.disabled = false;
       }
