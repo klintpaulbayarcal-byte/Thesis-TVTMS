@@ -192,7 +192,7 @@
 
                 <!-- Action Buttons -->
                 <div class="action-buttons">
-                    <a href="issue-ticket.html" class="btn btn-primary">
+                    <a href="issue-ticket.html" class="btn btn-primary role-officer-link">
                         <i class="fas fa-plus"></i> Issue New Ticket
                     </a>
                     <button type="button" class="btn btn-success" onclick="exportTicketsToCSV()">
@@ -285,6 +285,11 @@
             const user = getUser();
             document.querySelectorAll('.role-admin-link').forEach((link) => {
                 if (!user || user.role !== 'admin') {
+                    link.remove();
+                }
+            });
+            document.querySelectorAll('.role-officer-link').forEach((link) => {
+                if (!user || user.role !== 'apprehending_officer') {
                     link.remove();
                 }
             });
