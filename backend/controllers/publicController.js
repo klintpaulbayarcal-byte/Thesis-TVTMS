@@ -151,8 +151,7 @@ exports.publicFileDispute = async (req, res) => {
         const ticket=tickets[0];
         if (ticket.status !== 'unpaid') { await connection.rollback(); return res.status(403).json({ success:false, message:'Only unpaid tickets can be disputed.' }); }
 
-        // Calculate dispute age in JavaScript so the same logic works reliably
-        // on both MySQL (local) and PostgreSQL/Supabase (production).
+        // Compare UTC calendar dates so the deadline is independent of server locale.
         const issuedDate = new Date(ticket.date_issued);
         const today = new Date();
         const issuedUtc = Date.UTC(issuedDate.getUTCFullYear(), issuedDate.getUTCMonth(), issuedDate.getUTCDate());

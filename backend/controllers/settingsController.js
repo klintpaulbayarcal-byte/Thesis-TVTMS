@@ -26,11 +26,9 @@ const persist = async entries => {
     for (const [key, raw] of entries) {
         if (!allowedKeys.has(key)) throw new Error(`Unsupported setting: ${key}`);
         const value=normalizeValue(key,raw);
-        const sql = db.client === 'postgres'
-            ? `INSERT INTO system_settings(setting_key,setting_value) VALUES(?,?)
-               ON CONFLICT (setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value, updated_at=CURRENT_TIMESTAMP`
-            : `INSERT INTO system_settings(setting_key,setting_value) VALUES(?,?)
-               ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)`;
+        const sql = `INSERT INTO system_settings(setting_key,setting_value) VALUES(?,?)
+                     ON CONFLICT (setting_key) DO UPDATE
+                     SET setting_value=EXCLUDED.setting_value, updated_at=CURRENT_TIMESTAMP`;
         await db.query(sql,[key,value]);
     }
 };

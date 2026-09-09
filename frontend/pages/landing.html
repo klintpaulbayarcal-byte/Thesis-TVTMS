@@ -4242,8 +4242,7 @@
     });
 
     // ── SEARCH ──
-    const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) ||
-      ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:5000' : location.origin);
+    const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || location.origin;
     const API = `${API_ORIGIN}/api`;
     let tab = 'plate';
     function switchTab(t) {

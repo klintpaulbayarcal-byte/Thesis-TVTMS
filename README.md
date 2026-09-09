@@ -1,10 +1,5 @@
 # Municipal Traffic Violation Ticketing and Management System
 
-
-## Easiest first-time local setup
-
-For a Windows laptop with XAMPP, extract the project under `C:\xampp\htdocs\` and double-click `FIRST_TIME_SETUP.bat`. It prepares the environment, imports the database, installs packages, verifies the project, creates the first Administrator, starts the backend, and opens the landing page. See `START_HERE.txt`.
-
 A web-based municipal traffic citation and records-management system developed for the Municipality of Calape, Bohol. The project includes a public portal, role-based internal dashboards, ticket issuance, repeat-offender lookup, payments, disputes, evidence, reports, notifications, settings, and audit trails.
 
 ## Project Attribution
@@ -27,139 +22,117 @@ This package is a **final deployment candidate**, not a substitute for live acce
 - **Apprehending Officer** — ticket issuance, assigned ticket records, authorized vehicle lookup, evidence, notifications, and profile management.
 - **Public user** — account-free ticket or plate lookup, public violation information, dispute submission, and contact form.
 
-There are **no default accounts** and no public driver account. Create the first administrator through the provided setup script.
+There are **no default accounts** and no public driver account. Configure `INITIAL_ADMIN_*` in `backend/.env`, then run `npm run create-admin`.
 
 ## Technology
 
-- Frontend: HTML, CSS, JavaScript
-- Backend: Node.js 20+, Express
-- Database: MySQL/MariaDB using `mysql2`
+- Application: Node.js 20+ and Express
+- Frontend: static HTML, CSS, and JavaScript served by Express
+- Production hosting: Hostinger Node.js Web App
+- Database: Supabase PostgreSQL
 - Authentication: JWT with database-backed user/status verification
-- Evidence: protected server-side file storage
 - Email: SMTP via Nodemailer
 
-## Local setup using XAMPP
+## Install and configure
 
-1. Extract the project under:
+```bash
+npm install
+copy backend\.env.example backend\.env
+```
 
-   ```text
-   C:\xampp\htdocs\vehicle-violation-system
-   ```
+Set `DATABASE_URL` in `backend/.env` to the Supabase transaction-pooler connection string. No separate local web or database stack is required.
 
-2. Copy the environment template:
+## Development
 
-   ```bat
-   copy backend\.env.example backend\.env
-   ```
+```bash
+npm run dev
+```
 
-3. Edit `backend/.env` and set the database, a unique `JWT_SECRET` of at least 32 characters, allowed origins, public URL, and optional SMTP values.
+Open `http://localhost:5000/`. Express serves the frontend and `/api` from the same origin and connects directly to Supabase PostgreSQL.
 
-4. Start Apache and MySQL in XAMPP.
+## Production build
 
-5. Import once:
+```bash
+npm run build
+```
 
-   ```text
-   backend/models/database.sql
-   ```
+The command validates the JavaScript, creates the Hostinger-ready application in `dist/`, and creates `hostinger-app.zip`.
 
-6. Install backend dependencies:
+## Hostinger Node.js deployment
 
-   ```bat
-   cd backend
-   npm ci
-   ```
+Hostinger Node.js Web Apps require a Business or Cloud hosting plan. In hPanel:
 
-7. Create the initial administrator by temporarily setting these in `backend/.env`:
+1. Go to **Websites → Add Website → Deploy Web App**.
+2. Choose **Upload your website files** and upload `hostinger-app.zip`.
+3. Select **Express.js** with Node.js 20 or newer.
+4. Set the entry file to `backend/server.js`.
+5. Leave the output directory and build command blank.
+6. Set the start command to `npm start`.
+7. Add the variables from `backend/.env.production.example`.
+8. Use Hostinger's **Database Connect Wizard → Supabase** to populate `DATABASE_URL`, then deploy.
 
-   ```env
-   INITIAL_ADMIN_NAME=System Administrator
-   INITIAL_ADMIN_EMAIL=admin@example.gov.ph
-   INITIAL_ADMIN_PASSWORD=Use-A-Unique-Strong-Password!
-   ```
-
-   Then run:
-
-   ```bat
-   npm run create-admin
-   ```
-
-   Clear `INITIAL_ADMIN_PASSWORD` immediately afterward.
-
-8. Validate and run:
-
-   ```bat
-   npm run check
-   npm run preflight
-   npm start
-   ```
-
-The Windows helper `OPEN_VVS.bat` performs package installation on first use, runs preflight, starts the API, and opens the portal. It will stop instead of reporting success when the backend fails.
+Hostinger manages Node dependencies, the listening port, HTTPS routing, process restarts, and files outside `public_html`. Plain FTP is not a valid deployment path for this Express backend.
 
 ## Production architecture
 
-Recommended:
-
 ```text
 Browser
-  -> HTTPS web server/reverse proxy
+  -> Hostinger Express application
        -> static frontend
-       -> /api proxied to Node.js API
-            -> dedicated MySQL database user
-            -> persistent private evidence storage
+       -> /api
+            -> Supabase PostgreSQL transaction pooler
             -> configured SMTP service
 ```
 
-Use the same HTTPS origin for the frontend and `/api` when possible. Leave `frontend/app-config.js` with an empty API origin in that setup. When the API uses a separate HTTPS domain, set `window.APP_CONFIG.API_ORIGIN` to that exact origin and configure `ALLOWED_ORIGINS` accordingly.
-
-Do not expose the `backend` directory through Apache. The included `backend/.htaccess` blocks direct web access when the project is under `htdocs`; production deployments should still place backend source and `.env` outside the public document root whenever possible.
+Database credentials stay in Hostinger environment variables and are never shipped to browser code.
 
 ## Important production requirements
 
-- Set `NODE_ENV=production`.
-- Use HTTPS only.
-- Use a dedicated database account with a strong password and only required privileges.
-- Store the real `.env` on the server only; never commit or share it.
-- Configure a persistent volume for `backend/uploads/evidence`.
-- Back up both the database and evidence files.
-- Run the Node API with a process manager or managed service.
-- Validate violation definitions, penalties, demerit points, dispute periods, and payment periods with the authorized LGU office before go-live.
-- Obtain LGU/privacy approval for plate-number-only public lookup. It is rate-limited and excludes owner/license/contact/evidence data, but plate-based enumeration remains a residual privacy consideration.
+- Set `NODE_ENV=production` and `TRUST_PROXY=1`.
+- Set `APP_PUBLIC_URL` and `ALLOWED_ORIGINS` to the exact Hostinger HTTPS origin.
+- Configure a unique `JWT_SECRET` containing at least 32 characters.
+- Connect `DATABASE_URL` through Hostinger's Supabase Database Connect Wizard.
+- Configure SMTP or Resend before production startup.
+- Validate violation definitions, penalties, dispute periods, and payment periods with the authorized LGU office.
+- Complete backup, restore, security, and end-to-end acceptance tests before go-live.
 
 ## Useful commands
 
-```bat
-cd backend
-npm run check          REM Static JavaScript syntax validation
-npm run preflight      REM Environment and required-file validation
-npm run verify         REM Syntax validation plus preflight
-npm run create-admin   REM Create the first administrator
-npm start              REM Start the API
-npm audit              REM Current online dependency advisory check
+```bash
+npm run dev          # Run the full frontend and API locally
+npm run check        # Validate all JavaScript
+npm run preflight    # Validate local environment and required files
+npm run verify       # Run check and preflight
+npm run create-admin # Create or reset the first Administrator
+npm run build        # Create dist/ and hostinger-app.zip
+npm start            # Hostinger production start command
 ```
 
-## Main URLs in local XAMPP setup
+## Development URLs
 
 ```text
-Public portal: http://localhost/<project-folder>/
-API health:    http://localhost:5000/api/health
-Officer login: http://localhost/<project-folder>/frontend/pages/login.html
+Public portal:  http://localhost:5000/
+Officer login:  http://localhost:5000/pages/login.html
+Backend health: http://localhost:5000/api/health
 ```
 
 ## Project structure
 
 ```text
+package.json             Canonical development and production manifest
+scripts/build.js         Hostinger archive builder
 frontend/
   pages/                 Public and authenticated interfaces
   assets/css/            Shared styles
-  assets/js/             API and page logic
-  app-config.js          Runtime API origin
+  assets/js/             Same-origin API and page logic
+  app-config.js          Optional runtime API-origin override
 backend/
+  server.js              Express entry point and static frontend server
   controllers/           Business logic
   routes/                API routes and authorization
   middleware/            Authentication, authorization, rate limits
-  models/database.sql    Canonical database schema and starter references
-  scripts/               Preflight, syntax check, initial admin creation
-  uploads/evidence/      Runtime evidence files; not included in source archives
+  models/database.postgres.sql
+                          Supabase PostgreSQL schema
 ```
 
 ## Final acceptance

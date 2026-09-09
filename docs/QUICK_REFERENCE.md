@@ -3,44 +3,48 @@
 ## First local run
 
 ```bat
+npm install
 copy backend\.env.example backend\.env
 ```
 
-Edit `backend/.env`, start Apache/MySQL, import `backend/models/database.sql`, then:
+Set the Supabase transaction-pooler URL as `DATABASE_URL` in `backend/.env`, then run:
 
 ```bat
-cd backend
-npm ci
-npm run create-admin
 npm run verify
-npm start
+npm run dev
 ```
 
-Or use `OPEN_VVS.bat` after the database and `.env` are configured.
+Open `http://localhost:5000/`.
 
-## Required environment values
+## Required local values
 
 ```env
 NODE_ENV=development
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=<database user>
-DB_PASSWORD=<database password>
-DB_NAME=violation_system
+DATABASE_URL=<Supabase transaction-pooler URL>
+DB_POOL_SIZE=3
+DB_SSL=1
 JWT_SECRET=<unique random value, at least 32 characters>
-ALLOWED_ORIGINS=http://localhost,http://127.0.0.1
-APP_PUBLIC_URL=http://localhost/<project-folder>/frontend
+ALLOWED_ORIGINS=http://localhost:5000,http://127.0.0.1:5000
+APP_PUBLIC_URL=http://localhost:5000
 ```
 
-For production, use `NODE_ENV=production`, HTTPS URLs, exact origins, a dedicated database account, and `TRUST_PROXY=1` when behind a reverse proxy.
+## Hostinger build
 
-## Health check
+```bat
+npm run build
+```
+
+Upload `hostinger-app.zip` through **Deploy Web App → Upload your website files**. Use:
 
 ```text
-http://localhost:5000/api/health
+Framework: Express.js
+Entry file: backend/server.js
+Start command: npm start
+Build command: blank
+Output directory: blank
 ```
 
-Healthy response requires both the Node API and database connection.
+Use Hostinger's Supabase Database Connect Wizard and add the remaining values from `.env.example` to the environment-variable dashboard.
 
 ## Common commands
 
@@ -48,30 +52,30 @@ Healthy response requires both the Node API and database connection.
 npm run check
 npm run preflight
 npm run verify
+npm run create-admin
+npm run dev
+npm run build
 npm start
-npm audit
 ```
 
 ## Common errors
 
-### `Could not read package.json`
-Run npm commands inside `backend`, not the project root.
+### `DATABASE_URL is required`
 
-### Backend does not start
-Check `backend/.env`, MySQL status, database name, `JWT_SECRET`, and port 5000.
+Copy the Supabase transaction-pooler connection string into `backend/.env` for local development, or connect Supabase through the Hostinger Database Connect Wizard in production.
+
+### Production startup stops
+
+Check `DATABASE_URL`, `JWT_SECRET`, `APP_PUBLIC_URL`, `ALLOWED_ORIGINS`, SMTP variables, and Hostinger deployment logs.
 
 ### CORS denied
-Add the exact frontend origin to `ALLOWED_ORIGINS`; do not use a wildcard for a public deployment.
 
-### Public page loads but API requests fail
-Use a same-origin `/api` reverse proxy or set `frontend/app-config.js` to the deployed HTTPS API origin.
+Set `ALLOWED_ORIGINS` to the exact Hostinger HTTPS origin. Do not use a wildcard.
 
 ### Email not delivered
-Set SMTP values and confirm the provider permits the configured account. Password reset and email notifications require working SMTP.
 
-### Evidence missing after redeployment
-Use persistent storage for `backend/uploads/evidence` and back it up together with the database.
+Set SMTP values and confirm the provider permits the configured account.
 
 ## No default login
 
-Create the initial administrator with `npm run create-admin`. Remove `INITIAL_ADMIN_PASSWORD` from `.env` after successful creation.
+Configure `INITIAL_ADMIN_NAME`, `INITIAL_ADMIN_EMAIL`, and `INITIAL_ADMIN_PASSWORD`, run `npm run create-admin`, then remove the temporary password.

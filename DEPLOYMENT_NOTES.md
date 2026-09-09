@@ -1,67 +1,50 @@
 # Deployment Notes
 
-## Recommended topology
+## Topology
 
-Serve the static frontend through HTTPS and reverse-proxy `/api` to the Node.js backend. Keep backend source, `.env`, and evidence outside the public document root whenever the hosting platform permits it.
-
-## Production environment
-
-At minimum:
-
-```env
-NODE_ENV=production
-PORT=5000
-TRUST_PROXY=1
-DB_HOST=<private database host>
-DB_PORT=3306
-DB_USER=<dedicated application user>
-DB_PASSWORD=<strong password>
-DB_NAME=violation_system
-JWT_SECRET=<unique random 32+ character value>
-JWT_EXPIRES_IN=8h
-ALLOWED_ORIGINS=https://traffic.example.gov.ph
-APP_PUBLIC_URL=https://traffic.example.gov.ph
-SMTP_HOST=<provider>
-SMTP_PORT=587
-SMTP_USER=<account>
-SMTP_PASS=<secret>
-SMTP_FROM=<approved sender>
-CONTACT_TO_EMAIL=<official inbox>
-```
-
-Set `TRUST_PROXY=1` only when a trusted reverse proxy is actually in front of Node.
-
-## Frontend API configuration
-
-Preferred same-origin setup:
+Hostinger runs one Express application that serves both the static frontend and `/api`. The API connects privately to Supabase PostgreSQL.
 
 ```text
-https://traffic.example.gov.ph/       -> frontend
-https://traffic.example.gov.ph/api/   -> reverse proxy to Node
+Hostinger Express application
+  -> frontend
+  -> /api
+       -> Supabase PostgreSQL
 ```
 
-Leave `frontend/app-config.js` blank for same-origin. For a separate API origin, use HTTPS and set the exact origin there and in `ALLOWED_ORIGINS`.
+No separate API service or cross-origin configuration is required.
 
-## Database
+## Build
 
-- Back up the database before initial import or migration.
-- Import `backend/models/database.sql` for a new database.
-- The server runs safe schema checks/migrations at startup.
-- Production startup intentionally stops when unsupported legacy driver accounts remain.
-- Validate all starter violation definitions and amounts with the authorized LGU office.
+```bash
+npm install
+npm run build
+```
 
-## Evidence storage
+The build creates:
 
-`backend/uploads/evidence` is intentionally not included in ZIPs or Git. Create a persistent writable directory owned only by the API service account. Back up evidence and the database as one coordinated set.
+- `dist/` — unpacked Hostinger application
+- `hostinger-app.zip` — hPanel upload archive
 
-## Web-server protections
+Neither output contains `backend/.env`, database credentials, local uploads, development scripts, nor `node_modules`.
 
-The package contains `.htaccess` rules to disable directory listing, block direct access to backend source through Apache, and protect documentation/schema files from web download. These rules are defense-in-depth; production should still use a proper document-root separation.
+## Deploy in Hostinger
 
-## Process management
+1. Use a Business or Cloud plan with Node.js Web App support.
+2. Open **Websites → Add Website → Deploy Web App**.
+3. Choose **Upload your website files**.
+4. Upload `hostinger-app.zip`.
+5. Select Express.js and Node.js 20 or newer.
+6. Use entry file `backend/server.js` and start command `npm start`.
+7. Leave build command and output directory blank.
+8. Add the environment variables from `.env.example`.
+9. Open **Database Connect Wizard**, select Supabase, authorize the project, and redeploy.
 
-Run Node with a managed service such as the hosting platform’s process manager or an operating-system service. Configure automatic restart, restricted service permissions, log rotation, and health monitoring against `/api/health`.
+Hostinger stores backend build files outside `public_html` and creates its own routing configuration. Plain FTP uploads to `public_html` cannot start or supervise this Node.js application.
 
-## Go-live rule
+## Required production environment
 
-Static validation alone is not approval. Complete `DEPLOYMENT_CHECKLIST.md`, run a current online `npm audit`, execute live UAT against a copy of the production environment, and test a backup restore before switching public traffic.
+Set `NODE_ENV=production`, `TRUST_PROXY=1`, a strong `JWT_SECRET`, exact HTTPS values for `APP_PUBLIC_URL` and `ALLOWED_ORIGINS`, and configured SMTP credentials. `DATABASE_URL` must be the Supabase transaction-pooler URL supplied by Hostinger's Database Connect Wizard.
+
+## Go-live
+
+After deployment, verify `/api/health`, login, ticket issuance, ticket lookup, payment, dispute, reports, notifications, and evidence access against the Hostinger domain. Complete `DEPLOYMENT_CHECKLIST.md` before public use.

@@ -1,18 +1,10 @@
 /**
- * emailService.js
- * Email notification service for LGU Violation System.
+ * Email notification service for the LGU violation system.
  *
- * For local LGU deployment: configure SMTP in .env.
- * Uses Nodemailer. When SMTP is unavailable, delivery returns false without logging recipient data.
- *
- * .env variables:
- *   SMTP_HOST=smtp.gmail.com
- *   SMTP_PORT=587
- *   SMTP_USER=youremail@gmail.com
- *   SMTP_PASS=yourapppassword
- *   SMTP_FROM="Municipal Traffic Enforcement <youremail@gmail.com>"
+ * Configure SMTP in backend/.env or the hosting environment. RESEND_API_KEY
+ * uses smtp.resend.com with the standard Resend SMTP identity. Delivery returns
+ * false without logging recipient data when SMTP is unavailable.
  */
-
 const db = require('../config/database');
 
 let transporter = null;

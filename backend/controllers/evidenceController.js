@@ -1,11 +1,9 @@
-const fs=require('fs/promises');
 const path=require('path');
 const crypto=require('crypto');
 const multer=require('multer');
 const db=require('../config/database');
 const {sendSuccess,sendError}=require('../utils/apiResponse');
 const {logAudit}=require('../utils/auditLogger');
-const uploadDir=path.join(__dirname,'..','uploads','evidence');
 const mimeExt={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp','application/pdf':'.pdf'};
 const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024,files:1},fileFilter:(req,file,cb)=>mimeExt[file.mimetype]?cb(null,true):cb(new Error('Invalid file type. Allowed: JPG, PNG, WEBP, PDF'))});
 const signatureOk=file=>{const b=file.buffer; if(file.mimetype==='image/jpeg')return b[0]===0xff&&b[1]===0xd8&&b[2]===0xff; if(file.mimetype==='image/png')return b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])); if(file.mimetype==='image/webp')return b.subarray(0,4).toString()==='RIFF'&&b.subarray(8,12).toString()==='WEBP'; if(file.mimetype==='application/pdf')return b.subarray(0,5).toString()==='%PDF-'; return false};
@@ -21,7 +19,6 @@ exports.uploadMiddleware = (req, res, next) => {
     });
 };
 exports.uploadEvidence=async(req,res)=>{
-    let diskPath=null;
     try {
         const ticketId=Number(req.params.ticketId);
         const a=await access(ticketId,req.user);
@@ -36,30 +33,15 @@ exports.uploadEvidence=async(req,res)=>{
         }
 
         const filename=`${crypto.randomUUID()}${mimeExt[req.file.mimetype]}`;
-        let filePath;
-        let result;
-        if(db.client==='postgres'){
-            filePath=`database:${filename}`;
-            [result]=await db.query(
-                `INSERT INTO evidence(ticket_id,file_path,file_name,file_type,file_size,uploaded_by,gps_lat,gps_lng,file_data)
-                 VALUES(?,?,?,?,?,?,?,?,?)`,
-                [ticketId,filePath,path.basename(req.file.originalname),req.file.mimetype,req.file.size,req.user.id,lat,lng,req.file.buffer]
-            );
-        }else{
-            await fs.mkdir(uploadDir,{recursive:true});
-            diskPath=path.join(uploadDir,filename);
-            await fs.writeFile(diskPath,req.file.buffer,{flag:'wx'});
-            filePath=`/uploads/evidence/${filename}`;
-            [result]=await db.query(
-                `INSERT INTO evidence(ticket_id,file_path,file_name,file_type,file_size,uploaded_by,gps_lat,gps_lng)
-                 VALUES(?,?,?,?,?,?,?,?)`,
-                [ticketId,filePath,path.basename(req.file.originalname),req.file.mimetype,req.file.size,req.user.id,lat,lng]
-            );
-        }
+        const filePath=`database:${filename}`;
+        const [result]=await db.query(
+            `INSERT INTO evidence(ticket_id,file_path,file_name,file_type,file_size,uploaded_by,gps_lat,gps_lng,file_data)
+             VALUES(?,?,?,?,?,?,?,?,?)`,
+            [ticketId,filePath,path.basename(req.file.originalname),req.file.mimetype,req.file.size,req.user.id,lat,lng,req.file.buffer]
+        );
         await logAudit({userId:req.user.id,action:'EVIDENCE_UPLOADED',entityType:'evidence',entityId:result.insertId,metadata:{ticketId,fileName:path.basename(req.file.originalname)},req});
         return sendSuccess(res,'Evidence uploaded successfully',{id:result.insertId,ticketId,fileName:req.file.originalname,filePath,fileType:req.file.mimetype,fileSize:req.file.size},{statusCode:201});
     }catch(error){
-        if(diskPath)try{await fs.unlink(diskPath)}catch{}
         console.error(error);
         return sendError(res,error.message?.startsWith('Invalid file type')?error.message:'Server error while uploading evidence',{statusCode:error.message?.startsWith('Invalid file type')?400:500,errorCode:'EVIDENCE_UPLOAD_FAILED'});
     }
@@ -88,36 +70,13 @@ exports.getEvidenceFile = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Access denied.' });
         }
 
-        if (db.client === 'postgres') {
-            if (!item.file_data) return res.status(404).json({ success: false, message: 'Evidence file is missing from storage.' });
-            res.setHeader('Content-Type', item.file_type || 'application/octet-stream');
-            res.setHeader('Content-Disposition', `inline; filename="${String(item.file_name || 'evidence').replace(/["\\\r\n]/g, '_')}"`);
-            res.setHeader('Cache-Control', 'private, no-store');
-            res.setHeader('X-Content-Type-Options', 'nosniff');
-            return res.send(item.file_data);
-        }
-
-        const expectedPrefix = '/uploads/evidence/';
-        if (!String(item.file_path || '').startsWith(expectedPrefix)) {
-            return res.status(400).json({ success: false, message: 'Invalid evidence file path.' });
-        }
-        const safeName = path.basename(item.file_path);
-        const diskPath = path.join(uploadDir, safeName);
-        const resolved = path.resolve(diskPath);
-        if (!resolved.startsWith(path.resolve(uploadDir) + path.sep)) {
-            return res.status(400).json({ success: false, message: 'Invalid evidence file path.' });
-        }
-
-        await fs.access(resolved);
+        if (!item.file_data) return res.status(404).json({ success: false, message: 'Evidence file is missing from storage.' });
         res.setHeader('Content-Type', item.file_type || 'application/octet-stream');
-        res.setHeader('Content-Disposition', `inline; filename="${String(item.file_name || safeName).replace(/["\\\r\n]/g, '_')}"`);
+        res.setHeader('Content-Disposition', `inline; filename="${String(item.file_name || 'evidence').replace(/["\\\r\n]/g, '_')}"`);
         res.setHeader('Cache-Control', 'private, no-store');
         res.setHeader('X-Content-Type-Options', 'nosniff');
-        return res.sendFile(resolved);
+        return res.send(item.file_data);
     } catch (error) {
-        if (error && error.code === 'ENOENT') {
-            return res.status(404).json({ success: false, message: 'Evidence file is missing from storage.' });
-        }
         console.error('Evidence file access error:', error);
         return res.status(500).json({ success: false, message: 'Unable to load evidence file.' });
     }
