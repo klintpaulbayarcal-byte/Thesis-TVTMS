@@ -1,9 +1,9 @@
 /**
  * Runtime frontend configuration.
  *
- * Development and Hostinger production use the same Express origin for both
- * static pages and /api. Database credentials remain server-side.
+ * Hostinger serves the static frontend while the Node.js/Express API runs on
+ * Vercel. Database credentials remain server-side in the API deployment.
  */
 window.APP_CONFIG = window.APP_CONFIG || {};
-const defaultApiOrigin = '';
+const defaultApiOrigin = 'https://thesis-tvtms-api-klintpaulbayarcal-bytes-projects.vercel.app';
 window.APP_CONFIG.API_ORIGIN = String(window.APP_CONFIG.API_ORIGIN || defaultApiOrigin).replace(/\/$/, '');
