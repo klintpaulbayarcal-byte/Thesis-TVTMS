@@ -1,11 +1,11 @@
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const crypto = require('crypto');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const db = require('./config/database');
-const autoMigrate = require('./utils/autoMigrate');
 const { getSmtpStatus } = require('./utils/emailService');
 const { apiLimiter, publicLookupLimiter, publicWriteLimiter } = require('./middleware/securityMiddleware');
 
@@ -19,9 +19,8 @@ const validateEnvironment = () => {
     if (jwtSecret.length < 32 || /your-secret|change-me|secret-key/i.test(jwtSecret)) {
         errors.push('JWT_SECRET must be a strong, unique value with at least 32 characters.');
     }
-    const usesDatabaseUrl = Boolean(String(process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim());
-    for (const key of ['DB_HOST', 'DB_USER', 'DB_NAME']) {
-        if (isProduction && !usesDatabaseUrl && !process.env[key]) errors.push(`${key} is required in production when DATABASE_URL is not used.`);
+    if (!String(process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim()) {
+        errors.push('DATABASE_URL is required for the Supabase PostgreSQL connection.');
     }
     if (isProduction && !String(process.env.ALLOWED_ORIGINS || '').trim()) {
         errors.push('ALLOWED_ORIGINS is required in production.');
@@ -107,8 +106,7 @@ app.get('/api/health', async (req, res) => {
             database: 'connected',
             databaseClient: db.client,
             smtp: smtp.configured ? 'configured' : 'not_configured',
-            gitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA || null,
-            gitCommitRef: process.env.VERCEL_GIT_COMMIT_REF || null,
+            deployment: process.env.NODE_ENV || 'development',
             capabilities: [
                 'ticket-permanent-delete',
                 'ticket-mark-unpaid',
@@ -121,12 +119,13 @@ app.get('/api/health', async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => res.json({
-    success: true,
-    message: 'Municipal Traffic Violation Ticketing and Management System API',
-    version: '1.1.0',
-    requestId: res.locals.requestId,
-    timestamp: new Date().toISOString()
+const frontendRoot = path.resolve(__dirname, '..', 'frontend');
+app.use(express.static(frontendRoot, {
+    index: 'index.html',
+    maxAge: isProduction ? '1h' : 0,
+    setHeaders(res) {
+        if (!isProduction) res.setHeader('Cache-Control', 'no-store');
+    }
 }));
 
 app.use((req, res) => res.status(404).json({
@@ -149,8 +148,7 @@ app.use((err, req, res, next) => {
 const start = async () => {
     validateEnvironment();
     await db.checkConnection();
-    await autoMigrate();
-    app.listen(PORT, () => console.log(`API listening on port ${PORT}`));
+    app.listen(PORT, () => console.log(`Website listening on port ${PORT}`));
 };
 
 // Fail fast during production cold starts as well as persistent-server starts.

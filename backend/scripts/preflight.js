@@ -24,11 +24,7 @@ if (!fs.existsSync(envPath)) {
   }
 
   const usesDatabaseUrl = Boolean(env.DATABASE_URL || env.POSTGRES_URL);
-  if (!usesDatabaseUrl) {
-    for (const key of ['DB_HOST', 'DB_USER', 'DB_NAME']) {
-      if (!env[key]) issues.push(`${key} is missing in backend/.env.`);
-    }
-  }
+  if (!usesDatabaseUrl) issues.push('DATABASE_URL is required for Supabase PostgreSQL.');
   if (!env.JWT_SECRET) issues.push('JWT_SECRET is missing in backend/.env.');
   const secret = String(env.JWT_SECRET || '');
   if (secret.length < 32 || /change-this|your-secret|secret-key/i.test(secret)) {
@@ -37,8 +33,6 @@ if (!fs.existsSync(envPath)) {
   if (String(env.NODE_ENV || '').toLowerCase() === 'production') {
     if (!env.ALLOWED_ORIGINS) issues.push('ALLOWED_ORIGINS is required in production.');
     if (!env.APP_PUBLIC_URL) issues.push('APP_PUBLIC_URL is required in production.');
-    if (!usesDatabaseUrl && !env.DB_PASSWORD) issues.push('DB_PASSWORD cannot be empty in production.');
-    if (!usesDatabaseUrl && String(env.DB_USER || '').toLowerCase() === 'root') issues.push('Do not use the MySQL root account in production.');
     if (!/^https:\/\//i.test(env.APP_PUBLIC_URL || '')) issues.push('APP_PUBLIC_URL must use HTTPS in production.');
     if (String(env.TRUST_PROXY || '0') !== '1') warnings.push('Set TRUST_PROXY=1 when the API runs behind a reverse proxy.');
     const hasSmtpLogin = Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
@@ -56,13 +50,10 @@ const required = [
   'frontend/pages/officer-dashboard.html',
   'frontend/pages/public-ticket-lookup.html',
   'frontend/pages/reset-password.html',
-  'FIRST_TIME_SETUP.bat',
-  'FIRST_TIME_SETUP.ps1',
-  'OPEN_VVS.bat',
   'backend/server.js',
-  'backend/models/database.sql',
   'backend/models/database.postgres.sql',
-  'backend/package-lock.json'
+  'package.json',
+  'package-lock.json'
 ];
 for (const relative of required) {
   if (!fs.existsSync(path.join(projectRoot, relative))) issues.push(`Required file is missing: ${relative}`);

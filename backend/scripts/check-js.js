@@ -3,7 +3,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
-const roots = [path.join(projectRoot, 'backend'), path.join(projectRoot, 'frontend', 'assets', 'js')];
+const roots = [path.join(projectRoot, 'backend'), path.join(projectRoot, 'frontend'), path.join(projectRoot, 'scripts')];
 const files = [];
 
 const walk = directory => {

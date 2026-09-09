@@ -1,8 +1,8 @@
-require('dotenv').config();
+const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
-const requestedClient = String(process.env.DB_CLIENT || '').trim().toLowerCase();
-const postgresUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
-const usePostgres = requestedClient === 'postgres' || requestedClient === 'postgresql' || Boolean(postgresUrl);
+const postgresUrl = String(process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim();
+if (!postgresUrl) throw new Error('DATABASE_URL is required for the Supabase PostgreSQL connection.');
 
 const normalizePostgresError = error => {
     if (!error || typeof error !== 'object') return error;
@@ -117,37 +117,4 @@ const createPostgresPool = () => {
     };
 };
 
-const createMysqlPool = () => {
-    const mysql = require('mysql2');
-    const pool = mysql.createPool({
-        host: process.env.DB_HOST || 'localhost',
-        port: Number(process.env.DB_PORT || 3306),
-        user: process.env.DB_USER || 'root',
-        password: process.env.DB_PASSWORD || '',
-        database: process.env.DB_NAME || 'violation_system',
-        waitForConnections: true,
-        connectionLimit: Number(process.env.DB_POOL_SIZE || 10),
-        queueLimit: 0,
-        charset: 'utf8mb4',
-        dateStrings: true,
-        decimalNumbers: true,
-        timezone: process.env.DB_TIMEZONE || '+08:00'
-    }).promise();
-    pool.client = 'mysql';
-    pool.checkConnection = async () => {
-        const connection = await pool.getConnection();
-        try {
-            await connection.query('SELECT 1');
-            return true;
-        } finally {
-            connection.release();
-        }
-    };
-    return pool;
-};
-
-if (usePostgres && !postgresUrl) {
-    throw new Error('DATABASE_URL or POSTGRES_URL is required when DB_CLIENT=postgres.');
-}
-
-module.exports = usePostgres ? createPostgresPool() : createMysqlPool();
+module.exports = createPostgresPool();

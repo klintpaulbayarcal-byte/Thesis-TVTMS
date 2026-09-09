@@ -12,14 +12,14 @@ Mark every required item before public deployment.
 
 ## Environment and infrastructure
 
-- [ ] Production `.env` exists only on the server and contains no template/default secrets.
+- [ ] Hostinger environment variables contain no template/default secrets.
 - [ ] `NODE_ENV=production`.
 - [ ] Unique 32+ character `JWT_SECRET` configured.
-- [ ] Dedicated least-privilege database user and strong password configured.
+- [ ] Supabase connection uses the intended project and transaction pooler.
 - [ ] Exact HTTPS `ALLOWED_ORIGINS` configured.
 - [ ] HTTPS certificate and automatic renewal verified.
 - [ ] Reverse proxy and `TRUST_PROXY` setting verified.
-- [ ] Persistent evidence storage configured and writable only by the API service.
+- [ ] Evidence is stored in Supabase PostgreSQL and access control is verified.
 - [ ] SMTP and official sender verified.
 - [ ] Node process automatic restart and log rotation configured.
 - [ ] `/api/health` monitoring configured.
@@ -31,7 +31,7 @@ Mark every required item before public deployment.
 - [ ] No unsupported legacy driver accounts remain.
 - [ ] Initial administrator created; `INITIAL_ADMIN_PASSWORD` cleared.
 - [ ] Scheduled database backup enabled.
-- [ ] Scheduled evidence backup enabled.
+- [ ] Database backup coverage includes evidence `file_data`.
 - [ ] Restore test completed on a separate environment.
 
 ## Security validation

@@ -2,18 +2,8 @@
 // API Configuration and Helper Functions
 // ==============================================
 
-const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) ||
-    ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-        ? 'http://localhost:5000'
-        : window.location.origin);
+const API_ORIGIN = (window.APP_CONFIG && window.APP_CONFIG.API_ORIGIN) || window.location.origin;
 const API_BASE_URL = `${API_ORIGIN}/api`;
-// Production normally uses the same-origin Vercel rewrite. If that rewrite is
-// temporarily unreachable on a mobile/VPN network, login may safely retry the
-// dedicated API origin. The fallback is intentionally limited to login so
-// mutating requests are never duplicated.
-const LOGIN_FALLBACK_API_BASE_URL = window.location.hostname === 'thesis-tvtms.vercel.app'
-    ? 'https://thesis-tvtms-api.vercel.app/api'
-    : '';
 
 const isNetworkFetchError = (error) =>
     error instanceof TypeError || /failed to fetch|networkerror|load failed/i.test(String(error?.message || ''));
@@ -98,7 +88,7 @@ const redirectToDashboard = () => {
 const apiRequest = async (endpoint, options = {}) => {
     const token = getToken();
     const hasToken = Boolean(token);
-    const { fallbackOnNetworkError = false, ...requestOptions } = options;
+    const requestOptions = options;
     const isFormData = typeof FormData !== 'undefined' && requestOptions.body instanceof FormData;
 
     const config = {
@@ -113,19 +103,7 @@ const apiRequest = async (endpoint, options = {}) => {
     }
 
     try {
-        let response;
-
-        try {
-            response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-        } catch (primaryError) {
-            const canUseLoginFallback = fallbackOnNetworkError
-                && LOGIN_FALLBACK_API_BASE_URL
-                && LOGIN_FALLBACK_API_BASE_URL !== API_BASE_URL
-                && isNetworkFetchError(primaryError);
-
-            if (!canUseLoginFallback) throw primaryError;
-            response = await fetch(`${LOGIN_FALLBACK_API_BASE_URL}${endpoint}`, config);
-        }
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
         let data = {};
 
@@ -193,8 +171,7 @@ const API = {
     login: (credentials) => apiRequest('/auth/login', {
         method: 'POST',
         body: JSON.stringify(credentials),
-        cache: 'no-store',
-        fallbackOnNetworkError: true
+        cache: 'no-store'
     }),
 
     requestPasswordReset: (email) => apiRequest('/auth/request-password-reset', {

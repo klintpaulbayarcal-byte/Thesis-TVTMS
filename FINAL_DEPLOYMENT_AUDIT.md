@@ -102,24 +102,23 @@ The clean deployment release intentionally excludes:
 - Release offline dependency audit: **0 known vulnerabilities reported**
 - Secret/runtime files found in release: **0**
 
-The clean release intentionally does not include `backend/.env` or `node_modules`. The deployment environment must create `backend/.env` from `.env.example` and install dependencies using `npm ci`.
+The historical clean release intentionally excluded secrets and dependencies. The current Hostinger artifact is built with `npm run build`; Hostinger installs dependencies and receives secrets through its environment-variable dashboard.
 
 ## Remaining limitations
 
-1. A live Windows/XAMPP/MySQL browser session was not available in this audit environment. Admin and Officer end-to-end workflows still require final staging acceptance testing on the target laptop/server.
-2. Mobile layout and contrast were not independently re-captured after this patch. The edits were mostly semantic/JavaScript changes, but a final 390px browser check is still required.
+1. Admin and Officer end-to-end workflows require final acceptance testing against the deployed Hostinger application and Supabase project.
+2. Mobile layout and contrast require a final 390px browser check on the production domain.
 3. Eighty-nine legacy inline HTML handlers remain. They are functional, but a future strict Content Security Policy would require a planned event-listener migration.
-4. Public government go-live still requires HTTPS, production CORS values, a least-privilege database account, backups/restore testing, monitoring, SMTP, and LGU/DPO approval.
+4. Public government go-live still requires HTTPS, production CORS values, backups/restore testing, monitoring, SMTP, and LGU/DPO approval.
 
-## Launch instructions for the existing local installation
+## Current launch instructions
 
-Do **not** run `FIRST_TIME_SETUP.bat` again.
-
-1. Apply the final audit patch to the existing project.
-2. Start XAMPP Apache and MySQL.
-3. Run `OPEN_VVS.bat`.
-4. Press `Ctrl + F5` in the browser.
-5. Test one complete Admin-to-Officer workflow before deployment.
+1. Set the Supabase transaction-pooler `DATABASE_URL` in `backend/.env`.
+2. Run `npm install`.
+3. Run `npm run verify`.
+4. Run `npm run dev`.
+5. Open `http://localhost:5000/`.
+6. Test one complete Admin-to-Officer workflow before deployment.
 
 ## Required final staging workflow
 
