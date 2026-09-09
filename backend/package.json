@@ -1,0 +1,26 @@
+{
+  "name": "thesis-tvtms-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TVTMS Node.js/Express API deployed separately from the Hostinger frontend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "nodemailer": "^9.0.5",
+    "pdfkit": "^0.18.0",
+    "pg": "^8.23.0"
+  }
+}
