@@ -4,6 +4,7 @@
   "description": "Municipal Traffic Violation Ticketing and Management System API",
   "main": "server.js",
   "scripts": {
+    "build": "npm run check",
     "start": "node server.js",
     "check": "node scripts/check-js.js",
     "create-admin": "node scripts/create-initial-admin.js",
