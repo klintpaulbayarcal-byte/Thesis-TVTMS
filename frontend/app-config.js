@@ -5,5 +5,5 @@
  * Vercel. Database credentials remain server-side in the API deployment.
  */
 window.APP_CONFIG = window.APP_CONFIG || {};
-const defaultApiOrigin = 'https://thesis-tvtms-api-klintpaulbayarcal-bytes-projects.vercel.app';
+const defaultApiOrigin = 'https://thesis-tvtms-api.vercel.app';
 window.APP_CONFIG.API_ORIGIN = String(window.APP_CONFIG.API_ORIGIN || defaultApiOrigin).replace(/\/$/, '');
