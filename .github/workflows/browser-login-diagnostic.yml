@@ -1,0 +1,54 @@
+name: Browser Login Diagnostic
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/browser-login-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-browser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0 >/dev/null 2>&1
+          npx playwright install --with-deps chromium >/dev/null 2>&1
+
+      - name: Run live school-domain browser test
+        run: |
+          cat > diagnose.js <<'EOF'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+            page.on('console', msg => console.log('CONSOLE', msg.type(), msg.text()));
+            page.on('pageerror', err => console.log('PAGEERROR', err.message));
+            page.on('requestfailed', req => console.log('REQUESTFAILED', req.method(), req.url(), req.failure()?.errorText));
+            page.on('request', req => {
+              if (req.url().includes('/api/')) console.log('API REQUEST', req.method(), req.url());
+            });
+            page.on('response', res => {
+              if (res.url().includes('/api/')) console.log('API RESPONSE', res.status(), res.url());
+            });
+            const response = await page.goto('https://trafficviolation.dcsbisu.com/pages/login.html', { waitUntil: 'networkidle', timeout: 60000 });
+            console.log('PAGE STATUS', response?.status());
+            console.log('PAGE URL', page.url());
+            console.log('API TYPE', await page.evaluate(() => typeof API));
+            console.log('LOGIN FORM EXISTS', await page.locator('#loginForm').count());
+            console.log('SCRIPT SRCS', await page.evaluate(() => Array.from(document.scripts).map(s => s.src).filter(Boolean)));
+            await page.fill('#email', 'diagnostic@example.invalid');
+            await page.fill('#password', 'not-a-real-password');
+            await page.click('#loginBtn');
+            await page.waitForTimeout(5000);
+            console.log('FORM MESSAGE', await page.locator('#formMessage').innerText().catch(() => 'missing'));
+            console.log('FINAL URL', page.url());
+            await browser.close();
+          })().catch(err => { console.error('FATAL', err); process.exit(1); });
+          EOF
+          node diagnose.js
