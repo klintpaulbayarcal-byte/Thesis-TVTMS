@@ -3,6 +3,7 @@
  *
  * Hostinger serves the static frontend while the Node.js/Express API runs on
  * Vercel. Database credentials remain server-side in the API deployment.
+ * Deployment refresh: 2026-09-11b
  */
 window.APP_CONFIG = window.APP_CONFIG || {};
 const defaultApiOrigin = 'https://thesis-tvtms-api.vercel.app';
