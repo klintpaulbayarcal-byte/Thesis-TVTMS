@@ -1,0 +1,43 @@
+name: Fix School Login Cache Busting
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-login-cache.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bust login asset cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's#../app-config.js"#../app-config.js?v=20260911b"#' frontend/pages/login.html
+          sed -i 's#../assets/js/api.js?v=20260812a#../assets/js/api.js?v=20260911b#' frontend/pages/login.html
+          sed -i 's#../assets/js/login.js?v=20260812a#../assets/js/login.js?v=20260911b#' frontend/pages/login.html
+          grep -E 'app-config.js|assets/js/api.js|assets/js/login.js' frontend/pages/login.html
+
+      - name: Commit and push patched login page
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add frontend/pages/login.html
+          if git diff --cached --quiet; then
+            echo 'No changes needed.'
+            exit 0
+          fi
+          git commit -m 'Bust school login JavaScript cache'
+          git push origin HEAD:main
