@@ -1,0 +1,47 @@
+name: Diagnose Hostinger Login Path
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-hostinger.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live Hostinger frontend files
+        shell: bash
+        run: |
+          set -euxo pipefail
+          echo '=== login.html headers ==='
+          curl -sSIL 'https://trafficviolation.dcsbisu.com/pages/login.html' | sed -n '1,30p'
+          echo '=== app-config.js live body ==='
+          curl -sS 'https://trafficviolation.dcsbisu.com/app-config.js'
+          echo
+          echo '=== api.js markers from live Hostinger ==='
+          curl -sS 'https://trafficviolation.dcsbisu.com/assets/js/api.js?v=20260812a' | grep -E 'STABLE_VERCEL_API_ORIGIN|defaultApiOrigin|API_ORIGIN|API_BASE_URL' | head -20 || true
+          echo '=== login.html script references ==='
+          curl -sS 'https://trafficviolation.dcsbisu.com/pages/login.html' | grep -E 'app-config.js|assets/js/api.js|assets/js/login.js' || true
+
+      - name: Test CORS preflight from school domain
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -sS -i -X OPTIONS 'https://thesis-tvtms-api.vercel.app/api/auth/login' \
+            -H 'Origin: https://trafficviolation.dcsbisu.com' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: content-type' | sed -n '1,40p'
+
+      - name: Test login route reachability with fake credentials
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -sS -i -X POST 'https://thesis-tvtms-api.vercel.app/api/auth/login' \
+            -H 'Origin: https://trafficviolation.dcsbisu.com' \
+            -H 'Content-Type: application/json' \
+            --data '{"email":"diagnostic@example.invalid","password":"not-a-real-password"}' | sed -n '1,60p'
