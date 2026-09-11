@@ -48,8 +48,18 @@ app.use(helmet({
     referrerPolicy: { policy: 'no-referrer' }
 }));
 
-const allowedOrigins = String(process.env.ALLOWED_ORIGINS || '')
+const configuredOrigins = String(process.env.ALLOWED_ORIGINS || '')
     .split(',').map(v => v.trim()).filter(Boolean);
+
+// Known production frontends are explicitly trusted so the school-hosted
+// frontend can call the separately hosted Vercel API even if an older
+// ALLOWED_ORIGINS value is still present in Vercel.
+const builtInProductionOrigins = [
+    'https://trafficviolation.dcsbisu.com',
+    'https://thesis-tvtms.vercel.app'
+];
+const allowedOrigins = [...new Set([...configuredOrigins, ...builtInProductionOrigins])];
+
 app.use(cors({
     origin(origin, callback) {
         if (!origin) return callback(null, true);
@@ -151,7 +161,6 @@ const start = async () => {
     app.listen(PORT, () => console.log(`Website listening on port ${PORT}`));
 };
 
-// Fail fast during production cold starts as well as persistent-server starts.
 if (isProduction) validateEnvironment();
 
 if (require.main === module) {
