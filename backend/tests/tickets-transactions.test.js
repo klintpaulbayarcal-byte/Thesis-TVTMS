@@ -44,6 +44,8 @@ test('ticket RPCs preserve snapshots, escalation, payment protections and rollba
         assert.equal((await db.query("select count(*)::int as n from public.vehicles where plate_number='ROLLBACK'")).rows[0].n, 0);
         const listing = await call('tvtms_ticket_list', [JSON.stringify({ officerId: 2, enforcerId: 1, pageSize: 20 })]);
         assert.equal(listing.total, 0);
+        const search = await call('tvtms_ticket_list', [JSON.stringify({ search: 'first owner', pageSize: 20 })]);
+        assert.equal(search.total, 1);
         const stats = await call('tvtms_ticket_stats', [2]);
         assert.equal(stats.total, 2);
         assert.equal(stats.revenue, 0);

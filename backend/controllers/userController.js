@@ -166,15 +166,13 @@ exports.unlockUser = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const users = await run(supabase.from('users').select('id').eq('id', id));
+        const users = await run(supabase.from('users').update({ failed_login_attempts: 0, locked_until: null }).eq('id', id).select('id'));
         if (users.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
         }
-
-        await run(supabase.from('users').update({ failed_login_attempts: 0, locked_until: null }).eq('id', id));
 
         await logAudit({
             userId: req.user.id,

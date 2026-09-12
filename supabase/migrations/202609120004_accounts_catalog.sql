@@ -87,7 +87,7 @@ CREATE OR REPLACE FUNCTION public.tvtms_account_clear_test_logs()
 RETURNS bigint LANGUAGE plpgsql SECURITY INVOKER SET search_path = '' AS $$
 DECLARE deleted bigint;
 BEGIN
-  DELETE FROM public.audit_logs WHERE action LIKE 'TEST_%';
+  DELETE FROM public.audit_logs WHERE action ILIKE 'TEST_%';
   GET DIAGNOSTICS deleted = ROW_COUNT;
   RETURN deleted;
 END;
@@ -123,8 +123,8 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
       CASE WHEN p_license IS NULL AND p_owner IS NOT NULL THEN v.owner_name ELSE v.plate_number END AS sort_key
     FROM public.vehicles v
     WHERE CASE WHEN p_license IS NOT NULL THEN v.driver_license_number=p_license
-      WHEN p_owner IS NOT NULL THEN v.owner_name LIKE '%' || p_owner || '%'
-      ELSE (upper(v.plate_number) LIKE '%' || upper(p_query) || '%' OR v.owner_name LIKE '%' || p_query || '%' OR v.owner_email LIKE '%' || p_query || '%') END
+      WHEN p_owner IS NOT NULL THEN v.owner_name ILIKE '%' || p_owner || '%'
+      ELSE (upper(v.plate_number) LIKE '%' || upper(p_query) || '%' OR v.owner_name ILIKE '%' || p_query || '%' OR v.owner_email ILIKE '%' || p_query || '%') END
       AND (p_license IS NOT NULL OR p_type='all' OR v.vehicle_type=p_type)
     ORDER BY sort_key,v.id LIMIT 20
   ) r;

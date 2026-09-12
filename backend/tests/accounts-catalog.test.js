@@ -56,6 +56,8 @@ test('catalog functions preserve balances, escalation, search and histories abov
         assert.equal((await call('tvtms_catalog_vehicle_by_plate',['ABC123']))[0].id,1);
         assert.equal((await call('tvtms_catalog_prior_offenses',[1,'ABC123'])).prior_count,1001);
         assert.equal((await call('tvtms_catalog_search_vehicles',[null,null,'ABC','car']))[0].violation_count,1001);
+        assert.equal((await call('tvtms_catalog_search_vehicles',[null,'owner',null,'car']))[0].id,1);
+        assert.equal((await call('tvtms_catalog_search_vehicles',[null,null,'oWnEr','car']))[0].id,1);
         assert.deepEqual(await call('tvtms_catalog_search_vehicles',[null,null,'ABC),id.gt.0','car']),[]);
         await db.exec("insert into public.violation_penalty_rules(violation_id,offense_count,penalty_amount,effective_from) values(1,1002,300,current_date)");
         assert.equal((await call('tvtms_catalog_penalty_rule',[1,1002]))[0].penalty_amount,300);
