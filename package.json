@@ -11,12 +11,15 @@
     "preflight": "node backend/scripts/preflight.js",
     "verify": "npm run check && npm run preflight",
     "create-admin": "node backend/scripts/create-initial-admin.js",
-    "build": "npm run check && node scripts/build.js"
+    "build": "npm run check && node scripts/build.js",
+    "test": "node --test backend/tests/*.test.js",
+    "smoke": "node backend/scripts/supabase-smoke-test.js"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -26,10 +29,10 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "nodemailer": "^9.0.5",
-    "pdfkit": "^0.18.0",
-    "pg": "^8.23.0"
+    "pdfkit": "^0.18.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "yazl": "^3.3.1"
   }
 }

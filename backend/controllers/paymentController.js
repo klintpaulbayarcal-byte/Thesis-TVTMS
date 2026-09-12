@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const { supabase, run, rpc, allRows } = require('../config/supabase');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { logAudit } = require('../utils/auditLogger');
 const emailService = require('../utils/emailService');
@@ -27,8 +27,6 @@ const isValidDateString = value => {
 };
 
 exports.recordPayment = async (req, res) => {
-    const connection = await db.getConnection();
-    let committed = false;
     try {
         const schema = paymentSchema;
         const { ticket_id, or_number, official_receipt_number, amount_paid, payment_date, payment_method = 'cash', notes } = req.body;
@@ -50,50 +48,15 @@ exports.recordPayment = async (req, res) => {
             return sendError(res, 'Invalid payment method', { statusCode: 400, errorCode: 'VALIDATION_ERROR' });
         }
 
-        await connection.beginTransaction();
-        const [rows]=await connection.query(`
-            SELECT t.id,t.ticket_number,t.status,t.payment_date,t.user_id,
-                   COALESCE(t.penalty_amount_at_issue,v.penalty_amount) AS penalty_amount,
-                   ve.owner_email,ve.owner_name
-            FROM tickets t JOIN violations v ON t.violation_id=v.id JOIN vehicles ve ON t.vehicle_id=ve.id
-            WHERE t.id=? FOR UPDATE`,[ticketId]);
-        if(!rows.length){await connection.rollback();return sendError(res,'Ticket not found',{statusCode:404,errorCode:'TICKET_NOT_FOUND'});}
-        const ticket=rows[0];
-        if (ticket.status === 'cancelled') {
-            await connection.rollback();
-            return sendError(res, 'Cancelled tickets cannot receive payments', { statusCode: 409, errorCode: 'TICKET_CANCELLED' });
-        }
-        const [activeDisputes] = await connection.query(
-            `SELECT id FROM disputes WHERE ticket_id = ? AND status IN ('submitted', 'under_review') LIMIT 1`,
-            [ticketId]
-        );
-        if (activeDisputes.length) {
-            await connection.rollback();
-            return sendError(res, 'Resolve the active dispute before recording payment', {
-                statusCode: 409,
-                errorCode: 'ACTIVE_DISPUTE'
-            });
-        }
-
-        const [dupe]=await connection.query(`SELECT id FROM payments WHERE \`${schema.receiptColumn}\`=? LIMIT 1`,[receiptNumber]);
-        if(dupe.length){await connection.rollback();return sendError(res,'Official receipt number already exists',{statusCode:409,errorCode:'OR_NUMBER_EXISTS'});}
-        const [[totals]]=await connection.query(`SELECT COALESCE(SUM(amount_paid),0) total_paid FROM payments WHERE ticket_id=? AND payment_status<>'voided'`,[ticketId]);
-        const paidBefore=Number(totals.total_paid||0), penalty=Number(ticket.penalty_amount||0), balance=Math.max(0,penalty-paidBefore);
-        if(balance<=0||ticket.status==='paid'){await connection.rollback();return sendError(res,'This ticket is already fully paid',{statusCode:409,errorCode:'ALREADY_PAID'});}
-        if(amount>balance+0.001){await connection.rollback();return sendError(res,`Payment exceeds the remaining balance of PHP ${balance.toFixed(2)}`,{statusCode:400,errorCode:'OVERPAYMENT'});}
-
-        const total=paidBefore+amount;
-        const paymentStatus=total+0.001>=penalty?'full':'partial';
         const dateValue = isValidDateString(payment_date) ? String(payment_date) : todayInManila();
-        if (dateValue > todayInManila()) {
-            await connection.rollback();
-            return sendError(res, 'Payment date cannot be in the future', { statusCode: 400, errorCode: 'INVALID_PAYMENT_DATE' });
-        }
-        const [result]=await connection.query(`INSERT INTO payments(ticket_id,\`${schema.receiptColumn}\`,amount_paid,payment_date,payment_method,payment_status,notes,\`${schema.recorderColumn}\`) VALUES(?,?,?,?,?,?,?,?)`,[ticketId, receiptNumber, amount, dateValue, method, paymentStatus, normalizedNotes || null, req.user.id]);
-        const nextStatus=paymentStatus==='full'?'paid':'unpaid';
-        await connection.query('UPDATE tickets SET status=?,payment_date=? WHERE id=?',[nextStatus, paymentStatus === 'full' ? dateValue : null, ticketId]);
-        await connection.query(`INSERT INTO ticket_status_history(ticket_id,previous_status,new_status,changed_by,reason) VALUES(?,?,?,?,?)`,[ticketId, ticket.status, paymentStatus === 'full' ? 'paid' : 'partially_paid',req.user.id,`Payment recorded. OR: ${receiptNumber}`]);
-        await connection.commit(); committed=true;
+        if (dateValue > todayInManila()) return sendError(res, 'Payment date cannot be in the future', { statusCode: 400, errorCode: 'INVALID_PAYMENT_DATE' });
+        const outcome = await rpc('tvtms_payment_record', {
+            p_ticket_id: ticketId, p_receipt: receiptNumber, p_amount: amount,
+            p_date: dateValue, p_method: method, p_notes: normalizedNotes || null, p_actor: req.user.id
+        });
+        if (outcome.errorCode) return sendError(res, outcome.message, outcome);
+        const { ticket, paymentStatus, total, penalty, nextStatus, paymentId } = outcome;
+        const result = { insertId: paymentId };
 
         try { await logAudit({userId:req.user.id,action:'PAYMENT_RECORDED',entityType:'payments',entityId:result.insertId,metadata:{ticketId,officialReceiptNumber:receiptNumber,amountPaid:amount,paymentStatus,totalPaid:total,penaltyAmount:penalty},req}); } catch(e){console.error('Payment audit failed:',e.message)}
         if (ticket.owner_email) {
@@ -109,20 +72,22 @@ exports.recordPayment = async (req, res) => {
                 console.error('Payment confirmation email failed:', emailError.message);
             }
         }
-        try { await db.query(`INSERT INTO notifications(user_id,type,title,message,reference_type,reference_id) VALUES(?,?,?,?,?,?)`,[ticket.user_id,'payment','Ticket Payment Update',`Payment (${paymentStatus}) recorded for ${ticket.ticket_number}.`,'ticket',ticketId]); } catch(e){console.error('Payment notification failed:',e.message)}
+        try { await run(supabase.from('notifications').insert({user_id:ticket.user_id,type:'payment',title:'Ticket Payment Update',message:`Payment (${paymentStatus}) recorded for ${ticket.ticket_number}.`,reference_type:'ticket',reference_id:ticketId})); } catch(e){console.error('Payment notification failed:',e.message)}
 
         return sendSuccess(res,'Payment recorded successfully',{paymentId:result.insertId,ticketId,paymentStatus,totalPaidAfter:total,penaltyAmount:penalty,remainingBalance:Math.max(0,penalty-total),storedTicketStatus:nextStatus},{statusCode:201});
     } catch(error){
-        if(!committed){try{await connection.rollback()}catch{}}
         console.error('Record payment error:',error);
         return sendError(res,'Server error while recording payment',{statusCode:500,errorCode:'PAYMENT_RECORD_FAILED'});
-    } finally { connection.release(); }
+    }
 };
 
 exports.getTicketPayments = async (req,res) => {
     try{
-        const receiptProjection = `p.*,p.\`${paymentSchema.receiptColumn}\` AS or_number`;
-        const [payments]=await db.query(`SELECT ${receiptProjection} FROM payments p JOIN tickets t ON p.ticket_id=t.id WHERE p.ticket_id=? AND (?='admin' OR t.user_id=?) ORDER BY p.payment_date DESC,p.id DESC`,[req.params.ticketId,req.user.role,req.user.id]);
+        let ticketQuery = supabase.from('tickets').select('id').eq('id', req.params.ticketId);
+        if (req.user.role !== 'admin') ticketQuery = ticketQuery.eq('user_id', req.user.id);
+        const ticket = await run(ticketQuery.maybeSingle());
+        const rows = ticket ? await allRows(() => supabase.from('payments').select('*').eq('ticket_id', ticket.id).order('payment_date', {ascending:false}).order('id', {ascending:false})) : [];
+        const payments = rows.map(row => ({...row, or_number:row.official_receipt_number}));
         return sendSuccess(res,'Payments fetched successfully',payments,{legacy:{payments}});
     }catch(error){console.error(error);return sendError(res,'Server error while fetching payments',{statusCode:500,errorCode:'PAYMENTS_FETCH_FAILED'});}
 };

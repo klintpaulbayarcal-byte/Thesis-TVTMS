@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ quiet: true });
-const db = require('../config/database');
+const { supabase, run } = require('../config/supabase');
 
 const assert = (condition, message) => {
     if (!condition) throw new Error(message);
@@ -397,19 +397,15 @@ async function captureBaseline(admin, adminToken) {
 async function main() {
     try {
         assert(process.env.JWT_SECRET, 'JWT_SECRET is required for browser validation.');
-        const [admins] = await db.query(
-            `SELECT id, name, email, role FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id LIMIT 1`
-        );
-        const [officers] = await db.query(
-            `SELECT id, name, email, role FROM users WHERE role = 'apprehending_officer' AND status = 'active' ORDER BY id LIMIT 1`
-        );
+        const admins = await run(supabase.from('users').select('id,name,email,role').eq('role','admin').eq('status','active').order('id').limit(1));
+        const officers = await run(supabase.from('users').select('id,name,email,role').eq('role','apprehending_officer').eq('status','active').order('id').limit(1));
         const admin = admins[0];
         const officer = officers[0];
         assert(admin, 'An active Administrator is required.');
         assert(officer, 'An active Apprehending Officer is required.');
 
-        const [[adminTicket]] = await db.query('SELECT id FROM tickets ORDER BY id LIMIT 1');
-        const [[officerTicket]] = await db.query('SELECT id FROM tickets WHERE user_id = ? ORDER BY id LIMIT 1', [officer.id]);
+        const [adminTicket] = await run(supabase.from('tickets').select('id').order('id').limit(1));
+        const [officerTicket] = await run(supabase.from('tickets').select('id').eq('user_id',officer.id).order('id').limit(1));
         const adminToken = jwt.sign({ id: admin.id, name: admin.name, email: admin.email, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
         const officerToken = jwt.sign({ id: officer.id, name: officer.name, email: officer.email, role: officer.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
@@ -457,7 +453,7 @@ async function main() {
         warnings.forEach(warning => console.log(warning));
         console.log(`Mobile target warnings: ${warnings.length}`);
     } finally {
-        await db.end();
+        // Supabase HTTP requests do not hold a database connection.
     }
 }
 

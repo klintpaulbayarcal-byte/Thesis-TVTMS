@@ -5,7 +5,7 @@
  * uses smtp.resend.com with the standard Resend SMTP identity. Delivery returns
  * false without logging recipient data when SMTP is unavailable.
  */
-const db = require('../config/database');
+const { supabase, run } = require('../config/supabase');
 
 let transporter = null;
 
@@ -26,10 +26,7 @@ const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':
 
 const readSettings = async (keys) => {
     try {
-        const [rows] = await db.query(
-            `SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN (${keys.map(() => '?').join(',')})`,
-            keys
-        );
+        const rows = await run(supabase.from('system_settings').select('setting_key,setting_value').in('setting_key', keys));
         return Object.fromEntries(rows.map(row => [row.setting_key, row.setting_value]));
     } catch (error) {
         console.warn('[EmailService] Unable to read system settings:', error.message);

@@ -3,7 +3,7 @@
 
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ quiet: true });
-const db = require('../config/database');
+const { supabase, run, allRows } = require('../config/supabase');
 
 const assert = (condition, message) => {
     if (!condition) throw new Error(message);
@@ -87,13 +87,8 @@ class CdpClient {
 }
 
 const insertFixture = async (userId, title, isRead = 0) => {
-    const [result] = await db.query(
-        `INSERT INTO notifications
-            (user_id, type, title, message, is_read, read_at, reference_type, reference_id)
-         VALUES (?, ?, ?, ?, ?, IF(? = 1, NOW(), NULL), ?, ?)`,
-        [userId, fixtureType, title, 'Browser notification deletion validation.', isRead, isRead, fixtureType, runId]
-    );
-    return result.insertId;
+    const result = await run(supabase.from('notifications').insert({user_id:userId,type:fixtureType,title,message:'Browser notification deletion validation.',is_read:isRead,read_at:isRead ? new Date().toISOString() : null,reference_type:fixtureType,reference_id:runId}).select('id').single());
+    return result.id;
 };
 
 async function main() {
@@ -102,19 +97,12 @@ async function main() {
     const results = [];
 
     try {
-        const [admins] = await db.query(
-            `SELECT id, name, email, role
-             FROM users
-             WHERE status = 'active' AND role = 'admin'
-             ORDER BY id LIMIT 1`
-        );
+        const admins = await run(supabase.from('users').select('id,name,email,role').eq('status','active').eq('role','admin').order('id').limit(1));
         admin = admins[0];
         assert(admin, 'An active administrator is required for the browser test.');
 
-        const [[baseline]] = await db.query(
-            'SELECT COUNT(*) AS total, COALESCE(SUM(is_read = 0), 0) AS unread FROM notifications WHERE user_id = ?',
-            [admin.id]
-        );
+        const baselineRows = await allRows(() => supabase.from('notifications').select('id,is_read').eq('user_id',admin.id).order('id'));
+        const baseline = {total:baselineRows.length,unread:baselineRows.filter(row=>!row.is_read).length};
 
         const ids = {
             cancel: await insertFixture(admin.id, `Cancel ${runId}`),
@@ -304,12 +292,9 @@ async function main() {
     } finally {
         if (cdp) cdp.close();
         if (admin) {
-            await db.query(
-                'DELETE FROM notifications WHERE user_id = ? AND reference_type = ? AND reference_id = ?',
-                [admin.id, fixtureType, runId]
-            );
+            await run(supabase.from('notifications').delete().eq('user_id',admin.id).eq('reference_type',fixtureType).eq('reference_id',runId));
         }
-        await db.end();
+        // Supabase HTTP requests do not hold a database connection.
     }
 }
 

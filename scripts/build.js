@@ -68,7 +68,7 @@ const createArchive = () => new Promise((resolve, reject) => {
   const requiredFiles = [
     'package.json',
     'backend/server.js',
-    'backend/config/database.js',
+    'backend/config/supabase.js',
     'frontend/index.html',
     'frontend/pages/landing.html',
     'frontend/assets/js/api.js'

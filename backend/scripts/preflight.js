@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { readSupabaseConfig } = require('../config/supabase-settings');
 
 const projectRoot = path.resolve(__dirname, '..', '..');
 const backendRoot = path.resolve(__dirname, '..');
@@ -8,23 +9,14 @@ const issues = [];
 const warnings = [];
 
 const major = Number(process.versions.node.split('.')[0]);
-if (major < 20) issues.push(`Node.js 20 or newer is required. Current version: ${process.version}`);
+if (major < 22) issues.push(`Node.js 22 or newer is required. Current version: ${process.version}`);
 
 if (!fs.existsSync(envPath)) {
   issues.push('backend/.env is missing. Copy backend/.env.example to backend/.env and configure it.');
 } else {
   const text = fs.readFileSync(envPath, 'utf8');
-  const env = {};
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith('#')) continue;
-    const index = line.indexOf('=');
-    if (index < 1) continue;
-    env[line.slice(0, index).trim()] = line.slice(index + 1).trim().replace(/^['"]|['"]$/g, '');
-  }
-
-  const usesDatabaseUrl = Boolean(env.DATABASE_URL || env.POSTGRES_URL);
-  if (!usesDatabaseUrl) issues.push('DATABASE_URL is required for Supabase PostgreSQL.');
+  const env = { ...require('dotenv').parse(text), ...process.env };
+  try { readSupabaseConfig(env); } catch (error) { issues.push(error.message); }
   if (!env.JWT_SECRET) issues.push('JWT_SECRET is missing in backend/.env.');
   const secret = String(env.JWT_SECRET || '');
   if (secret.length < 32 || /change-this|your-secret|secret-key/i.test(secret)) {

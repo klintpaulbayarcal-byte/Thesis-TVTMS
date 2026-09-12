@@ -3,7 +3,7 @@
  * Centralized audit trail for all sensitive actions in the LGU system.
  */
 
-const db = require('../config/database');
+const { supabase, run } = require('../config/supabase');
 
 /**
  * Log an audit event.
@@ -23,20 +23,11 @@ exports.logAudit = async ({
             : null;
         const userAgent = req ? (req.headers['user-agent'] || null) : null;
 
-        await db.query(
-            `INSERT INTO audit_logs
-             (user_id, action, entity_type, entity_id, metadata, ip_address, user_agent)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [
-                userId || null,
-                action,
-                entityType || null,
-                entityId || null,
-                metadata ? JSON.stringify(metadata) : null,
-                ipAddress,
-                userAgent
-            ]
-        );
+        await run(supabase.from('audit_logs').insert({
+            user_id: userId || null, action, entity_type: entityType || null,
+            entity_id: entityId || null, metadata: metadata ? JSON.stringify(metadata) : null,
+            ip_address: ipAddress, user_agent: userAgent
+        }));
     } catch (error) {
         // Audit logging must never break the main request flow.
         if (error.code === 'ER_NO_SUCH_TABLE') {
