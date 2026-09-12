@@ -1,0 +1,45 @@
+name: Build and Deploy Website via Instructor FTP
+
+on:
+  push:
+    branches:
+      - master # Change this if your default branch is different (e.g., 'master')
+
+jobs:
+  web-deploy:
+    name: Build & Deploy to Class Server
+    runs-on: ubuntu-latest
+    steps:
+    - name: Get latest code
+      uses: actions/checkout@v4
+    
+    # Step 1: Set up Node.js on the runner
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+
+    # Step 2: Install dependencies and compile the production build
+    - name: Install dependencies and Build
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
+      run: |
+        test -n "$VITE_SUPABASE_URL" || { echo "::error::VITE_SUPABASE_URL is not configured"; exit 1; }
+        test -n "$VITE_SUPABASE_ANON_KEY" || { echo "::error::VITE_SUPABASE_ANON_KEY is not configured"; exit 1; }
+        npm ci
+        npm run build
+
+    # Step 3: Sync ONLY the generated build contents to the server
+    - name: Sync files
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        # Tells the action to grab the files from inside the local dist folder
+        local-dir: ./dist/ 
+        # Uploads directly into your root access directory provided by the instructor
+        server-dir: ./ 
