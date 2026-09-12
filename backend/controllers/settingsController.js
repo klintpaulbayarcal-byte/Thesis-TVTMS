@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const { supabase, run, allRows } = require('../config/supabase');
 const { logAudit } = require('../utils/auditLogger');
 
 const allowedKeys = new Set(['lgu_name','lgu_address','lgu_contact','dispute_deadline_days','system_title','payment_deadline_days','send_violation_notice','send_payment_confirmation']);
@@ -15,22 +15,21 @@ const normalizeValue = (key, value) => {
 };
 
 exports.getSystemSettings = async (req,res) => {
-    try { const [settings]=await db.query('SELECT id,setting_key,setting_value,description,updated_at FROM system_settings ORDER BY setting_key'); return res.json({success:true,settings}); }
+    try { const settings=await allRows(() => supabase.from('system_settings').select('id,setting_key,setting_value,description,updated_at').order('setting_key')); return res.json({success:true,settings}); }
     catch(error){ console.error(error); return res.status(500).json({success:false,message:'Failed to retrieve system settings'}); }
 };
 exports.getSettingValue = async (req,res) => {
-    try { const [rows]=await db.query('SELECT setting_value FROM system_settings WHERE setting_key=?',[req.params.key]); if(!rows.length)return res.status(404).json({success:false,message:'Setting not found'}); return res.json({success:true,value:rows[0].setting_value}); }
+    try { const rows=await run(supabase.from('system_settings').select('setting_value').eq('setting_key', req.params.key)); if(!rows.length)return res.status(404).json({success:false,message:'Setting not found'}); return res.json({success:true,value:rows[0].setting_value}); }
     catch(error){ return res.status(500).json({success:false,message:'Failed to retrieve setting'}); }
 };
 const persist = async entries => {
+    const normalized = new Map();
     for (const [key, raw] of entries) {
         if (!allowedKeys.has(key)) throw new Error(`Unsupported setting: ${key}`);
-        const value=normalizeValue(key,raw);
-        const sql = `INSERT INTO system_settings(setting_key,setting_value) VALUES(?,?)
-                     ON CONFLICT (setting_key) DO UPDATE
-                     SET setting_value=EXCLUDED.setting_value, updated_at=CURRENT_TIMESTAMP`;
-        await db.query(sql,[key,value]);
+        normalized.set(key, normalizeValue(key, raw));
     }
+    const rows = [...normalized].map(([setting_key, setting_value]) => ({ setting_key, setting_value, updated_at: new Date().toISOString() }));
+    if (rows.length) await run(supabase.from('system_settings').upsert(rows, { onConflict: 'setting_key' }));
 };
 exports.updateSystemSettings = async (req,res) => {
     try { const settings=req.body.settings; if(!settings||typeof settings!=='object'||Array.isArray(settings))return res.status(400).json({success:false,message:'Invalid settings format'}); await persist(Object.entries(settings)); await logAudit({userId:req.user.id,action:'SYSTEM_SETTINGS_UPDATE',entityType:'system_settings',metadata:{keys:Object.keys(settings)},req}); return res.json({success:true,message:'System settings updated successfully'}); }

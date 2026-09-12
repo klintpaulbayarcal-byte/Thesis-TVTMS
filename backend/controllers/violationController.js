@@ -1,12 +1,10 @@
-const db = require('../config/database');
+const { supabase, run, rpc, allRows } = require('../config/supabase');
 const { logAudit } = require('../utils/auditLogger');
 
 // Get all violations
 exports.getAllViolations = async (req, res) => {
     try {
-        const [violations] = await db.query(
-            'SELECT * FROM violations ORDER BY violation_code ASC'
-        );
+        const violations = await allRows(() => supabase.from('violations').select('*').order('violation_code'));
 
         res.json({
             success: true,
@@ -25,10 +23,7 @@ exports.getAllViolations = async (req, res) => {
 // Get active violations only
 exports.getActiveViolations = async (req, res) => {
     try {
-        const [violations] = await db.query(
-            'SELECT * FROM violations WHERE status = ? ORDER BY violation_name ASC',
-            ['active']
-        );
+        const violations = await allRows(() => supabase.from('violations').select('*').eq('status', 'active').order('violation_name').order('id'));
 
         res.json({
             success: true,
@@ -49,10 +44,7 @@ exports.getViolationById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [violations] = await db.query(
-            'SELECT * FROM violations WHERE id = ?',
-            [id]
-        );
+        const violations = await run(supabase.from('violations').select('*').eq('id', id));
 
         if (violations.length === 0) {
             return res.status(404).json({ 
@@ -89,10 +81,7 @@ exports.getPenaltyPreview = async (req, res) => {
             });
         }
 
-        const [violations] = await db.query(
-            'SELECT id, violation_code, violation_name, penalty_amount FROM violations WHERE id = ? LIMIT 1',
-            [id]
-        );
+        const violations = await run(supabase.from('violations').select('id,violation_code,violation_name,penalty_amount').eq('id', id).limit(1));
 
         if (violations.length === 0) {
             return res.status(404).json({
@@ -103,15 +92,7 @@ exports.getPenaltyPreview = async (req, res) => {
 
         const violation = violations[0];
 
-        const [[history]] = await db.query(
-            `SELECT COUNT(*) as prior_count
-             FROM tickets t
-             JOIN vehicles v ON t.vehicle_id = v.id
-             WHERE t.violation_id = ?
-               AND REPLACE(REPLACE(UPPER(v.plate_number), '-', ''), ' ', '') = ?
-               AND t.status <> 'cancelled'`,
-            [id, normalizedPlateNumber]
-        );
+        const history = await rpc('tvtms_catalog_prior_offenses', { p_id: Number(id), p_plate: normalizedPlateNumber });
 
         const nextOffenseCount = Number(history.prior_count || 0) + 1;
         const basePenalty = Number(violation.penalty_amount);
@@ -119,18 +100,7 @@ exports.getPenaltyPreview = async (req, res) => {
         let usedEscalationRule = false;
 
         try {
-            const [rules] = await db.query(
-                `SELECT penalty_amount
-                 FROM violation_penalty_rules
-                 WHERE violation_id = ?
-                   AND offense_count = ?
-                   AND is_active = 1
-                   AND effective_from <= CURDATE()
-                   AND (effective_to IS NULL OR effective_to >= CURDATE())
-                 ORDER BY effective_from DESC
-                 LIMIT 1`,
-                [id, nextOffenseCount]
-            );
+            const rules = await rpc('tvtms_catalog_penalty_rule', { p_id: Number(id), p_offense: nextOffenseCount });
 
             if (rules.length > 0) {
                 effectivePenalty = Number(rules[0].penalty_amount);
@@ -183,23 +153,19 @@ exports.createViolation = async (req, res) => {
             });
         }
 
-        const [existing] = await db.query('SELECT id FROM violations WHERE violation_code = ? LIMIT 1', [code]);
+        const existing = await run(supabase.from('violations').select('id').eq('violation_code', code).limit(1));
         if (existing.length) return res.status(409).json({ success: false, message: 'Violation code already exists' });
 
-        const [result] = await db.query(
-            `INSERT INTO violations (violation_code, violation_name, description, penalty_amount, demerit_points)
-             VALUES (?, ?, ?, ?, ?)`,
-            [code, name, description || null, penalty, points]
-        );
+        const result = await run(supabase.from('violations').insert({ violation_code: code, violation_name: name, description: description || null, penalty_amount: penalty, demerit_points: points }).select('id').single());
         await logAudit({
             userId: req.user.id,
             action: 'VIOLATION_CREATED',
             entityType: 'violations',
-            entityId: result.insertId,
+            entityId: result.id,
             metadata: { violationCode: code, penaltyAmount: penalty, demeritPoints: points },
             req
         });
-        return res.status(201).json({ success: true, message: 'Violation created successfully', violationId: result.insertId });
+        return res.status(201).json({ success: true, message: 'Violation created successfully', violationId: result.id });
     } catch (error) {
         console.error('Create violation error:', error);
         if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ success: false, message: 'Violation code already exists' });
@@ -213,7 +179,7 @@ exports.updateViolation = async (req, res) => {
         const id = Number(req.params.id);
         if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ success: false, message: 'Invalid violation ID' });
 
-        const [rows] = await db.query('SELECT * FROM violations WHERE id = ? LIMIT 1', [id]);
+        const rows = await run(supabase.from('violations').select('*').eq('id', id).limit(1));
         if (!rows.length) return res.status(404).json({ success: false, message: 'Violation not found' });
         const current = rows[0];
 
@@ -230,11 +196,7 @@ exports.updateViolation = async (req, res) => {
             return res.status(400).json({ success: false, message: 'One or more violation fields are invalid.' });
         }
 
-        await db.query(
-            `UPDATE violations SET violation_code = ?, violation_name = ?, description = ?, penalty_amount = ?,
-             demerit_points = ?, status = ? WHERE id = ?`,
-            [code, name, description || null, penalty, points, status, id]
-        );
+        await run(supabase.from('violations').update({ violation_code: code, violation_name: name, description: description || null, penalty_amount: penalty, demerit_points: points, status }).eq('id', id));
         await logAudit({
             userId: req.user.id,
             action: 'VIOLATION_UPDATED',
@@ -256,31 +218,8 @@ exports.deleteViolation = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // Check if violation exists
-        const [violations] = await db.query('SELECT id FROM violations WHERE id = ?', [id]);
-        
-        if (violations.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Violation not found' 
-            });
-        }
-
-        // Prevent delete if violation is used in tickets
-        const [ticketRefs] = await db.query(
-            'SELECT COUNT(*) AS total FROM tickets WHERE violation_id = ?'
-            , [id]
-        );
-
-        if (ticketRefs[0].total > 0) {
-            return res.status(409).json({
-                success: false,
-                message: 'Cannot delete this violation because it is already used in existing tickets. Set it to inactive instead.'
-            });
-        }
-
-        // Delete violation
-        await db.query('DELETE FROM violations WHERE id = ?', [id]);
+        const outcome = await rpc('tvtms_catalog_delete_violation', { p_id: Number(id) });
+        if (outcome.error) return res.status(outcome.status).json({ success: false, message: outcome.error });
         await logAudit({
             userId: req.user.id,
             action: 'VIOLATION_DELETED',

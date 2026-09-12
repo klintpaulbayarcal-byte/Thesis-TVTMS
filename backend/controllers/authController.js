@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const db = require('../config/database');
+const { supabase, run, rpc } = require('../config/supabase');
 const { logAudit } = require('../utils/auditLogger');
 const emailService = require('../utils/emailService');
 
@@ -43,10 +43,7 @@ exports.login = async (req, res) => {
         }
 
         // Check if user exists
-        const [users] = await db.query(
-            'SELECT * FROM users WHERE email = ? AND status = ?',
-            [normalizedEmail, 'active']
-        );
+        const users = await run(supabase.from('users').select('*').eq('email', normalizedEmail).eq('status', 'active'));
 
         if (users.length === 0) {
             await logAudit({
@@ -108,10 +105,7 @@ exports.login = async (req, res) => {
             }
 
             try {
-                await db.query(
-                    'UPDATE users SET failed_login_attempts = ?, locked_until = ? WHERE id = ?',
-                    [failedAttempts, lockedUntil, user.id]
-                );
+                await rpc('tvtms_account_failed_login', { p_id: user.id, p_max_attempts: MAX_FAILED_ATTEMPTS, p_lock_minutes: LOCK_MINUTES });
             } catch (updateError) {
                 console.error('Lockout update skipped:', updateError.message);
             }
@@ -132,10 +126,7 @@ exports.login = async (req, res) => {
         }
 
         try {
-            await db.query(
-                'UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = ?',
-                [user.id]
-            );
+            await run(supabase.from('users').update({ failed_login_attempts: 0, locked_until: null, last_login: new Date().toISOString() }).eq('id', user.id));
         } catch (resetError) {
             console.error('Lockout reset skipped:', resetError.message);
         }
@@ -219,7 +210,7 @@ exports.requestPasswordReset = async (req, res) => {
         const genericMessage = 'If this email belongs to an active account, password reset instructions will be sent.';
         if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
 
-        const [users] = await db.query('SELECT id, email, status FROM users WHERE email = ? LIMIT 1', [email]);
+        const users = await run(supabase.from('users').select('id,email,status').eq('email', email).limit(1));
         if (!users.length || users[0].status !== 'active') return res.json({ success: true, message: genericMessage });
 
         if (!process.env.SMTP_HOST || !process.env.APP_PUBLIC_URL) {
@@ -231,12 +222,12 @@ exports.requestPasswordReset = async (req, res) => {
         const resetToken = crypto.randomBytes(32).toString('hex');
         const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
         const expiresAt = new Date(Date.now() + RESET_TOKEN_HOURS * 60 * 60 * 1000);
-        await db.query('UPDATE users SET reset_token_hash=?, reset_token_expires=? WHERE id=?', [resetTokenHash, expiresAt, user.id]);
+        await run(supabase.from('users').update({ reset_token_hash: resetTokenHash, reset_token_expires: expiresAt.toISOString() }).eq('id', user.id));
 
         const resetLink = `${String(process.env.APP_PUBLIC_URL).replace(/\/$/, '')}/pages/reset-password.html?token=${encodeURIComponent(resetToken)}`;
         const sent = await emailService.sendPasswordResetEmail(user.email, resetLink);
         if (!sent) {
-            await db.query('UPDATE users SET reset_token_hash = NULL, reset_token_expires = NULL WHERE id = ?', [user.id]);
+            await run(supabase.from('users').update({ reset_token_hash: null, reset_token_expires: null }).eq('id', user.id).eq('reset_token_hash', resetTokenHash));
             return res.json({ success: true, message: genericMessage });
         }
 
@@ -268,10 +259,7 @@ exports.resetPassword = async (req, res) => {
 
         const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-        const [users] = await db.query(
-            'SELECT id, email FROM users WHERE reset_token_hash = ? AND reset_token_expires > NOW() LIMIT 1',
-            [tokenHash]
-        );
+        const users = await run(supabase.from('users').select('id,email').eq('reset_token_hash', tokenHash).gt('reset_token_expires', new Date().toISOString()).limit(1));
 
         if (users.length === 0) {
             return res.status(400).json({
@@ -283,17 +271,8 @@ exports.resetPassword = async (req, res) => {
         const user = users[0];
         const hashedPassword = await bcrypt.hash(newPassword, 12);
 
-        const [updateResult] = await db.query(
-            `UPDATE users
-             SET password = ?,
-                 reset_token_hash = NULL,
-                 reset_token_expires = NULL,
-                 failed_login_attempts = 0,
-                 locked_until = NULL
-             WHERE id = ? AND reset_token_hash = ? AND reset_token_expires > NOW()`,
-            [hashedPassword, user.id, tokenHash]
-        );
-        if (updateResult.affectedRows !== 1) {
+        const updateResult = await rpc('tvtms_account_reset_password', { p_id: user.id, p_token_hash: tokenHash, p_password: hashedPassword });
+        if (!updateResult) {
             return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });
         }
 
@@ -316,7 +295,7 @@ exports.resetPassword = async (req, res) => {
         if (error.code === 'ER_BAD_FIELD_ERROR') {
             return res.status(400).json({
                 success: false,
-                message: 'Password reset is temporarily unavailable. Please restart the server so auto-migration can verify the database schema, then try again.'
+                message: 'Password reset is temporarily unavailable. Please contact the administrator.'
             });
         }
 
@@ -330,10 +309,7 @@ exports.resetPassword = async (req, res) => {
 // Get current user profile
 exports.getProfile = async (req, res) => {
     try {
-        const [users] = await db.query(
-            'SELECT id, name, email, role, contact_number, plate_number, created_at FROM users WHERE id = ?',
-            [req.user.id]
-        );
+        const users = await run(supabase.from('users').select('id,name,email,role,contact_number,plate_number,created_at').eq('id', req.user.id));
 
         if (users.length === 0) {
             return res.status(404).json({

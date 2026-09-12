@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const db = require('../config/database');
+const { supabase, run, rpc, allRows } = require('../config/supabase');
 const { logAudit } = require('../utils/auditLogger');
 
 const isStrongPassword = value => {
@@ -14,12 +14,7 @@ const validProfileFields = ({ name, email, contactNumber }) =>
 // Get all users (Admin only)
 exports.getAllUsers = async (req, res) => {
     try {
-        const [users] = await db.query(
-            `SELECT id, name, email, role, contact_number, status, last_login, locked_until, created_at
-             FROM users
-             WHERE role IN ('admin', 'apprehending_officer')
-             ORDER BY created_at DESC`
-        );
+        const users = await allRows(() => supabase.from('users').select('id,name,email,role,contact_number,status,last_login,locked_until,created_at').in('role', ['admin', 'apprehending_officer']).order('created_at', { ascending: false }).order('id'));
 
         res.json({
             success: true,
@@ -40,10 +35,7 @@ exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [users] = await db.query(
-            'SELECT id, name, email, role, contact_number, status, created_at FROM users WHERE id = ?',
-            [id]
-        );
+        const users = await run(supabase.from('users').select('id,name,email,role,contact_number,status,created_at').eq('id', id));
 
         if (users.length === 0) {
             return res.status(404).json({
@@ -99,10 +91,7 @@ exports.createUser = async (req, res) => {
         }
 
         // Check if email already exists
-        const [existingUsers] = await db.query(
-            'SELECT id FROM users WHERE email = ?',
-            [normalizedEmail]
-        );
+        const existingUsers = await run(supabase.from('users').select('id').eq('email', normalizedEmail));
 
         if (existingUsers.length > 0) {
             return res.status(409).json({
@@ -115,16 +104,13 @@ exports.createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert new user
-        const [result] = await db.query(
-            'INSERT INTO users (name, email, password, role, contact_number) VALUES (?, ?, ?, ?, ?)',
-            [normalizedName, normalizedEmail, hashedPassword, role, normalizedContact || null]
-        );
+        const result = await run(supabase.from('users').insert({ name: normalizedName, email: normalizedEmail, password: hashedPassword, role, contact_number: normalizedContact || null }).select('id').single());
 
         await logAudit({
             userId: req.user.id,
             action: 'USER_CREATED',
             entityType: 'users',
-            entityId: result.insertId,
+            entityId: result.id,
             metadata: { name: normalizedName, email: normalizedEmail, role },
             req
         });
@@ -132,7 +118,7 @@ exports.createUser = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'User created successfully',
-            userId: result.insertId
+            userId: result.id
         });
 
     } catch (error) {
@@ -150,7 +136,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
     try {
         const id=Number(req.params.id);
-        const [rows]=await db.query('SELECT id,name,email,role,contact_number,status FROM users WHERE id=?',[id]);
+        const rows=await run(supabase.from('users').select('id,name,email,role,contact_number,status').eq('id', id));
         if(!rows.length)return res.status(404).json({success:false,message:'User not found'});
         const current=rows[0];
         const next={
@@ -164,11 +150,8 @@ exports.updateUser = async (req, res) => {
         if(!validProfileFields({ name: next.name, email: next.email, contactNumber: next.contact_number }))return res.status(400).json({success:false,message:'Name, email, or contact number is invalid or too long'});
         if(!['admin','apprehending_officer'].includes(next.role))return res.status(400).json({success:false,message:'Invalid role'});
         if(!['active','inactive'].includes(next.status))return res.status(400).json({success:false,message:'Invalid status'});
-        if(current.role==='admin'&&(next.role!=='admin'||next.status!=='active')){
-            const [[count]]=await db.query("SELECT COUNT(*) total FROM users WHERE role='admin' AND status='active' AND id<>?",[id]);
-            if(Number(count.total)<1)return res.status(409).json({success:false,message:'At least one active administrator must remain.'});
-        }
-        await db.query('UPDATE users SET name=?,email=?,role=?,contact_number=?,status=? WHERE id=?',[next.name,next.email,next.role,next.contact_number,next.status,id]);
+        const outcome = await rpc('tvtms_account_update', { p_id: id, p_name: next.name, p_email: next.email, p_role: next.role, p_contact: next.contact_number, p_status: next.status });
+        if (outcome.error) return res.status(outcome.status).json({ success: false, message: outcome.error });
         await logAudit({userId:req.user.id,action:'USER_UPDATED',entityType:'users',entityId:id,metadata:{role:next.role,status:next.status},req});
         return res.json({success:true,message:'User updated successfully'});
     } catch(error){
@@ -183,7 +166,7 @@ exports.unlockUser = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [users] = await db.query('SELECT id FROM users WHERE id = ?', [id]);
+        const users = await run(supabase.from('users').select('id').eq('id', id));
         if (users.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -191,10 +174,7 @@ exports.unlockUser = async (req, res) => {
             });
         }
 
-        await db.query(
-            'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?',
-            [id]
-        );
+        await run(supabase.from('users').update({ failed_login_attempts: 0, locked_until: null }).eq('id', id));
 
         await logAudit({
             userId: req.user.id,
@@ -229,102 +209,19 @@ exports.deleteUser = async (req, res) => {
         return res.status(400).json({ success: false, message: 'You cannot delete your own account while logged in.' });
     }
 
-    const connection = await db.getConnection();
-    let deletedUser = null;
-
     try {
-        await connection.beginTransaction();
-
-        const [rows] = await connection.query(
-            'SELECT id, name, role, status, email FROM users WHERE id = ? FOR UPDATE',
-            [id]
-        );
-        if (!rows.length) {
-            await connection.rollback();
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        deletedUser = rows[0];
-
-        if (deletedUser.role === 'admin' && deletedUser.status === 'active') {
-            const [activeAdmins] = await connection.query(
-                "SELECT id FROM users WHERE role = 'admin' AND status = 'active' FOR UPDATE"
-            );
-            if (activeAdmins.length < 2) {
-                await connection.rollback();
-                return res.status(409).json({ success: false, message: 'At least one active administrator must remain.' });
-            }
-        }
-
-        // Enforcement and financial records must retain their original officer/admin.
-        // Accounts with those references can be deactivated, but not hard-deleted.
-        const dependencyGroups = [
-            { table: 'tickets', columns: ['user_id'], label: 'ticket' },
-            { table: 'ticket_status_history', columns: ['changed_by', 'approver_id'], label: 'ticket status change' },
-            { table: 'payments', columns: ['recorded_by', 'cashier_user_id'], label: 'payment' },
-            { table: 'disputes', columns: ['submitted_by', 'resolved_by'], label: 'dispute' },
-            { table: 'evidence', columns: ['uploaded_by'], label: 'evidence record' }
-        ];
-        const [availableColumns] = await connection.query(
-            `SELECT TABLE_NAME, COLUMN_NAME
-             FROM INFORMATION_SCHEMA.COLUMNS
-             WHERE TABLE_SCHEMA = DATABASE()
-               AND TABLE_NAME IN ('tickets', 'ticket_status_history', 'payments', 'disputes', 'evidence')`
-        );
-        const columnKeys = new Set(availableColumns.map(column =>
-            `${column.TABLE_NAME || column.table_name}.${column.COLUMN_NAME || column.column_name}`
-        ));
-        const referenceLabels = [];
-
-        for (const group of dependencyGroups) {
-            const columns = group.columns.filter(column => columnKeys.has(`${group.table}.${column}`));
-            if (!columns.length) continue;
-            // Identifiers come only from the fixed allowlist above; values remain parameterized.
-            const where = columns.map(column => `\`${column}\` = ?`).join(' OR ');
-            const [[referenceCount]] = await connection.query(
-                `SELECT COUNT(*) AS total FROM \`${group.table}\` WHERE ${where}`,
-                columns.map(() => id)
-            );
-            const total = Number(referenceCount.total);
-            if (total > 0) {
-                referenceLabels.push(`${total} ${group.label}${total === 1 ? '' : 's'}`);
-            }
-        }
-
-        if (referenceLabels.length) {
-            await connection.rollback();
-            return res.status(409).json({
-                success: false,
-                message: `This account cannot be permanently deleted because it is linked to ${referenceLabels.join(', ')}. Deactivate it instead to preserve historical records.`
-            });
-        }
-
-        const [result] = await connection.query('DELETE FROM users WHERE id = ?', [id]);
-        if (result.affectedRows !== 1) {
-            throw new Error('User deletion did not affect exactly one account.');
-        }
-        await connection.commit();
-
-        await logAudit({
-            userId: req.user.id,
-            action: 'USER_DELETED',
-            entityType: 'users',
-            entityId: id,
-            metadata: { email: deletedUser.email, name: deletedUser.name, role: deletedUser.role },
-            req
-        });
+        const outcome = await rpc('tvtms_account_delete', { p_id: id });
+        if (outcome.error) return res.status(outcome.status).json({ success: false, message: outcome.error });
+        const deletedUser = outcome.user;
+        await logAudit({ userId: req.user.id, action: 'USER_DELETED', entityType: 'users', entityId: id,
+            metadata: { email: deletedUser.email, name: deletedUser.name, role: deletedUser.role }, req });
         return res.json({ success: true, message: 'User account permanently deleted.' });
     } catch (error) {
-        try { await connection.rollback(); } catch (rollbackError) { /* connection may already be closed */ }
-        if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.code === 'ER_ROW_IS_REFERENCED') {
-            return res.status(409).json({
-                success: false,
-                message: 'This account is linked to historical records and cannot be permanently deleted. Deactivate it instead.'
-            });
+        if (['ER_ROW_IS_REFERENCED_2', 'ER_ROW_IS_REFERENCED'].includes(error.code)) {
+            return res.status(409).json({ success: false, message: 'This account is linked to historical records and cannot be permanently deleted. Deactivate it instead.' });
         }
         console.error('Delete user error:', error);
         return res.status(500).json({ success: false, message: 'Server error while deleting user' });
-    } finally {
-        connection.release();
     }
 };
 
@@ -353,7 +250,7 @@ exports.changePassword = async (req, res) => {
         }
 
         // Get user
-        const [users] = await db.query('SELECT password FROM users WHERE id = ?', [userId]);
+        const users = await run(supabase.from('users').select('password').eq('id', userId));
 
         if (users.length === 0) {
             return res.status(404).json({
@@ -376,7 +273,8 @@ exports.changePassword = async (req, res) => {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Update password
-        await db.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, userId]);
+        const changed = await run(supabase.from('users').update({ password: hashedPassword }).eq('id', userId).eq('password', users[0].password).select('id'));
+        if (!changed.length) return res.status(409).json({ success: false, message: 'Password changed concurrently. Please retry.' });
 
         await logAudit({
             userId,
@@ -418,10 +316,7 @@ exports.updateMyProfile = async (req, res) => {
             });
         }
 
-        const [existingUser] = await db.query(
-            'SELECT id FROM users WHERE id = ? LIMIT 1',
-            [userId]
-        );
+        const existingUser = await run(supabase.from('users').select('id').eq('id', userId).limit(1));
 
         if (existingUser.length === 0) {
             return res.status(404).json({
@@ -430,10 +325,7 @@ exports.updateMyProfile = async (req, res) => {
             });
         }
 
-        const [duplicateUsers] = await db.query(
-            'SELECT id FROM users WHERE email = ? AND id <> ? LIMIT 1',
-            [normalizedEmail, userId]
-        );
+        const duplicateUsers = await run(supabase.from('users').select('id').eq('email', normalizedEmail).neq('id', userId).limit(1));
 
         if (duplicateUsers.length > 0) {
             return res.status(409).json({
@@ -442,19 +334,8 @@ exports.updateMyProfile = async (req, res) => {
             });
         }
 
-        await db.query(
-            `UPDATE users
-             SET name = ?,
-                 email = ?,
-                 contact_number = ?
-             WHERE id = ?`,
-            [normalizedName, normalizedEmail, normalizedContact || null, userId]
-        );
-
-        const [updatedUser] = await db.query(
-            'SELECT id, name, email, role, contact_number, plate_number, created_at FROM users WHERE id = ? LIMIT 1',
-            [userId]
-        );
+        const updatedUser = await run(supabase.from('users').update({ name: normalizedName, email: normalizedEmail, contact_number: normalizedContact || null }).eq('id', userId).select('id,name,email,role,contact_number,plate_number,created_at'));
+        if (!updatedUser.length) return res.status(404).json({ success: false, message: 'User not found' });
 
         await logAudit({
             userId,
@@ -472,6 +353,7 @@ exports.updateMyProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('Update profile error:', error);
+        if (error.code === 'ER_DUP_ENTRY') return res.status(409).json({ success: false, message: 'Email already exists' });
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -483,19 +365,11 @@ exports.getAuditLogs = async (req, res) => {
     try {
         const limit = Math.min(parseInt(req.query.limit, 10) || 200, 1000);
 
-        const [logs] = await db.query(
-            `SELECT a.id, a.user_id, a.action, a.entity_type, a.entity_id, a.metadata, a.ip_address, a.user_agent, a.created_at,
-                    u.name AS actor_name, u.email AS actor_email
-             FROM audit_logs a
-             LEFT JOIN users u ON a.user_id = u.id
-             ORDER BY a.created_at DESC
-             LIMIT ?`,
-            [limit]
-        );
+        const logs = await run(supabase.from('audit_logs').select('id,user_id,action,entity_type,entity_id,metadata,ip_address,user_agent,created_at,users(name,email)').order('created_at', { ascending: false }).order('id').limit(limit));
 
         res.json({
             success: true,
-            logs
+            logs: logs.map(({ users, ...log }) => ({ ...log, actor_name: users?.name || null, actor_email: users?.email || null }))
         });
     } catch (error) {
         console.error('Get audit logs error:', error);
@@ -503,7 +377,7 @@ exports.getAuditLogs = async (req, res) => {
         if (error.code === 'ER_NO_SUCH_TABLE') {
             return res.status(400).json({
                 success: false,
-                message: 'Audit log table is out of date. Restart the server so auto-migration can update it.'
+                message: 'Audit log table is unavailable. Please contact the administrator.'
             });
         }
 
@@ -520,8 +394,8 @@ exports.clearTestLogs = async (req, res) => {
         return res.status(403).json({ success: false, message: 'Audit log deletion is disabled outside development.' });
     }
     try {
-        const [result]=await db.query("DELETE FROM audit_logs WHERE action LIKE 'TEST_%'");
-        await logAudit({userId:req.user.id,action:'TEST_AUDIT_LOGS_CLEARED',entityType:'audit_logs',metadata:{deleted:result.affectedRows},req});
-        return res.json({success:true,message:`${result.affectedRows} test audit log(s) removed.`,deletedRows:result.affectedRows});
+        const result=await rpc('tvtms_account_clear_test_logs', {});
+        await logAudit({userId:req.user.id,action:'TEST_AUDIT_LOGS_CLEARED',entityType:'audit_logs',metadata:{deleted:result},req});
+        return res.json({success:true,message:`${result} test audit log(s) removed.`,deletedRows:result});
     } catch(error){return res.status(500).json({success:false,message:'Failed to clear test audit logs'});}
 };

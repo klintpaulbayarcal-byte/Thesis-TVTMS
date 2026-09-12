@@ -5,7 +5,8 @@ const helmet = require('helmet');
 const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const db = require('./config/database');
+const { checkConnection } = require('./config/supabase');
+const { readSupabaseConfig } = require('./config/supabase-settings');
 const { getSmtpStatus } = require('./utils/emailService');
 const { apiLimiter, publicLookupLimiter, publicWriteLimiter } = require('./middleware/securityMiddleware');
 
@@ -19,9 +20,7 @@ const validateEnvironment = () => {
     if (jwtSecret.length < 32 || /your-secret|change-me|secret-key/i.test(jwtSecret)) {
         errors.push('JWT_SECRET must be a strong, unique value with at least 32 characters.');
     }
-    if (!String(process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim()) {
-        errors.push('DATABASE_URL is required for the Supabase PostgreSQL connection.');
-    }
+    try { readSupabaseConfig(); } catch (error) { errors.push(error.message); }
     if (isProduction && !String(process.env.ALLOWED_ORIGINS || '').trim()) {
         errors.push('ALLOWED_ORIGINS is required in production.');
     }
@@ -98,13 +97,13 @@ app.use('/api/public', publicRoutes);
 
 app.get('/api/health', async (req, res) => {
     try {
-        await db.checkConnection();
+        await checkConnection();
         const smtp = getSmtpStatus();
         res.json({
             success: true,
             status: 'healthy',
             database: 'connected',
-            databaseClient: db.client,
+            databaseClient: 'supabase',
             smtp: smtp.configured ? 'configured' : 'not_configured',
             deployment: process.env.NODE_ENV || 'development',
             capabilities: [
@@ -147,7 +146,7 @@ app.use((err, req, res, next) => {
 
 const start = async () => {
     validateEnvironment();
-    await db.checkConnection();
+    await checkConnection();
     app.listen(PORT, () => console.log(`Website listening on port ${PORT}`));
 };
 

@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const { rpc } = require('../config/supabase');
 const { logAudit } = require('../utils/auditLogger');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const emailService = require('../utils/emailService');
@@ -15,24 +15,6 @@ const lifecycleToLegacyStatus = {
     voided: 'cancelled'
 };
 
-const legacyToLifecycleStatus = {
-    unpaid: 'pending_payment',
-    paid: 'paid',
-    cancelled: 'cancelled'
-};
-
-const lifecycleTransitionMap = {
-    draft: ['issued', 'cancelled', 'voided'],
-    issued: ['pending_payment', 'partially_paid', 'paid', 'cancelled', 'voided'],
-    pending_payment: ['partially_paid', 'paid', 'cancelled', 'voided'],
-    partially_paid: ['partially_paid', 'paid', 'cancelled', 'voided'],
-    unpaid: ['pending_payment', 'partially_paid', 'paid', 'cancelled', 'voided'],
-    paid: ['closed'],
-    closed: [],
-    cancelled: [],
-    voided: []
-};
-
 const validLifecycleStatuses = Object.keys(lifecycleToLegacyStatus);
 
 const parsePositiveInt = (value, fallback) => {
@@ -40,186 +22,11 @@ const parsePositiveInt = (value, fallback) => {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 };
 
-const getLatestLifecycleStatusSafe = async (ticketId, legacyStatus, executor = db) => {
-    try {
-        const [rows] = await executor.query(
-            `SELECT new_status
-             FROM ticket_status_history
-             WHERE ticket_id = ?
-             ORDER BY id DESC
-             LIMIT 1`,
-            [ticketId]
-        );
-
-        if (rows.length > 0) {
-            return rows[0].new_status;
-        }
-    } catch (error) {
-        if (!(error && error.code === 'ER_NO_SUCH_TABLE')) {
-            throw error;
-        }
-    }
-
-    return legacyToLifecycleStatus[legacyStatus] || 'pending_payment';
-};
-
-const isTransitionAllowed = (fromStatus, toStatus) => {
-    const allowedTargets = lifecycleTransitionMap[fromStatus] || [];
-    return allowedTargets.includes(toStatus);
-};
-
-const resolveOwnerIdSafe = async (connection, ownerName, ownerEmail, ownerAddress) => {
-    if (!ownerName && !ownerEmail) {
-        return null;
-    }
-
-    try {
-        let existingOwner = [];
-
-        if (ownerEmail) {
-            [existingOwner] = await connection.query(
-                'SELECT id FROM owners WHERE email = ? LIMIT 1',
-                [ownerEmail]
-            );
-        } else {
-            [existingOwner] = await connection.query(
-                'SELECT id FROM owners WHERE name = ? ORDER BY id DESC LIMIT 1',
-                [ownerName]
-            );
-        }
-
-        if (existingOwner.length > 0) {
-            const ownerId = existingOwner[0].id;
-            await connection.query(
-                `UPDATE owners
-                 SET name = COALESCE(?, name),
-                     email = COALESCE(?, email),
-                     address = COALESCE(?, address)
-                 WHERE id = ?`,
-                [ownerName || null, ownerEmail || null, ownerAddress || null, ownerId]
-            );
-            return ownerId;
-        }
-
-        const [result] = await connection.query(
-            'INSERT INTO owners (name, email, address) VALUES (?, ?, ?)',
-            [ownerName || 'Unknown Owner', ownerEmail || null, ownerAddress || null]
-        );
-
-        return result.insertId;
-    } catch (error) {
-        if (error && (error.code === 'ER_NO_SUCH_TABLE' || error.code === 'ER_BAD_FIELD_ERROR')) {
-            return null;
-        }
-
-        throw error;
-    }
-};
-
-const getEffectivePenalty = async ({ violationId, plateNumber, executor = db }) => {
-    const [[baseViolation]] = await executor.query(
-        'SELECT penalty_amount FROM violations WHERE id = ? LIMIT 1',
-        [violationId]
-    );
-
-    if (!baseViolation) {
-        throw new Error('Violation not found');
-    }
-
-    const basePenalty = Number(baseViolation.penalty_amount);
-
-    const [[history]] = await executor.query(
-        `SELECT COUNT(*) as prior_count
-         FROM tickets t
-         JOIN vehicles v ON t.vehicle_id = v.id
-         WHERE t.violation_id = ?
-           AND REPLACE(REPLACE(UPPER(v.plate_number), '-', ''), ' ', '') = ?
-           AND t.status <> 'cancelled'`,
-        [violationId, plateNumber]
-    );
-
-    const nextOffenseCount = Number(history.prior_count || 0) + 1;
-
-    try {
-        const [ruleRows] = await executor.query(
-            `SELECT penalty_amount
-             FROM violation_penalty_rules
-             WHERE violation_id = ?
-               AND offense_count = ?
-               AND is_active = 1
-               AND effective_from <= CURDATE()
-               AND (effective_to IS NULL OR effective_to >= CURDATE())
-             ORDER BY effective_from DESC
-             LIMIT 1`,
-            [violationId, nextOffenseCount]
-        );
-
-        if (ruleRows.length > 0) {
-            return {
-                basePenalty,
-                effectivePenalty: Number(ruleRows[0].penalty_amount),
-                nextOffenseCount,
-                usedEscalationRule: true
-            };
-        }
-    } catch (error) {
-        if (!(error && error.code === 'ER_NO_SUCH_TABLE')) {
-            throw error;
-        }
-    }
-
-    return {
-        basePenalty,
-        effectivePenalty: basePenalty,
-        nextOffenseCount,
-        usedEscalationRule: false
-    };
-};
-
-const insertStatusHistorySafe = async ({
-    ticketId,
-    previousStatus,
-    newStatus,
-    changedBy,
-    reason = null,
-    approverId = null,
-    executor = db
-}) => {
-    try {
-        await executor.query(
-            `INSERT INTO ticket_status_history
-            (ticket_id, previous_status, new_status, changed_by, reason, approver_id)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [ticketId, previousStatus, newStatus, changedBy, reason, approverId]
-        );
-    } catch (error) {
-        // Keep legacy compatibility if migration has not been applied yet.
-        if (error && (error.code === 'ER_NO_SUCH_TABLE' || error.code === 'ER_BAD_FIELD_ERROR')) {
-            return;
-        }
-
-        throw error;
-    }
-};
-
-// Generate a unique, sequential ticket number atomically on the active transaction.
-const generateTicketNumber = async connection => {
-    const year = Number(new Intl.DateTimeFormat('en', {
-        timeZone: 'Asia/Manila', year: 'numeric'
-    }).format(new Date()));
-
-    const [rows] = await connection.query(
-        `INSERT INTO ticket_number_sequences (sequence_year, last_number)
-         VALUES (?, 1)
-         ON CONFLICT (sequence_year) DO UPDATE
-         SET last_number = ticket_number_sequences.last_number + 1,
-             updated_at = CURRENT_TIMESTAMP
-         RETURNING last_number AS next_number`,
-        [year]
-    );
-    const [row] = rows;
-    const nextNumber = Number(row.next_number || 1);
-    return `TVT-${year}-${String(nextNumber).padStart(6, '0')}`;
+// Domain rejections are returned before any write by the atomic RPC.
+const domainError = (res, result) => {
+    if (!result.error) return false;
+    sendError(res, result.error.message, result.error);
+    return true;
 };
 
 // Get all tickets
@@ -247,108 +54,16 @@ exports.getAllTickets = async (req, res) => {
         const normalizedSortBy = allowedSortBy.includes(sortBy) ? sortBy : 'date_issued';
         const normalizedSortOrder = String(sortOrder).toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
-        let query = `
-            SELECT td.*, t.user_id
-            FROM ticket_details td
-            JOIN tickets t ON td.id = t.id
-            WHERE 1=1
-        `;
-        let params = [];
-
-        let countQuery = `
-            SELECT COUNT(*) as total
-            FROM ticket_details td
-            JOIN tickets t ON td.id = t.id
-            WHERE 1=1
-        `;
-        let countParams = [];
-
-        if (status) {
-            const legacyStatus = lifecycleToLegacyStatus[status] || status;
-            query += ' AND td.status = ?';
-            countQuery += ' AND td.status = ?';
-            params.push(legacyStatus);
-            countParams.push(legacyStatus);
-        }
-
-        if (dateFrom) {
-            query += ' AND td.date_issued >= ?';
-            countQuery += ' AND td.date_issued >= ?';
-            params.push(dateFrom);
-            countParams.push(dateFrom);
-        }
-
-        if (dateTo) {
-            query += ' AND td.date_issued <= ?';
-            countQuery += ' AND td.date_issued <= ?';
-            params.push(dateTo);
-            countParams.push(dateTo);
-        }
-
-        if (enforcerId) {
-            query += ' AND t.user_id = ?';
-            countQuery += ' AND t.user_id = ?';
-            params.push(enforcerId);
-            countParams.push(enforcerId);
-        }
-
-        if (violation) {
-            const violationTerm = `%${violation}%`;
-            query += ' AND (td.violation_name LIKE ? OR td.violation_code LIKE ?)';
-            countQuery += ' AND (td.violation_name LIKE ? OR td.violation_code LIKE ?)';
-            params.push(violationTerm, violationTerm);
-            countParams.push(violationTerm, violationTerm);
-        }
-
-        if (location) {
-            query += ' AND td.location LIKE ?';
-            countQuery += ' AND td.location LIKE ?';
-            params.push(`%${location}%`);
-            countParams.push(`%${location}%`);
-        }
-
-        // Officers can only view tickets they issued.
-        if (req.user.role === 'apprehending_officer') {
-            query += ' AND t.user_id = ?';
-            countQuery += ' AND t.user_id = ?';
-            params.push(req.user.id);
-            countParams.push(req.user.id);
-        }
-
-
-        if (search) {
-            const searchTerm = `%${search}%`;
-            query += `
-                AND (
-                    td.ticket_number LIKE ?
-                    OR td.plate_number LIKE ?
-                    OR td.owner_name LIKE ?
-                    OR td.owner_email LIKE ?
-                    OR td.violation_name LIKE ?
-                )
-            `;
-            countQuery += `
-                AND (
-                    td.ticket_number LIKE ?
-                    OR td.plate_number LIKE ?
-                    OR td.owner_name LIKE ?
-                    OR td.owner_email LIKE ?
-                    OR td.violation_name LIKE ?
-                )
-            `;
-
-            params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
-            countParams.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm);
-        }
-
-        query += ` ORDER BY td.${normalizedSortBy} ${normalizedSortOrder}, td.time_issued DESC LIMIT ? OFFSET ?`;
-        params.push(safePageSize, offset);
-
-        const [[countResult]] = await db.query(countQuery, countParams);
-        const total = countResult.total || 0;
+        const result = await rpc('tvtms_ticket_list', { p_filters: {
+            status: status ? lifecycleToLegacyStatus[status] || status : null,
+            dateFrom, dateTo, enforcerId, violation, location, search,
+            officerId: req.user.role === 'apprehending_officer' ? req.user.id : null,
+            sortBy: normalizedSortBy, sortOrder: normalizedSortOrder,
+            pageSize: safePageSize, offset
+        } });
+        const tickets = result.tickets;
+        const total = Number(result.total || 0);
         const totalPages = Math.ceil(total / safePageSize) || 1;
-
-        const [tickets] = await db.query(query, params);
 
         return sendSuccess(res, 'Tickets fetched successfully', tickets, {
             pagination: {
@@ -376,13 +91,8 @@ exports.getTicketById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const [tickets] = await db.query(
-            `SELECT td.*, t.user_id
-             FROM ticket_details td
-             JOIN tickets t ON td.id = t.id
-             WHERE td.id = ?`,
-            [id]
-        );
+        const detail = await rpc('tvtms_ticket_detail', { p_id: id });
+        const tickets = detail ? [detail] : [];
 
         if (tickets.length === 0) {
             return sendError(res, 'Ticket not found', {
@@ -400,25 +110,7 @@ exports.getTicketById = async (req, res) => {
         }
 
 
-        // Feature 1: Ticket Activity Timeline - reuse ticket_status_history,
-        // don't create a separate tracking table.
-        let timeline = [];
-        try {
-            const [history] = await db.query(
-                `SELECT h.id, h.previous_status, h.new_status, h.reason, h.created_at,
-                        u.name AS changed_by_name
-                 FROM ticket_status_history h
-                 LEFT JOIN users u ON h.changed_by = u.id
-                 WHERE h.ticket_id = ?
-                 ORDER BY h.created_at ASC, h.id ASC`,
-                [id]
-            );
-            timeline = history;
-        } catch (historyError) {
-            if (!(historyError && historyError.code === 'ER_NO_SUCH_TABLE')) {
-                throw historyError;
-            }
-        }
+        const timeline = tickets[0].timeline || [];
 
         return sendSuccess(res, 'Ticket fetched successfully', { ...tickets[0], timeline }, {
             legacy: {
@@ -437,8 +129,6 @@ exports.getTicketById = async (req, res) => {
 
 // Create new ticket
 exports.createTicket = async (req, res) => {
-    const connection = await db.getConnection();
-    let committed = false;
 
     try {
         const {
@@ -469,102 +159,17 @@ exports.createTicket = async (req, res) => {
             return sendError(res, 'One or more ticket fields exceed the allowed length', { statusCode: 400, errorCode: 'VALIDATION_ERROR' });
         }
 
-        await connection.beginTransaction();
-
-        const [[violation]] = await connection.query(
-            "SELECT id, status FROM violations WHERE id = ? LIMIT 1",
-            [violationId]
-        );
-        if (!violation || violation.status !== 'active') {
-            await connection.rollback();
-            return sendError(res, 'Selected violation is unavailable', { statusCode: 400, errorCode: 'VIOLATION_UNAVAILABLE' });
-        }
-
-        const ownerId = await resolveOwnerIdSafe(
-            connection,
-            normalizedOwnerName || null,
-            normalizedOwnerEmail || null,
-            normalizedOwnerAddress || null
-        );
-
-        let vehicleId;
-        const [vehicles] = await connection.query(
-            `SELECT id, owner_name, owner_email, owner_address
-             FROM vehicles
-             WHERE REPLACE(REPLACE(UPPER(plate_number), '-', ''), ' ', '') = ?
-             LIMIT 1 FOR UPDATE`,
-            [normalizedPlateNumber]
-        );
-
-        let ownerNameSnapshot = normalizedOwnerName || null;
-        let ownerEmailSnapshot = normalizedOwnerEmail || null;
-        let ownerAddressSnapshot = normalizedOwnerAddress || null;
-
-        if (vehicles.length) {
-            vehicleId = vehicles[0].id;
-            ownerNameSnapshot ||= vehicles[0].owner_name || null;
-            ownerEmailSnapshot ||= vehicles[0].owner_email || null;
-            ownerAddressSnapshot ||= vehicles[0].owner_address || null;
-            await connection.query(
-                `UPDATE vehicles SET
-                    vehicle_type = ?,
-                    owner_name = COALESCE(NULLIF(?, ''), owner_name),
-                    owner_email = COALESCE(NULLIF(?, ''), owner_email),
-                    owner_address = COALESCE(NULLIF(?, ''), owner_address),
-                    owner_id = COALESCE(?, owner_id),
-                    driver_license_number = COALESCE(NULLIF(?, ''), driver_license_number)
-                 WHERE id = ?`,
-                [normalizedVehicleType, normalizedOwnerName, normalizedOwnerEmail, normalizedOwnerAddress, ownerId, normalizedLicense, vehicleId]
-            );
-        } else {
-            const [vehicleResult] = await connection.query(
-                `INSERT INTO vehicles
-                 (plate_number, vehicle_type, owner_name, owner_email, owner_address, owner_id, driver_license_number)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [normalizedPlateNumber, normalizedVehicleType, normalizedOwnerName || null, normalizedOwnerEmail || null,
-                    normalizedOwnerAddress || null, ownerId, normalizedLicense || null]
-            );
-            vehicleId = vehicleResult.insertId;
-        }
-
-        const penaltyInfo = await getEffectivePenalty({
-            violationId,
-            plateNumber: normalizedPlateNumber,
-            executor: connection
-        });
-        const ticketNumber = await generateTicketNumber(connection);
-
-        const [ticketResult] = await connection.query(
-            `INSERT INTO tickets
-             (ticket_number, user_id, vehicle_id, violation_id,
-              owner_name_at_issue, owner_email_at_issue, owner_address_at_issue,
-              penalty_amount_at_issue, date_issued, time_issued, location, remarks)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURDATE(), CURTIME(), ?, ?)`,
-            [ticketNumber, req.user.id, vehicleId, violationId,
-                ownerNameSnapshot, ownerEmailSnapshot, ownerAddressSnapshot,
-                penaltyInfo.effectivePenalty, normalizedLocation || null, normalizedRemarks || null]
-        );
-
-        await insertStatusHistorySafe({
-            ticketId: ticketResult.insertId,
-            previousStatus: null,
-            newStatus: 'draft',
-            changedBy: req.user.id,
-            reason: 'Ticket drafted in system',
-            executor: connection
-        });
-        await insertStatusHistorySafe({
-            ticketId: ticketResult.insertId,
-            previousStatus: 'draft',
-            newStatus: 'issued',
-            changedBy: req.user.id,
-            reason: 'Ticket was issued',
-            executor: connection
-        });
-
-        const [newTicket] = await connection.query('SELECT * FROM ticket_details WHERE id = ?', [ticketResult.insertId]);
-        await connection.commit();
-        committed = true;
+        const result = await rpc('tvtms_ticket_create', { p_user_id: req.user.id, p_data: {
+            plate_number: normalizedPlateNumber, vehicle_type: normalizedVehicleType,
+            owner_name: normalizedOwnerName, owner_email: normalizedOwnerEmail,
+            owner_address: normalizedOwnerAddress, driver_license_number: normalizedLicense,
+            violation_id: violationId, location: normalizedLocation, remarks: normalizedRemarks
+        } });
+        if (domainError(res, result)) return;
+        const newTicket = [result.ticket];
+        const ticketResult = { insertId: result.ticket.id };
+        const ticketNumber = result.ticket.ticket_number;
+        const penaltyInfo = result.penaltyInfo;
 
         try {
             await logAudit({
@@ -611,9 +216,6 @@ exports.createTicket = async (req, res) => {
             legacy: { ticket: newTicket[0] }
         });
     } catch (error) {
-        if (!committed) {
-            try { await connection.rollback(); } catch {}
-        }
         console.error('Create ticket error:', error);
         if (error.code === 'ER_DUP_ENTRY') {
             return sendError(res, 'A duplicate ticket or vehicle record was detected. Please retry.', {
@@ -623,15 +225,11 @@ exports.createTicket = async (req, res) => {
         return sendError(res, 'Server error while issuing ticket', {
             statusCode: 500, errorCode: 'TICKET_CREATE_FAILED'
         });
-    } finally {
-        connection.release();
     }
 };
 
 // Update ticket status
 exports.updateTicketStatus = async (req, res) => {
-    const connection = await db.getConnection();
-    let committed = false;
     try {
         const id = Number(req.params.id);
         const status = String(req.body.status || '').trim();
@@ -655,57 +253,13 @@ exports.updateTicketStatus = async (req, res) => {
             });
         }
 
-        await connection.beginTransaction();
-        const [tickets] = await connection.query(
-            'SELECT id, status, user_id FROM tickets WHERE id = ? FOR UPDATE',
-            [id]
-        );
-        if (!tickets.length) {
-            await connection.rollback();
-            return sendError(res, 'Ticket not found', { statusCode: 404, errorCode: 'TICKET_NOT_FOUND' });
-        }
-        const ticket = tickets[0];
-        if (req.user.role === 'apprehending_officer' && ticket.user_id !== req.user.id) {
-            await connection.rollback();
-            return sendError(res, 'Access denied', { statusCode: 403, errorCode: 'TICKET_ACCESS_DENIED' });
-        }
-
-        if (['cancelled', 'voided'].includes(status)) {
-            const [[paymentSummary]] = await connection.query(
-                `SELECT COALESCE(SUM(amount_paid), 0) AS total_paid
-                 FROM payments WHERE ticket_id = ? AND payment_status <> 'voided'`,
-                [id]
-            );
-            if (Number(paymentSummary.total_paid || 0) > 0) {
-                await connection.rollback();
-                return sendError(res, 'Tickets with recorded payments cannot be cancelled or voided', {
-                    statusCode: 409,
-                    errorCode: 'PAYMENT_EXISTS'
-                });
-            }
-        }
-
-        const currentLifecycleStatus = await getLatestLifecycleStatusSafe(id, ticket.status, connection);
-        if (!isTransitionAllowed(currentLifecycleStatus, status)) {
-            await connection.rollback();
-            return sendError(res, `Invalid lifecycle transition: ${currentLifecycleStatus} -> ${status}`, {
-                statusCode: 409, errorCode: 'INVALID_STATUS_TRANSITION'
-            });
-        }
-
-        const dbStatus = lifecycleToLegacyStatus[status];
-        await connection.query('UPDATE tickets SET status = ? WHERE id = ?', [dbStatus, id]);
-        await insertStatusHistorySafe({
-            ticketId: id,
-            previousStatus: currentLifecycleStatus,
-            newStatus: status,
-            changedBy: req.user.id,
-            reason: reason || null,
-            approverId: req.user.id,
-            executor: connection
+        const result = await rpc('tvtms_ticket_mutate', {
+            p_action: 'status', p_id: id, p_user_id: req.user.id, p_role: req.user.role,
+            p_data: { status, reason }
         });
-        await connection.commit();
-        committed = true;
+        if (domainError(res, result)) return;
+        const currentLifecycleStatus = result.previousLifecycleStatus;
+        const dbStatus = result.storedStatus;
 
         try {
             await logAudit({
@@ -730,69 +284,32 @@ exports.updateTicketStatus = async (req, res) => {
             id, requestedStatus: status, storedStatus: dbStatus
         });
     } catch (error) {
-        if (!committed) {
-            try { await connection.rollback(); } catch {}
-        }
         console.error('Update ticket error:', error);
         return sendError(res, 'Server error while updating ticket', {
             statusCode: 500, errorCode: 'TICKET_UPDATE_FAILED'
         });
-    } finally {
-        connection.release();
     }
 };
 
 // Update editable ticket details
 exports.updateTicketDetails = async (req, res) => {
-    const connection = await db.getConnection();
     try {
         const id = Number(req.params.id);
         if (!Number.isInteger(id) || id <= 0) {
             return sendError(res, 'Invalid ticket ID', { statusCode: 400, errorCode: 'VALIDATION_ERROR' });
         }
 
-        await connection.beginTransaction();
-        const [tickets] = await connection.query(
-            'SELECT id, status, user_id, location, remarks FROM tickets WHERE id = ? FOR UPDATE',
-            [id]
-        );
-        if (!tickets.length) {
-            await connection.rollback();
-            return sendError(res, 'Ticket not found', { statusCode: 404, errorCode: 'TICKET_NOT_FOUND' });
-        }
-
-        const current = tickets[0];
-        if (req.user.role === 'apprehending_officer' && current.user_id !== req.user.id) {
-            await connection.rollback();
-            return sendError(res, 'Access denied', { statusCode: 403, errorCode: 'TICKET_ACCESS_DENIED' });
-        }
-        if (['paid', 'cancelled'].includes(current.status)) {
-            await connection.rollback();
-            return sendError(res, 'Paid or cancelled tickets cannot be edited', {
-                statusCode: 409,
-                errorCode: 'INVALID_OPERATION'
-            });
-        }
-
-        const normalizedLocation = typeof req.body.location === 'string'
-            ? req.body.location.trim()
-            : String(current.location || '').trim();
-        const normalizedRemarks = typeof req.body.remarks === 'string'
-            ? req.body.remarks.trim()
-            : String(current.remarks || '').trim();
-        if (normalizedLocation.length > 200 || normalizedRemarks.length > 4000) {
-            await connection.rollback();
-            return sendError(res, 'Location or remarks exceed the allowed length', {
-                statusCode: 400,
-                errorCode: 'VALIDATION_ERROR'
-            });
-        }
-
-        await connection.query(
-            'UPDATE tickets SET location = ?, remarks = ? WHERE id = ?',
-            [normalizedLocation || null, normalizedRemarks || null, id]
-        );
-        await connection.commit();
+        const result = await rpc('tvtms_ticket_mutate', {
+            p_action: 'details', p_id: id, p_user_id: req.user.id, p_role: req.user.role,
+            p_data: {
+                ...(typeof req.body.location === 'string' ? { location: req.body.location.trim() } : {}),
+                ...(typeof req.body.remarks === 'string' ? { remarks: req.body.remarks.trim() } : {})
+            }
+        });
+        if (domainError(res, result)) return;
+        const current = result.previous;
+        const normalizedLocation = result.location;
+        const normalizedRemarks = result.remarks;
 
         try {
             await logAudit({
@@ -818,17 +335,13 @@ exports.updateTicketDetails = async (req, res) => {
             remarks: normalizedRemarks || null
         });
     } catch (error) {
-        try { await connection.rollback(); } catch {}
         console.error('Update ticket details error:', error);
         return sendError(res, 'Server error', { statusCode: 500, errorCode: 'TICKET_UPDATE_FAILED' });
-    } finally {
-        connection.release();
     }
 };
 
 // Cancel ticket (admin only). Records are retained for accountability.
 exports.deleteTicket = async (req, res) => {
-    const connection = await db.getConnection();
     try {
         const id = Number(req.params.id);
         const reason = String(req.body?.reason || req.query.reason || '').trim();
@@ -842,49 +355,12 @@ exports.deleteTicket = async (req, res) => {
             });
         }
 
-        await connection.beginTransaction();
-        const [rows] = await connection.query(
-            'SELECT id, ticket_number, status FROM tickets WHERE id = ? FOR UPDATE',
-            [id]
-        );
-        if (!rows.length) {
-            await connection.rollback();
-            return sendError(res, 'Ticket not found', { statusCode: 404, errorCode: 'TICKET_NOT_FOUND' });
-        }
-
-        const ticket = rows[0];
-        if (ticket.status === 'paid') {
-            await connection.rollback();
-            return sendError(res, 'Paid tickets cannot be cancelled', { statusCode: 409, errorCode: 'INVALID_OPERATION' });
-        }
-        if (ticket.status === 'cancelled') {
-            await connection.rollback();
-            return sendError(res, 'Ticket is already cancelled', { statusCode: 409, errorCode: 'ALREADY_CANCELLED' });
-        }
-        const [[paymentSummary]] = await connection.query(
-            `SELECT COALESCE(SUM(amount_paid), 0) AS total_paid
-             FROM payments WHERE ticket_id = ? AND payment_status <> 'voided'`,
-            [id]
-        );
-        if (Number(paymentSummary.total_paid || 0) > 0) {
-            await connection.rollback();
-            return sendError(res, 'Tickets with recorded payments cannot be cancelled', {
-                statusCode: 409,
-                errorCode: 'PAYMENT_EXISTS'
-            });
-        }
-
-        await connection.query("UPDATE tickets SET status = 'cancelled' WHERE id = ?", [id]);
-        await insertStatusHistorySafe({
-            ticketId: id,
-            previousStatus: ticket.status,
-            newStatus: 'cancelled',
-            changedBy: req.user.id,
-            reason,
-            approverId: req.user.id,
-            executor: connection
+        const result = await rpc('tvtms_ticket_mutate', {
+            p_action: 'cancel', p_id: id, p_user_id: req.user.id, p_role: req.user.role,
+            p_data: { reason }
         });
-        await connection.commit();
+        if (domainError(res, result)) return;
+        const ticket = result.ticket;
 
         try {
             await logAudit({
@@ -905,17 +381,13 @@ exports.deleteTicket = async (req, res) => {
             status: 'cancelled'
         });
     } catch (error) {
-        try { await connection.rollback(); } catch {}
         console.error('Cancel ticket error:', error);
         return sendError(res, 'Server error', { statusCode: 500, errorCode: 'TICKET_CANCEL_FAILED' });
-    } finally {
-        connection.release();
     }
 };
 
 // Permanently delete an unpaid/cancelled ticket with no linked official records (admin only).
 exports.permanentlyDeleteTicket = async (req, res) => {
-    const connection = await db.getConnection();
     try {
         const id = Number(req.params.id);
         const reason = String(req.body?.reason || '').trim();
@@ -929,49 +401,12 @@ exports.permanentlyDeleteTicket = async (req, res) => {
             });
         }
 
-        await connection.beginTransaction();
-        const [rows] = await connection.query(
-            'SELECT id, ticket_number, status FROM tickets WHERE id = ? FOR UPDATE',
-            [id]
-        );
-        if (!rows.length) {
-            await connection.rollback();
-            return sendError(res, 'Ticket not found', { statusCode: 404, errorCode: 'TICKET_NOT_FOUND' });
-        }
-
-        const ticket = rows[0];
-        if (!['unpaid', 'cancelled'].includes(ticket.status)) {
-            await connection.rollback();
-            return sendError(res, 'Only unpaid or cancelled tickets can be permanently deleted', {
-                statusCode: 409,
-                errorCode: 'TICKET_DELETE_NOT_ALLOWED'
-            });
-        }
-
-        const [[linkedRecords]] = await connection.query(
-            `SELECT
-                (SELECT COUNT(*) FROM payments WHERE ticket_id = ?) AS payments_count,
-                (SELECT COUNT(*) FROM disputes WHERE ticket_id = ?) AS disputes_count,
-                (SELECT COUNT(*) FROM evidence WHERE ticket_id = ?) AS evidence_count`,
-            [id, id, id]
-        );
-        const linkedCount = Number(linkedRecords.payments_count || 0)
-            + Number(linkedRecords.disputes_count || 0)
-            + Number(linkedRecords.evidence_count || 0);
-        if (linkedCount > 0) {
-            await connection.rollback();
-            return sendError(res, 'This ticket has linked payment, dispute, or evidence records and cannot be deleted', {
-                statusCode: 409,
-                errorCode: 'LINKED_RECORDS_EXIST'
-            });
-        }
-
-        const [result] = await connection.query('DELETE FROM tickets WHERE id = ?', [id]);
-        if (result.affectedRows !== 1) {
-            await connection.rollback();
-            return sendError(res, 'Ticket could not be deleted', { statusCode: 409, errorCode: 'DELETE_FAILED' });
-        }
-        await connection.commit();
+        const result = await rpc('tvtms_ticket_mutate', {
+            p_action: 'delete', p_id: id, p_user_id: req.user.id, p_role: req.user.role,
+            p_data: { reason }
+        });
+        if (domainError(res, result)) return;
+        const ticket = result.ticket;
 
         try {
             await logAudit({
@@ -991,17 +426,13 @@ exports.permanentlyDeleteTicket = async (req, res) => {
             ticketNumber: ticket.ticket_number
         });
     } catch (error) {
-        try { await connection.rollback(); } catch {}
         console.error('Permanent ticket deletion error:', error);
         return sendError(res, 'Server error', { statusCode: 500, errorCode: 'TICKET_DELETE_FAILED' });
-    } finally {
-        connection.release();
     }
 };
 
 // Correct an accidental paid status while retaining and voiding payment records.
 exports.markTicketUnpaid = async (req, res) => {
-    const connection = await db.getConnection();
     try {
         const id = Number(req.params.id);
         const reason = String(req.body?.reason || '').trim();
@@ -1015,46 +446,13 @@ exports.markTicketUnpaid = async (req, res) => {
             });
         }
 
-        await connection.beginTransaction();
-        const [rows] = await connection.query(
-            'SELECT id, ticket_number, status FROM tickets WHERE id = ? FOR UPDATE',
-            [id]
-        );
-        if (!rows.length) {
-            await connection.rollback();
-            return sendError(res, 'Ticket not found', { statusCode: 404, errorCode: 'TICKET_NOT_FOUND' });
-        }
-        const ticket = rows[0];
-        if (ticket.status !== 'paid') {
-            await connection.rollback();
-            return sendError(res, 'Only paid tickets can be marked unpaid', {
-                statusCode: 409,
-                errorCode: 'TICKET_NOT_PAID'
-            });
-        }
-
-        const [voidResult] = await connection.query(
-            `UPDATE payments
-             SET payment_status = 'voided',
-                 notes = CONCAT(
-                    COALESCE(notes, ''),
-                    CASE WHEN notes IS NULL OR notes = '' THEN '' ELSE '\n' END,
-                    'Voided because paid status was corrected: ', ?
-                 )
-             WHERE ticket_id = ? AND payment_status <> 'voided'`,
-            [reason, id]
-        );
-        await connection.query("UPDATE tickets SET status = 'unpaid' WHERE id = ?", [id]);
-        await insertStatusHistorySafe({
-            ticketId: id,
-            previousStatus: 'paid',
-            newStatus: 'unpaid',
-            changedBy: req.user.id,
-            reason,
-            approverId: req.user.id,
-            executor: connection
+        const result = await rpc('tvtms_ticket_mutate', {
+            p_action: 'unpaid', p_id: id, p_user_id: req.user.id, p_role: req.user.role,
+            p_data: { reason }
         });
-        await connection.commit();
+        if (domainError(res, result)) return;
+        const ticket = result.ticket;
+        const voidResult = { affectedRows: result.voidedPayments };
 
         try {
             await logAudit({
@@ -1080,11 +478,8 @@ exports.markTicketUnpaid = async (req, res) => {
             voidedPayments: Number(voidResult.affectedRows || 0)
         });
     } catch (error) {
-        try { await connection.rollback(); } catch {}
         console.error('Mark ticket unpaid error:', error);
         return sendError(res, 'Server error', { statusCode: 500, errorCode: 'TICKET_MARK_UNPAID_FAILED' });
-    } finally {
-        connection.release();
     }
 };
 
@@ -1098,95 +493,8 @@ exports.getDashboardStats = async (req, res) => {
             userId = req.user.id;
         }
 
-        // Total tickets
-        let totalQuery = 'SELECT COUNT(*) as total FROM tickets';
-        let params = [];
-
-        if (userId) {
-            totalQuery += ' WHERE user_id = ?';
-            params.push(userId);
-        }
-
-        const [totalResult] = await db.query(totalQuery, params);
-
-        // Paid tickets
-        let paidQuery = 'SELECT COUNT(*) as paid FROM tickets WHERE status = ?';
-        let paidParams = ['paid'];
-
-        if (userId) {
-            paidQuery += ' AND user_id = ?';
-            paidParams.push(userId);
-        }
-
-        const [paidResult] = await db.query(paidQuery, paidParams);
-
-        // Unpaid tickets
-        let unpaidQuery = 'SELECT COUNT(*) as unpaid FROM tickets WHERE status = ?';
-        let unpaidParams = ['unpaid'];
-
-        if (userId) {
-            unpaidQuery += ' AND user_id = ?';
-            unpaidParams.push(userId);
-        }
-
-        const [unpaidResult] = await db.query(unpaidQuery, unpaidParams);
-
-        // Repeat-offender case: this vehicle had an earlier non-cancelled ticket.
-        let repeatQuery = `
-            SELECT COUNT(*) AS repeat_offenders
-            FROM tickets t
-            WHERE t.status <> 'cancelled'
-              AND EXISTS (
-                  SELECT 1
-                  FROM tickets previous
-                  WHERE previous.vehicle_id = t.vehicle_id
-                    AND previous.status <> 'cancelled'
-                    AND (
-                        previous.date_issued < t.date_issued
-                        OR (previous.date_issued = t.date_issued AND previous.id < t.id)
-                    )
-              )
-        `;
-        const repeatParams = [];
-        if (userId) {
-            repeatQuery += ' AND t.user_id = ?';
-            repeatParams.push(userId);
-        }
-        const [repeatResult] = await db.query(repeatQuery, repeatParams);
-
-        // Revenue is based on actual non-voided payment records, not ticket face value.
-        let revenueQuery = `
-            SELECT COALESCE(SUM(p.amount_paid), 0) AS revenue
-            FROM payments p
-            JOIN tickets t ON p.ticket_id = t.id
-            WHERE p.payment_status <> 'voided'
-        `;
-        const revenueParams = [];
-
-        if (userId) {
-            revenueQuery += ' AND t.user_id = ?';
-            revenueParams.push(userId);
-        }
-
-        const [revenueResult] = await db.query(revenueQuery, revenueParams);
-
-        return sendSuccess(res, 'Dashboard stats fetched successfully', {
-            total: totalResult[0].total,
-            paid: paidResult[0].paid,
-            unpaid: unpaidResult[0].unpaid,
-            repeatOffenders: repeatResult[0].repeat_offenders || 0,
-            revenue: revenueResult[0].revenue || 0
-        }, {
-            legacy: {
-                stats: {
-                    total: totalResult[0].total,
-                    paid: paidResult[0].paid,
-                    unpaid: unpaidResult[0].unpaid,
-                    repeatOffenders: repeatResult[0].repeat_offenders || 0,
-                    revenue: revenueResult[0].revenue || 0
-                }
-            }
-        });
+        const stats = await rpc('tvtms_ticket_stats', { p_user_id: userId });
+        return sendSuccess(res, 'Dashboard stats fetched successfully', stats, { legacy: { stats } });
 
     } catch (error) {
         console.error('Get stats error:', error);
@@ -1209,27 +517,11 @@ exports.searchTickets = async (req, res) => {
             });
         }
 
-        let query = `
-            SELECT * FROM ticket_details
-            WHERE (
-                ticket_number LIKE ? OR plate_number LIKE ? OR owner_name LIKE ?
-                OR owner_email LIKE ? OR violation_name LIKE ?
-            )
-        `;
-
-        const searchTerm = `%${search}%`;
-        let params = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
-
-        // Apprehending officers only see tickets they issued.
-        if (req.user.role === 'apprehending_officer') {
-            query += ' AND user_id = ?';
-            params.push(req.user.id);
-        }
-
-
-        query += ' ORDER BY date_issued DESC LIMIT 50';
-
-        const [tickets] = await db.query(query, params);
+        const result = await rpc('tvtms_ticket_list', { p_filters: {
+            search, officerId: req.user.role === 'apprehending_officer' ? req.user.id : null,
+            sortBy: 'date_issued', sortOrder: 'DESC', pageSize: 50, offset: 0
+        } });
+        const tickets = result.tickets;
 
         return sendSuccess(res, 'Tickets fetched successfully', tickets, {
             legacy: {

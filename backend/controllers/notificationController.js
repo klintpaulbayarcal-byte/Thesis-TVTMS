@@ -1,32 +1,24 @@
-const db = require('../config/database');
+const { supabase, run } = require('../config/supabase');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+
+const countResult = async query => {
+    const result = await query;
+    await run(result);
+    return Number(result.count || 0);
+};
 
 exports.getMyNotifications = async (req, res) => {
     try {
         const { unreadOnly, limit = 50 } = req.query;
         const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
 
-        let query = 'SELECT * FROM notifications WHERE user_id = ?';
-        const params = [req.user.id];
-
-        if (String(unreadOnly).toLowerCase() === 'true') {
-            query += ' AND is_read = 0';
-        }
-
-        query += ' ORDER BY created_at DESC LIMIT ?';
-        params.push(safeLimit);
-
-        const [items] = await db.query(query, params);
-        const [[counts]] = await db.query(
-            `SELECT COUNT(*) AS total_count,
-                    COALESCE(SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END), 0) AS unread_count
-             FROM notifications
-             WHERE user_id = ?`,
-            [req.user.id]
-        );
-
-        const totalCount = Number(counts.total_count) || 0;
-        const unreadCount = Number(counts.unread_count) || 0;
+        let query = supabase.from('notifications').select('*').eq('user_id', req.user.id);
+        if (String(unreadOnly).toLowerCase() === 'true') query = query.eq('is_read', 0);
+        const [items, totalCount, unreadCount] = await Promise.all([
+            run(query.order('created_at', { ascending: false }).order('id', { ascending: false }).limit(safeLimit)),
+            countResult(supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id)),
+            countResult(supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', req.user.id).eq('is_read', 0))
+        ]);
 
         return sendSuccess(res, 'Notifications fetched successfully', items, {
             legacy: {
@@ -69,12 +61,11 @@ exports.markNotificationAsRead = async (req, res) => {
             });
         }
 
-        const [result] = await db.query(
-            'UPDATE notifications SET is_read = 1, read_at = NOW() WHERE id = ? AND user_id = ?',
-            [id, req.user.id]
-        );
+        const affectedRows = await countResult(supabase.from('notifications')
+            .update({ is_read: 1, read_at: new Date().toISOString() }, { count: 'exact' })
+            .eq('id', id).eq('user_id', req.user.id));
 
-        if (result.affectedRows === 0) {
+        if (affectedRows === 0) {
             return sendError(res, 'Notification not found', {
                 statusCode: 404,
                 errorCode: 'NOTIFICATION_NOT_FOUND'
@@ -102,12 +93,10 @@ exports.deleteNotification = async (req, res) => {
             });
         }
 
-        const [result] = await db.query(
-            'DELETE FROM notifications WHERE id = ? AND user_id = ?',
-            [id, req.user.id]
-        );
+        const affectedRows = await countResult(supabase.from('notifications').delete({ count: 'exact' })
+            .eq('id', id).eq('user_id', req.user.id));
 
-        if (result.affectedRows === 0) {
+        if (affectedRows === 0) {
             return sendError(res, 'Notification not found', {
                 statusCode: 404,
                 errorCode: 'NOTIFICATION_NOT_FOUND'
@@ -146,14 +135,11 @@ exports.deleteNotificationsBulk = async (req, res) => {
             });
         }
 
-        const placeholders = ids.map(() => '?').join(', ');
-        const [result] = await db.query(
-            `DELETE FROM notifications WHERE user_id = ? AND id IN (${placeholders})`,
-            [req.user.id, ...ids]
-        );
+        const affectedRows = await countResult(supabase.from('notifications').delete({ count: 'exact' })
+            .eq('user_id', req.user.id).in('id', ids));
 
         return sendSuccess(res, 'Selected notifications deleted successfully', {
-            deletedCount: result.affectedRows,
+            deletedCount: affectedRows,
             ids
         });
     } catch (error) {
@@ -167,13 +153,11 @@ exports.deleteNotificationsBulk = async (req, res) => {
 
 exports.deleteAllNotifications = async (req, res) => {
     try {
-        const [result] = await db.query(
-            'DELETE FROM notifications WHERE user_id = ?',
-            [req.user.id]
-        );
+        const affectedRows = await countResult(supabase.from('notifications').delete({ count: 'exact' })
+            .eq('user_id', req.user.id));
 
         return sendSuccess(res, 'All notifications deleted successfully', {
-            deletedCount: result.affectedRows
+            deletedCount: affectedRows
         });
     } catch (error) {
         console.error('Delete all notifications error:', error);
