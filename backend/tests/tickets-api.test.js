@@ -9,7 +9,6 @@ function controller(rpc) {
     vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../controllers/ticketController.js'), 'utf8'), {
         exports, console, require(name) {
             if (name === '../config/supabase') return { rpc };
-            if (name === '../config/database') return {};
             if (name === '../utils/auditLogger') return { logAudit: async () => {} };
             if (name === '../utils/emailService') return { sendViolationNotice: async () => {} };
             return require('../utils/apiResponse');

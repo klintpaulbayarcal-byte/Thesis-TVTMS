@@ -5,16 +5,16 @@ const { supabase, run } = require('../config/supabase');
 
 const base = `http://127.0.0.1:${Number(process.env.PORT || 5000)}/api`;
 let checks = 0;
-async function check(path, token, expectedStatus = 200) {
+async function check(path, token, expectedStatus = 200, label = path) {
     const response = await fetch(`${base}${path}`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         signal: AbortSignal.timeout(30000)
     });
     const body = await response.json();
-    assert.equal(response.status, expectedStatus, `${path}: HTTP ${response.status}`);
-    if (expectedStatus === 200) assert.equal(body.success, true, path);
+    assert.equal(response.status, expectedStatus, `${label}: HTTP ${response.status}`);
+    if (expectedStatus === 200) assert.equal(body.success, true, label);
     checks += 1;
-    console.log(`PASS ${path} (${expectedStatus})`);
+    console.log(`PASS ${label} (${expectedStatus})`);
     return body;
 }
 
@@ -29,8 +29,12 @@ async function check(path, token, expectedStatus = 200) {
         const users = await run(supabase.from('users').select('id,role').eq('status', 'active').eq('role', role).order('id').limit(1));
         assert.ok(users.length, `An active ${role} is required for the read-only session checks.`);
         const token = jwt.sign({ id: users[0].id }, process.env.JWT_SECRET, { expiresIn: '5m' });
+        const vehicles = await run(supabase.from('vehicles').select('plate_number').order('id').limit(1));
+        if (vehicles.length) {
+            await check(`/vehicles/stats?plate_number=${encodeURIComponent(vehicles[0].plate_number)}`, token, 200, '/vehicles/stats (existing vehicle)');
+        }
         for (const path of ['/auth/profile', '/tickets', '/tickets/stats', '/violations/active', '/vehicles/stats', '/notifications', '/disputes']) {
-            await check(path, token);
+            await check(path, token, path === '/vehicles/stats' ? 400 : 200);
         }
         if (role === 'admin') {
             for (const path of ['/users', '/system/settings', '/vehicles', '/reports/daily', '/reports/monthly', '/reports/yearly',
