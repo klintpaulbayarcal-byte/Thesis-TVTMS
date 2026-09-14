@@ -43,6 +43,9 @@ app.use((req, res, next) => {
 });
 
 app.use(helmet({
+    contentSecurityPolicy: {
+        directives: { upgradeInsecureRequests: isProduction ? [] : null }
+    },
     crossOriginResourcePolicy: { policy: 'cross-origin' },
     referrerPolicy: { policy: 'no-referrer' }
 }));

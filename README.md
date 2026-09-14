@@ -14,7 +14,7 @@ A web-based municipal traffic citation and records-management system developed f
 
 ## Deployment status
 
-This package is a **final deployment candidate**, not a substitute for live acceptance testing. Static code checks passed, but the target server, production database, SMTP account, HTTPS configuration, and complete browser workflows must still be tested before public go-live. See `DEPLOYMENT_CHECKLIST.md` and `FINAL_DEPLOYMENT_AUDIT.md`.
+This package is a **final deployment candidate**, not a substitute for live acceptance testing. Static code checks passed, but the target server, production database, SMTP account, HTTPS configuration, and complete browser workflows must still be tested before public go-live. See `docs/SUPABASE_SETUP.md` and the final acceptance requirements below.
 
 ## Supported roles
 
@@ -26,7 +26,7 @@ There are **no default accounts** and no public driver account. Configure `INITI
 
 ## Technology
 
-- Application: Node.js 20+ and Express
+- Application: Node.js 22+ and Express
 - Frontend: static HTML, CSS, and JavaScript served by Express
 - Production hosting: Hostinger Node.js Web App
 - Database: Supabase PostgreSQL
@@ -40,7 +40,7 @@ npm install
 copy backend\.env.example backend\.env
 ```
 
-Set `DATABASE_URL` in `backend/.env` to the Supabase transaction-pooler connection string. No separate local web or database stack is required.
+Set `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in `backend/.env` for the Supabase HTTPS API. A legacy `SUPABASE_SERVICE_ROLE_KEY` can replace the secret key. No separate local web or database stack is required.
 
 ## Development
 
@@ -48,7 +48,7 @@ Set `DATABASE_URL` in `backend/.env` to the Supabase transaction-pooler connecti
 npm run dev
 ```
 
-Open `http://localhost:5000/`. Express serves the frontend and `/api` from the same origin and connects directly to Supabase PostgreSQL.
+Open `http://localhost:5000/`. Express serves the frontend and `/api` from the same origin and connects through the Supabase HTTPS API.
 
 ## Production build
 
@@ -64,12 +64,12 @@ Hostinger Node.js Web Apps require a Business or Cloud hosting plan. In hPanel:
 
 1. Go to **Websites → Add Website → Deploy Web App**.
 2. Choose **Upload your website files** and upload `hostinger-app.zip`.
-3. Select **Express.js** with Node.js 20 or newer.
+3. Select **Express.js** with Node.js 22 or newer.
 4. Set the entry file to `backend/server.js`.
 5. Leave the output directory and build command blank.
 6. Set the start command to `npm start`.
 7. Add the variables from `backend/.env.production.example`.
-8. Use Hostinger's **Database Connect Wizard → Supabase** to populate `DATABASE_URL`, then deploy.
+8. Confirm `SUPABASE_URL` and the server secret key are configured. Deploy only after acceptance testing and separate approval.
 
 Hostinger manages Node dependencies, the listening port, HTTPS routing, process restarts, and files outside `public_html`. Plain FTP is not a valid deployment path for this Express backend.
 
@@ -80,7 +80,7 @@ Browser
   -> Hostinger Express application
        -> static frontend
        -> /api
-            -> Supabase PostgreSQL transaction pooler
+            -> Supabase HTTPS API (PostgreSQL)
             -> configured SMTP service
 ```
 
@@ -91,7 +91,7 @@ Database credentials stay in Hostinger environment variables and are never shipp
 - Set `NODE_ENV=production` and `TRUST_PROXY=1`.
 - Set `APP_PUBLIC_URL` and `ALLOWED_ORIGINS` to the exact Hostinger HTTPS origin.
 - Configure a unique `JWT_SECRET` containing at least 32 characters.
-- Connect `DATABASE_URL` through Hostinger's Supabase Database Connect Wizard.
+- Configure `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (or legacy `SUPABASE_SERVICE_ROLE_KEY`).
 - Configure SMTP or Resend before production startup.
 - Validate violation definitions, penalties, dispute periods, and payment periods with the authorized LGU office.
 - Complete backup, restore, security, and end-to-end acceptance tests before go-live.
@@ -137,4 +137,4 @@ backend/
 
 ## Final acceptance
 
-Do not approve public deployment until every required item in `DEPLOYMENT_CHECKLIST.md` is signed off, especially ticket issuance, repeat-offender lookup, evidence access, partial/full payment, dispute approval/rejection, reports, account lock/unlock, password reset, backups, and restore testing.
+Do not approve public deployment until every required acceptance test is signed off, especially ticket issuance, repeat-offender lookup, evidence access, partial/full payment, dispute approval/rejection, reports, account lock/unlock, password reset, backups, and restore testing.
