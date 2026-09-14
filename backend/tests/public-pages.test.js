@@ -10,7 +10,7 @@ test('public pages load their scripts under the response CSP without inline exec
     await new Promise(resolve => server.once('listening', resolve));
     const base = `http://127.0.0.1:${server.address().port}`;
     try {
-        for (const page of ['landing', 'login', 'public-ticket-lookup']) {
+        for (const page of ['landing', 'login', 'public-ticket-lookup', 'admin-dashboard', 'officer-dashboard']) {
             const url = `${base}/pages/${page}.html`;
             const response = await fetch(url);
             assert.equal(response.status, 200);
