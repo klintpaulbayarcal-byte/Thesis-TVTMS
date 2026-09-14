@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const db = require('../config/database');
+const { supabase, run } = require('../config/supabase');
 
 const unauthorized = (res, message) => {
     return res.status(403).json({
@@ -31,10 +31,7 @@ const verifyToken = async (req, res, next) => {
     }
 
     try {
-        const [users] = await db.query(
-            'SELECT id, name, email, role, status, plate_number FROM users WHERE id = ? LIMIT 1',
-            [decoded.id]
-        );
+        const users = await run(supabase.from('users').select('id,name,email,role,status,plate_number').eq('id', decoded.id).limit(1));
 
         if (users.length === 0) {
             return res.status(401).json({
