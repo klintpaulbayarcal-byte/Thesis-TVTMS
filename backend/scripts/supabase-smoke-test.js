@@ -37,20 +37,25 @@ async function check(path, token, expectedStatus = 200, label = path) {
             await check(path, token, path === '/vehicles/stats' ? 400 : 200);
         }
         if (role === 'admin') {
-            for (const path of ['/users', '/system/settings', '/vehicles', '/reports/daily', '/reports/monthly', '/reports/yearly',
+            for (const path of ['/users', '/users/audit-logs', '/system/settings', '/vehicles', '/reports/daily', '/reports/monthly', '/reports/yearly',
                 '/reports/violations', '/reports/officers', '/reports/collections', '/reports/hotspots',
                 '/reports/officer-performance', '/reports/aging', '/reports/barangay', '/reports/analytics/collections',
                 '/reports/analytics/payment-status', '/reports/analytics/tickets-summary', '/reports/analytics/dispute-rate',
                 '/reports/analytics/monthly-revenue']) await check(path, token);
         } else {
             await check('/users', token, 403);
+            await check('/users/audit-logs', token, 403);
+            await check('/system/settings', token, 403);
             await check('/reports/daily', token, 403);
         }
-        const tickets = await run(supabase.from('tickets').select('id').eq('user_id', users[0].id).order('id').limit(1));
+        const tickets = await run(supabase.from('tickets').select('id,ticket_number').eq('user_id', users[0].id).order('id').limit(1));
         if (tickets.length) {
             await check(`/tickets/${tickets[0].id}`, token);
             await check(`/payments/ticket/${tickets[0].id}`, token);
             await check(`/evidence/ticket/${tickets[0].id}`, token);
+            const lookup = await check(`/public/ticket-lookup?ticket=${encodeURIComponent(tickets[0].ticket_number)}`, null, 200, 'public lookup (existing ticket)');
+            assert.ok(lookup.tickets.length > 0, 'Existing ticket must be found by public lookup');
+            assert.ok(lookup.tickets.every(ticket => !('id' in ticket)), 'Public lookup must omit internal IDs');
         }
     }
     console.log(`Read-only Supabase smoke checks passed: ${checks}. No records were modified.`);

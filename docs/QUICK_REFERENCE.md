@@ -7,7 +7,7 @@ npm install
 copy backend\.env.example backend\.env
 ```
 
-Set the Supabase transaction-pooler URL as `DATABASE_URL` in `backend/.env`, then run:
+Set `SUPABASE_URL` and the server-only `SUPABASE_SECRET_KEY` in `backend/.env`, then run:
 
 ```bat
 npm run verify
@@ -20,9 +20,8 @@ Open `http://localhost:5000/`.
 
 ```env
 NODE_ENV=development
-DATABASE_URL=<Supabase transaction-pooler URL>
-DB_POOL_SIZE=3
-DB_SSL=1
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SECRET_KEY=<server secret key>
 JWT_SECRET=<unique random value, at least 32 characters>
 ALLOWED_ORIGINS=http://localhost:5000,http://127.0.0.1:5000
 APP_PUBLIC_URL=http://localhost:5000
@@ -44,7 +43,7 @@ Build command: blank
 Output directory: blank
 ```
 
-Use Hostinger's Supabase Database Connect Wizard and add the remaining values from `.env.example` to the environment-variable dashboard.
+Use Node.js 22 or 24 and add the values from `backend/.env.production.example` to the Hostinger environment-variable dashboard. This application uses the HTTPS API, not a database connection string.
 
 ## Common commands
 
@@ -60,13 +59,13 @@ npm start
 
 ## Common errors
 
-### `DATABASE_URL is required`
+### `SUPABASE_URL is required`
 
-Copy the Supabase transaction-pooler connection string into `backend/.env` for local development, or connect Supabase through the Hostinger Database Connect Wizard in production.
+Configure the HTTPS project URL and server secret key in `backend/.env` locally or Hostinger environment variables in production. A legacy `SUPABASE_SERVICE_ROLE_KEY` can replace `SUPABASE_SECRET_KEY`.
 
 ### Production startup stops
 
-Check `DATABASE_URL`, `JWT_SECRET`, `APP_PUBLIC_URL`, `ALLOWED_ORIGINS`, SMTP variables, and Hostinger deployment logs.
+Check `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `JWT_SECRET`, `APP_PUBLIC_URL`, `ALLOWED_ORIGINS`, SMTP variables, and Hostinger deployment logs.
 
 ### CORS denied
 
