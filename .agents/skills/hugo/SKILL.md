@@ -14,11 +14,7 @@ Before editing, inspect the project shape:
 - Read repository instructions such as `AGENTS.md`, `.codex/config.toml`, and relevant README files.
 - Identify the Hugo config file: `hugo.toml`, `config.toml`, `hugo.yaml`, `config.yaml`, `hugo.json`, or a `config/` directory.
 - Check for a theme, module, or local layouts: `themes/`, `layouts/`, `assets/`, `static/`, `data/`, `content/`, `archetypes/`, `i18n/`.
-<<<<<<< HEAD
 - Check the build/deploy path: `package.json`, `go.mod`, `.github/workflows/`, `netlify.toml`, `wrangler.*`, Cloudflare Pages docs, Makefile, or project scripts.
-=======
-- Check the build/deploy path: `package.json`, `go.mod`, `.github/workflows/`, `netlify.toml`, `wrangler.*`, Cloudflare Pages docs, Makefile, or project scripts.
->>>>>>> 1223352993797e3d843683c663b496455a750151
 - Run or inspect `hugo version` when validation depends on version-specific behavior.
 - Inspect `git status --short` and preserve unrelated user changes.
 
@@ -86,11 +82,7 @@ Match validation to the deployment target:
 - Cloudflare Pages commonly runs `hugo` or a project script and publishes `public/`.
 - Netlify may use `netlify.toml`, environment variables, and a pinned Hugo version.
 - GitHub Pages may deploy through Actions and may require base URL or artifact settings.
-<<<<<<< HEAD
 - Custom hosts may wrap Hugo in package scripts.
-=======
-- Custom hosts may wrap Hugo in package scripts.
->>>>>>> 1223352993797e3d843683c663b496455a750151
 
 Do not change deployment commands, publish directories, Hugo versions, or environment assumptions without checking the existing deployment config.
 
